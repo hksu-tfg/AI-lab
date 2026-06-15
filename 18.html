@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>冰箱靈感大師 - AI 剩食救星與創意料理</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- 頂部導航欄 -->
+  <header class="bg-white border-b border-slate-100 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-gradient-to-tr from-emerald-500 to-teal-600 text-white p-2 rounded-xl shadow-md">
+          <i class="fa-solid fa-kitchen-set text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-black text-xl tracking-wide bg-gradient-to-r from-emerald-600 to-teal-700 bg-clip-text text-transparent">
+            冰箱靈感大師
+          </h1>
+          <p class="text-xs text-slate-400 font-medium">解決剩食困境 • 激發烹飪靈感</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600">
+          <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span>
+          AI 主廚已就緒
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- 左側：冰箱食材管理 (占 5 格) -->
+    <section class="lg:col-span-5 flex flex-col space-y-6">
+      <!-- 新增食材卡片 -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 transition-all hover:shadow-md">
+        <h2 class="text-lg font-bold text-slate-800 flex items-center mb-4">
+          <i class="fa-solid fa-plus-circle text-emerald-500 mr-2"></i> 新增冰箱食材
+        </h2>
+        <form id="add-ingredient-form" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">食材名稱</label>
+            <input type="text" id="ing-name" placeholder="例如：高麗菜、雞胸肉、雞蛋..." required
+              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition text-sm">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">食材類別</label>
+              <select id="ing-category" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition text-sm">
+                <option value="vegetable">🥦 蔬菜水果</option>
+                <option value="meat">🥩 肉類禽類</option>
+                <option value="seafood">🐟 海鮮水產</option>
+                <option value="egg-dairy">🍳 蛋與乳製品</option>
+                <option value="sauce">🥫 醬料與配料</option>
+                <option value="other">🍞 其他食材</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">有效期限</label>
+              <input type="date" id="ing-expiry" required
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition text-sm">
+            </div>
+          </div>
+          <button type="submit" 
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-xl transition duration-200 shadow-sm shadow-emerald-600/10 flex items-center justify-center space-x-2 text-sm">
+            <i class="fa-solid fa-download"></i>
+            <span>放入冰箱</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- 冰箱列表卡片 -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex-grow flex flex-col min-h-[450px]">
+        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+          <div class="flex items-center space-x-2">
+            <h2 class="text-lg font-bold text-slate-800">🧊 我的冷藏庫</h2>
+            <span id="fridge-count" class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+          <button id="btn-clear-fridge" class="text-xs text-slate-400 hover:text-rose-500 transition flex items-center space-x-1">
+            <i class="fa-regular fa-trash-can"></i>
+            <span>清空冰箱</span>
+          </button>
+        </div>
+
+        <!-- 快速篩選/狀態統計 -->
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <div class="bg-emerald-50 border border-emerald-100 p-2.5 rounded-xl text-center">
+            <div class="text-xs text-emerald-600 font-medium">新鮮無虞</div>
+            <div id="stat-fresh" class="text-lg font-bold text-emerald-700">0</div>
+          </div>
+          <div class="bg-amber-50 border border-amber-100 p-2.5 rounded-xl text-center">
+            <div class="text-xs text-amber-600 font-medium">即期警告</div>
+            <div id="stat-warning" class="text-lg font-bold text-amber-700">0</div>
+          </div>
+          <div class="bg-rose-50 border border-rose-100 p-2.5 rounded-xl text-center">
+            <div class="text-xs text-rose-600 font-medium">已過期</div>
+            <div id="stat-expired" class="text-lg font-bold text-rose-700">0</div>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-400 mb-3 flex items-center">
+          <i class="fa-solid fa-circle-info mr-1.5 text-slate-300"></i>
+          勾選食材以作為 AI 創意食譜的原料基礎：
+        </p>
+
+        <!-- 食材列表 (滾動區域) -->
+        <div id="fridge-list" class="flex-grow overflow-y-auto pr-1 space-y-2.5 max-h-[350px] custom-scrollbar">
+          <!-- 預設空狀態 -->
+          <div id="fridge-empty-state" class="h-full flex flex-col items-center justify-center text-center py-12 text-slate-400">
+            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+              <i class="fa-regular fa-snowflake text-2xl text-slate-300"></i>
+            </div>
+            <p class="text-sm font-medium">冰箱空空的呢！</p>
+            <p class="text-xs text-slate-400 mt-1">快用上方表單新增食材吧。</p>
+          </div>
+        </div>
+
+        <!-- 底部一鍵全選 -->
+        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+          <div class="flex space-x-2">
+            <button id="btn-select-all" class="text-emerald-600 hover:text-emerald-700 font-medium">全選</button>
+            <span class="text-slate-300">|</span>
+            <button id="btn-select-none" class="text-slate-500 hover:text-slate-600 font-medium">取消全選</button>
+          </div>
+          <div class="text-slate-500">
+            已選中 <span id="selected-count" class="font-bold text-emerald-600">0</span> 項食材
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右側：AI 靈感烹飪區 (占 7 格) -->
+    <section class="lg:col-span-7 flex flex-col space-y-6">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex-grow flex flex-col">
+        <!-- 標題 -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-6 gap-3">
+          <div class="flex items-center space-x-3">
+            <div class="bg-amber-500/10 text-amber-600 p-2 rounded-xl">
+              <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-slate-800">AI 主廚靈感烹飪</h2>
+              <p class="text-xs text-slate-400 font-medium">使用 Gemini 2.5 進行智能剩食搭配</p>
+            </div>
+          </div>
+          
+          <button id="btn-generate-recipes" disabled
+            class="px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed transition duration-200 flex items-center justify-center space-x-2 shadow-sm">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>喚醒 AI 靈感料理</span>
+          </button>
+        </div>
+
+        <!-- 烹飪區內容槽 -->
+        <div id="recipe-content-area" class="flex-grow flex flex-col justify-center">
+          
+          <!-- 初始化提示狀態 -->
+          <div id="recipe-welcome-state" class="text-center py-12 px-4 max-w-md mx-auto">
+            <div class="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500 animate-bounce">
+              <i class="fa-solid fa-utensils text-3xl"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-700 mb-2">準備好大展身手了嗎？</h3>
+            <p class="text-sm text-slate-500 mb-6 leading-relaxed">
+              請先在左邊冰箱勾選你想要料理的食材，點擊右上角的「喚醒 AI 靈感料理」，AI 主廚將會立即為你量身打造頂級家常餐單！
+            </p>
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-3 text-left">
+              <h4 class="text-xs font-bold text-slate-600 mb-1 flex items-center">
+                <i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> 提示小訣竅：
+              </h4>
+              <p class="text-xs text-slate-400">
+                如果食材快過期了，優先勾選它們，AI 會重點思考如何幫你美味地消耗這些即期品喔！
+              </p>
+            </div>
+          </div>
+
+          <!-- 載入中骨架屏 -->
+          <div id="recipe-loading-state" class="hidden space-y-6 py-6">
+            <div class="flex items-center justify-center flex-col space-y-4 py-8">
+              <div class="relative">
+                <div class="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-emerald-600">
+                  <i class="fa-solid fa-egg animate-pulse"></i>
+                </div>
+              </div>
+              <p class="text-sm font-bold text-slate-600 animate-pulse">AI 主廚正在構思食譜中，請稍候...</p>
+              <p class="text-xs text-slate-400 max-w-xs text-center">正在結合您所選的食材特性、調味層次，並優化步驟結構...</p>
+            </div>
+          </div>
+
+          <!-- 錯誤提示 -->
+          <div id="recipe-error-state" class="hidden text-center py-12 px-4">
+            <div class="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fa-solid fa-circle-exclamation text-2xl"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-700 mb-1">哎呀！烹飪助理罷工了</h3>
+            <p id="error-message-text" class="text-sm text-slate-400 mb-6">目前連線到 AI 伺服器時發生了一點問題，請稍後重試。</p>
+            <button id="btn-retry-recipe" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-sm font-bold text-slate-700 transition">
+              重新嘗試
+            </button>
+          </div>
+
+          <!-- 食譜展示區 -->
+          <div id="recipe-results" class="hidden space-y-6">
+            <!-- 食譜分頁頁籤 -->
+            <div class="flex border-b border-slate-100 overflow-x-auto pb-px" id="recipe-tabs">
+              <!-- 動態生成 Tabs -->
+            </div>
+
+            <!-- 食譜詳細面板 -->
+            <div id="recipe-detail-card" class="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+              <!-- 食譜核心頭部 -->
+              <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-4 pb-4 border-b border-slate-200">
+                <div>
+                  <h3 id="current-recipe-name" class="text-xl font-black text-slate-800 mb-1.5">--</h3>
+                  <p id="current-recipe-desc" class="text-sm text-slate-500 leading-relaxed">--</p>
+                </div>
+                <!-- 難度與時間標籤 -->
+                <div class="flex items-center space-x-2 shrink-0">
+                  <span id="current-recipe-difficulty" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    --
+                  </span>
+                  <span id="current-recipe-time" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 flex items-center">
+                    <i class="fa-regular fa-clock mr-1"></i> --
+                  </span>
+                </div>
+              </div>
+
+              <!-- 主廚推薦照片 (Imagen 4 生成預留位置) -->
+              <div class="mb-5 relative rounded-xl overflow-hidden bg-slate-200 h-48 flex flex-col items-center justify-center border border-slate-300">
+                <img id="recipe-generated-img" class="absolute inset-0 w-full h-full object-cover hidden" alt="食譜示意圖" onerror="this.classList.add('hidden')">
+                <div id="img-placeholder-content" class="text-center p-4 z-10">
+                  <i class="fa-regular fa-image text-3xl text-slate-400 mb-2"></i>
+                  <p class="text-xs text-slate-500 mb-2">對這道菜感興趣？讓 Imagen 4 幫你畫出來！</p>
+                  <button id="btn-generate-img" class="px-4 py-1.5 bg-white hover:bg-slate-50 text-emerald-600 border border-emerald-200 hover:border-emerald-300 shadow-sm rounded-lg text-xs font-bold transition flex items-center space-x-1.5 mx-auto">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>AI 繪製精美成品照</span>
+                  </button>
+                </div>
+                <!-- 圖片生成中 Loading -->
+                <div id="img-loading" class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4">
+                  <div class="w-10 h-10 border-3 border-emerald-300 border-t-white rounded-full animate-spin mb-2"></div>
+                  <p class="text-xs font-bold tracking-wider">AI 正在精心繪製料理照片...</p>
+                </div>
+              </div>
+
+              <!-- 食材使用情況 -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-100">
+                  <h4 class="text-xs font-black text-emerald-600 mb-2 uppercase tracking-wider">
+                    <i class="fa-solid fa-check-circle mr-1"></i> 冰箱現有耗材
+                  </h4>
+                  <ul id="current-recipe-owned" class="space-y-1 text-sm text-slate-600 pl-2 list-disc list-inside">
+                    <!-- 動態帶入 -->
+                  </ul>
+                </div>
+                <div class="bg-white p-3.5 rounded-xl border border-slate-100">
+                  <div class="flex justify-between items-center mb-2">
+                    <h4 class="text-xs font-black text-rose-500 uppercase tracking-wider">
+                      <i class="fa-solid fa-triangle-exclamation mr-1"></i> 需要補充的食材
+                    </h4>
+                    <button id="btn-add-to-shopping" class="text-[10px] text-emerald-600 hover:underline font-bold">
+                      全部加入採購單
+                    </button>
+                  </div>
+                  <ul id="current-recipe-missing" class="space-y-1 text-sm text-slate-500 pl-2 list-disc list-inside">
+                    <!-- 動態帶入 -->
+                  </ul>
+                </div>
+              </div>
+
+              <!-- 烹飪步驟 -->
+              <div>
+                <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
+                  <i class="fa-solid fa-list-ol text-emerald-500 mr-2"></i> 烹飪步驟指引
+                </h4>
+                <ol id="current-recipe-steps" class="space-y-3 pl-1">
+                  <!-- 動態帶入 -->
+                </ol>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 全局提示框與購物袋快捷懸浮窗 -->
+  <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end space-y-4">
+    <!-- 購物清單面板 (預設隱藏，點擊購物袋時彈出) -->
+    <div id="shopping-panel" class="hidden w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 transform translate-y-2 transition-all">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
+        <h3 class="font-bold text-slate-800 text-sm flex items-center">
+          <i class="fa-solid fa-basket-shopping text-emerald-500 mr-1.5"></i> 待辦買菜清單
+        </h3>
+        <button id="btn-close-shopping" class="text-slate-400 hover:text-slate-600 text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <!-- 購物清單滾動區 -->
+      <div id="shopping-list-items" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1 text-sm text-slate-600">
+        <!-- 空白狀態 -->
+        <p id="shopping-empty-text" class="text-center text-xs text-slate-400 py-6">清單空空如也，快從食譜一鍵加入！</p>
+      </div>
+      <!-- 底部操作 -->
+      <div id="shopping-footer" class="hidden mt-3 pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
+        <button id="btn-clear-shopping" class="text-slate-400 hover:text-rose-500">全部清空</button>
+        <button id="btn-import-to-fridge" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded font-bold transition">
+          已買好！放入冰箱
+        </button>
+      </div>
+    </div>
+
+    <!-- 購物袋浮動按鈕 -->
+    <button id="btn-toggle-shopping" class="relative bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center">
+      <i class="fa-solid fa-cart-shopping text-xl"></i>
+      <!-- 購物標章數量 -->
+      <span id="shopping-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-pulse">0</span>
+    </button>
+  </div>
+
+  <!-- 通知訊息框 (取代 Alert) -->
+  <div id="toast-container" class="fixed top-20 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- 底部宣告頁腳 -->
+  <footer class="bg-white border-t border-slate-100 mt-12 py-6">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400 space-y-2">
+      <p>© 2026 冰箱靈感大師 Fridge Genius. 使用 Gemini Pro 技術支持.</p>
+      <p class="text-[10px]">致力於減少全球糧食浪費。每一餐創意料理，都是守護地球的美好起點。</p>
+    </div>
+  </footer>
+
+  <!-- 頁面邏輯主 JS -->
+  <script>
+    // --- 初始 API 金鑰設置 ---
+    const apiKey = ""; // 執行環境運行時會自動提供 API 金鑰
+
+    // --- 預設預載冰箱食材 (讓使用者一打開就有內容，快速體驗) ---
+    const initialIngredients = [
+      { id: '1', name: '雞胸肉', category: 'meat', expiry: getOffsetDate(2), selected: true },
+      { id: '2', name: '高麗菜', category: 'vegetable', expiry: getOffsetDate(5), selected: true },
+      { id: '3', name: '雞蛋', category: 'egg-dairy', expiry: getOffsetDate(10), selected: true },
+      { id: '4', name: '大蒜', category: 'sauce', expiry: getOffsetDate(15), selected: false },
+      { id: '5', name: '鮮蝦', category: 'seafood', expiry: getOffsetDate(-1), selected: false }
+    ];
+
+    // --- 狀態管理數據結構 ---
+    let fridgeIngredients = [...initialIngredients];
+    let selectedRecipes = [];
+    let activeRecipeIndex = 0;
+    let shoppingList = [];
+
+    // --- 輔助日期函數 ---
+    function getOffsetDate(days) {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return d.toISOString().split('T')[0];
+    }
+
+    // --- DOM 節點獲取 ---
+    const addIngForm = document.getElementById('add-ingredient-form');
+    const fridgeListEl = document.getElementById('fridge-list');
+    const fridgeEmptyState = document.getElementById('fridge-empty-state');
+    const fridgeCountEl = document.getElementById('fridge-count');
+    const selectedCountEl = document.getElementById('selected-count');
+    const btnClearFridge = document.getElementById('btn-clear-fridge');
+    const btnSelectAll = document.getElementById('btn-select-all');
+    const btnSelectNone = document.getElementById('btn-select-none');
+    const btnGenerateRecipes = document.getElementById('btn-generate-recipes');
+    
+    // 狀態數值節點
+    const statFreshEl = document.getElementById('stat-fresh');
+    const statWarningEl = document.getElementById('stat-warning');
+    const statExpiredEl = document.getElementById('stat-expired');
+
+    // 食譜渲染節點
+    const recipeContentArea = document.getElementById('recipe-content-area');
+    const recipeWelcomeState = document.getElementById('recipe-welcome-state');
+    const recipeLoadingState = document.getElementById('recipe-loading-state');
+    const recipeErrorState = document.getElementById('recipe-error-state');
+    const recipeResults = document.getElementById('recipe-results');
+    const recipeTabsEl = document.getElementById('recipe-tabs');
+    const btnRetryRecipe = document.getElementById('btn-retry-recipe');
+    const errorMessageText = document.getElementById('error-message-text');
+
+    // 當前食譜詳細視圖元件
+    const currentRecipeName = document.getElementById('current-recipe-name');
+    const currentRecipeDesc = document.getElementById('current-recipe-desc');
+    const currentRecipeDifficulty = document.getElementById('current-recipe-difficulty');
+    const currentRecipeTime = document.getElementById('current-recipe-time');
+    const currentRecipeOwned = document.getElementById('current-recipe-owned');
+    const currentRecipeMissing = document.getElementById('current-recipe-missing');
+    const currentRecipeSteps = document.getElementById('current-recipe-steps');
+    const recipeGeneratedImg = document.getElementById('recipe-generated-img');
+    const imgPlaceholderContent = document.getElementById('img-placeholder-content');
+    const btnGenerateImg = document.getElementById('btn-generate-img');
+    const imgLoading = document.getElementById('img-loading');
+    const btnAddToShopping = document.getElementById('btn-add-to-shopping');
+
+    // 購物袋與浮動面板
+    const btnToggleShopping = document.getElementById('btn-toggle-shopping');
+    const btnCloseShopping = document.getElementById('btn-close-shopping');
+    const shoppingPanel = document.getElementById('shopping-panel');
+    const shoppingListItems = document.getElementById('shopping-list-items');
+    const shoppingEmptyText = document.getElementById('shopping-empty-text');
+    const shoppingFooter = document.getElementById('shopping-footer');
+    const shoppingBadge = document.getElementById('shopping-badge');
+    const btnClearShopping = document.getElementById('btn-clear-shopping');
+    const btnImportToFridge = document.getElementById('btn-import-to-fridge');
+    const toastContainer = document.getElementById('toast-container');
+
+
+    // --- 核心邏輯渲染：食材清單 ---
+    function renderFridge() {
+      fridgeListEl.querySelectorAll('.ing-card').forEach(el => el.remove());
+
+      if (fridgeIngredients.length === 0) {
+        fridgeEmptyState.classList.remove('hidden');
+      } else {
+        fridgeEmptyState.classList.add('hidden');
+        
+        fridgeIngredients.forEach(ing => {
+          const card = document.createElement('div');
+          card.className = `ing-card group flex items-center justify-between p-3 rounded-xl border transition-all text-sm bg-white ${ing.selected ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-100 hover:border-slate-200'}`;
+          
+          const daysLeft = getDaysDifference(ing.expiry);
+          let alertColor = 'text-emerald-600 bg-emerald-50 border-emerald-100';
+          let alertLabel = '新鮮';
+
+          if (daysLeft < 0) {
+            alertColor = 'text-rose-600 bg-rose-50 border-rose-100';
+            alertLabel = `過期 ${Math.abs(daysLeft)} 天`;
+          } else if (daysLeft <= 3) {
+            alertColor = 'text-amber-600 bg-amber-50 border-amber-100';
+            alertLabel = daysLeft === 0 ? '今天過期' : `${daysLeft} 天內到期`;
+          }
+
+          card.innerHTML = `
+            <div class="flex items-center space-x-3 flex-grow cursor-pointer" onclick="toggleSelectIngredient('${ing.id}')">
+              <input type="checkbox" ${ing.selected ? 'checked' : ''} 
+                class="w-4.5 h-4.5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer transition">
+              <div class="flex flex-col">
+                <span class="font-bold text-slate-700">${ing.name}</span>
+                <span class="text-xs text-slate-400 flex items-center mt-0.5">
+                  <i class="fa-regular fa-calendar-days mr-1"></i> ${ing.expiry}
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold border ${alertColor}">
+                ${alertLabel}
+              </span>
+              <button onclick="deleteIngredient('${ing.id}', event)" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 p-1 transition">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </div>
+          `;
+          fridgeListEl.appendChild(card);
+        });
+      }
+
+      // 更新統計與按鈕狀態
+      updateStats();
+    }
+
+    // --- 輔助：計算到期日剩餘天數 ---
+    function getDaysDifference(dateStr) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const targetDate = new Date(dateStr);
+      targetDate.setHours(0,0,0,0);
+      const diffTime = targetDate - today;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    // --- 更新冰箱頂部統計資料 ---
+    function updateStats() {
+      const total = fridgeIngredients.length;
+      fridgeCountEl.innerText = total;
+
+      let fresh = 0, warning = 0, expired = 0;
+      fridgeIngredients.forEach(ing => {
+        const days = getDaysDifference(ing.expiry);
+        if (days < 0) expired++;
+        else if (days <= 3) warning++;
+        else fresh++;
+      });
+
+      statFreshEl.innerText = fresh;
+      statWarningEl.innerText = warning;
+      statExpiredEl.innerText = expired;
+
+      const selectedCount = fridgeIngredients.filter(i => i.selected).length;
+      selectedCountEl.innerText = selectedCount;
+
+      // 當選取食材大於 0 時才能召喚 AI
+      btnGenerateRecipes.disabled = selectedCount === 0;
+    }
+
+    // --- 互動：切換食材選中狀態 ---
+    window.toggleSelectIngredient = function(id) {
+      const ing = fridgeIngredients.find(i => i.id === id);
+      if (ing) {
+        ing.selected = !ing.selected;
+        renderFridge();
+      }
+    };
+
+    // --- 互動：刪除特定食材 ---
+    window.deleteIngredient = function(id, event) {
+      if(event) event.stopPropagation();
+      fridgeIngredients = fridgeIngredients.filter(i => i.id !== id);
+      showToast('食材已自冰箱中移出', 'info');
+      renderFridge();
+    };
+
+    // --- 互動：新增食材表單遞交 ---
+    addIngForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('ing-name').value.trim();
+      const category = document.getElementById('ing-category').value;
+      const expiry = document.getElementById('ing-expiry').value;
+
+      if (!name || !expiry) return;
+
+      const newIng = {
+        id: Date.now().toString(),
+        name,
+        category,
+        expiry,
+        selected: true // 預設新增時即選取，方便隨時煮
+      };
+
+      fridgeIngredients.unshift(newIng);
+      addIngForm.reset();
+      
+      // 重置成今日日期或清除
+      document.getElementById('ing-expiry').value = '';
+
+      showToast(`已成功放入 ${name}!`, 'success');
+      renderFridge();
+    });
+
+    // --- 互動：全選與取消全選 ---
+    btnSelectAll.addEventListener('click', () => {
+      fridgeIngredients.forEach(i => i.selected = true);
+      renderFridge();
+    });
+
+    btnSelectNone.addEventListener('click', () => {
+      fridgeIngredients.forEach(i => i.selected = false);
+      renderFridge();
+    });
+
+    btnClearFridge.addEventListener('click', () => {
+      if(fridgeIngredients.length === 0) return;
+      fridgeIngredients = [];
+      showToast('冷藏庫已完全清空。', 'info');
+      renderFridge();
+    });
+
+
+    // ==========================================
+    //   核心：Gemini API 剩食食譜生成 (RULE 2.5)
+    // ==========================================
+
+    // 指數退避重試邏輯實作
+    async function fetchWithRetry(url, options, retries = 5, delay = 1000) {
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return fetchWithRetry(url, options, retries - 1, delay * 2);
+        }
+        throw error;
+      }
+    }
+
+    // 發送請求給 Gemini
+    async function generateAISuggestions() {
+      const selectedIngs = fridgeIngredients.filter(i => i.selected);
+      if (selectedIngs.length === 0) return;
+
+      // 切換為載入中狀態
+      recipeWelcomeState.classList.add('hidden');
+      recipeErrorState.classList.add('hidden');
+      recipeResults.classList.add('hidden');
+      recipeLoadingState.classList.remove('hidden');
+
+      const ingredientsPromptList = selectedIngs.map(i => {
+        const days = getDaysDifference(i.expiry);
+        const status = days < 0 ? '（已過期）' : (days <= 3 ? '（即將過期，請優先消耗）' : '');
+        return `- ${i.name}${status}`;
+      }).join('\n');
+
+      const userQuery = `以下是我目前的冰箱現有食材清單：\n${ingredientsPromptList}\n\n請以這些食材為主要骨架，為我設計 2-3 道實用、美味、創意的家庭料理食譜。`;
+      
+      const systemPrompt = `你是一位精通家庭烹飪與剩食改造的米其林星級大廚。
+你的任務是根據使用者提供的現有食材，設計 2 到 3 道美味且實作難度合適的食譜。
+請在規劃時儘可能優先消耗那些使用者標記「即將過期」或「已過期」的食材，避免食物浪費。
+
+你必須嚴格遵守以下 JSON 回覆綱要：
+{
+  "recipes": [
+    {
+      "name": "料理名稱 (例如：香煎黃金蒜香雞胸肉)",
+      "description": "這道料理的特色與風味簡介 (字數約 40-60 字)",
+      "prepTime": "預估烹飪時間 (例如：20 分鐘)",
+      "difficulty": "簡單 / 中等 / 困難 三選一",
+      "ownedIngredientsUsed": ["配方中用到使用者現有的食材名稱1", "現有食材名稱2"],
+      "missingIngredients": ["配方中需要額外準備/購買的其他食材1", "其他食材2 (若無則留空陣列)"],
+      "steps": [
+        "步驟1：詳細的備料或下鍋動作說明",
+        "步驟2：..."
+      ]
+    }
+  ]
+}
+
+請務必使用繁體中文 (Traditional Chinese) 進行寫作。不可輸出任何 Markdown 的包裝外殼 (如 \`\`\`json)，只需給出純 JSON 物件。`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              recipes: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    name: { type: "STRING" },
+                    description: { type: "STRING" },
+                    prepTime: { type: "STRING" },
+                    difficulty: { type: "STRING" },
+                    ownedIngredientsUsed: { type: "ARRAY", items: { type: "STRING" } },
+                    missingIngredients: { type: "ARRAY", items: { type: "STRING" } },
+                    steps: { type: "ARRAY", items: { type: "STRING" } }
+                  },
+                  required: ["name", "description", "prepTime", "difficulty", "ownedIngredientsUsed", "missingIngredients", "steps"]
+                }
+              }
+            },
+            required: ["recipes"]
+          }
+        }
+      };
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+      try {
+        const result = await fetchWithRetry(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("無效的 AI 回應內容。");
+
+        const parsedData = JSON.parse(rawText);
+        if (!parsedData.recipes || parsedData.recipes.length === 0) {
+          throw new Error("食譜清單解析為空。");
+        }
+
+        selectedRecipes = parsedData.recipes;
+        activeRecipeIndex = 0;
+        
+        renderRecipesResult();
+        showToast('AI 食譜靈感生成成功！', 'success');
+
+      } catch (error) {
+        console.error("Gemini API Error:", error);
+        recipeLoadingState.classList.add('hidden');
+        recipeErrorState.classList.remove('hidden');
+        errorMessageText.innerText = "無法連上 AI 主廚，請確認網路連線是否正常。";
+      }
+    }
+
+    // --- 渲染食譜分頁與卡片詳情 ---
+    function renderRecipesResult() {
+      recipeLoadingState.classList.add('hidden');
+      recipeErrorState.classList.add('hidden');
+      recipeResults.classList.remove('hidden');
+
+      // 1. 渲染分頁 Tab
+      recipeTabsEl.innerHTML = '';
+      selectedRecipes.forEach((recipe, idx) => {
+        const tab = document.createElement('button');
+        tab.className = `px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-all shrink-0 ${idx === activeRecipeIndex ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`;
+        tab.innerText = recipe.name.substring(0, 10) + (recipe.name.length > 10 ? '..' : '');
+        tab.onclick = () => {
+          activeRecipeIndex = idx;
+          renderRecipesResult();
+        };
+        recipeTabsEl.appendChild(tab);
+      });
+
+      // 2. 獲取當前所選食譜並塞入詳情
+      const curr = selectedRecipes[activeRecipeIndex];
+      if (!curr) return;
+
+      currentRecipeName.innerText = curr.name;
+      currentRecipeDesc.innerText = curr.description;
+      currentRecipeDifficulty.innerText = curr.difficulty || '簡單';
+      currentRecipeTime.innerText = curr.prepTime || '15 分鐘';
+
+      // 渲染現有耗材
+      currentRecipeOwned.innerHTML = '';
+      if (curr.ownedIngredientsUsed && curr.ownedIngredientsUsed.length > 0) {
+        curr.ownedIngredientsUsed.forEach(item => {
+          const li = document.createElement('li');
+          li.innerText = item;
+          currentRecipeOwned.appendChild(li);
+        });
+      } else {
+        currentRecipeOwned.innerHTML = '<li class="text-xs text-slate-400 list-none">無</li>';
+      }
+
+      // 渲染缺少耗材
+      currentRecipeMissing.innerHTML = '';
+      if (curr.missingIngredients && curr.missingIngredients.length > 0) {
+        curr.missingIngredients.forEach(item => {
+          const li = document.createElement('li');
+          li.className = "flex items-center justify-between";
+          li.innerHTML = `
+            <span>${item}</span>
+            <button onclick="addSingleToShopping('${item}')" class="text-xs text-emerald-600 hover:text-emerald-700 font-bold ml-2">
+              <i class="fa-solid fa-plus-circle"></i> 加入
+            </button>
+          `;
+          currentRecipeMissing.appendChild(li);
+        });
+        btnAddToShopping.style.display = 'block';
+      } else {
+        currentRecipeMissing.innerHTML = '<li class="text-xs text-slate-400 list-none text-emerald-600 font-semibold flex items-center"><i class="fa-regular fa-face-smile mr-1.5"></i>食材完全齊備，不需額外購買！</li>';
+        btnAddToShopping.style.display = 'none';
+      }
+
+      // 渲染步驟
+      currentRecipeSteps.innerHTML = '';
+      if (curr.steps && curr.steps.length > 0) {
+        curr.steps.forEach((step, stepIdx) => {
+          const li = document.createElement('li');
+          li.className = "flex items-start space-x-3 text-slate-600 text-sm leading-relaxed";
+          li.innerHTML = `
+            <span class="flex items-center justify-center bg-emerald-100 text-emerald-800 font-black rounded-full w-5 h-5 shrink-0 mt-0.5 text-xs">
+              ${stepIdx + 1}
+            </span>
+            <span>${step}</span>
+          `;
+          currentRecipeSteps.appendChild(li);
+        });
+      }
+
+      // 初始化或重設圖片展示
+      if (curr.generatedImgBase64) {
+        recipeGeneratedImg.src = curr.generatedImgBase64;
+        recipeGeneratedImg.classList.remove('hidden');
+        imgPlaceholderContent.classList.add('hidden');
+      } else {
+        recipeGeneratedImg.src = '';
+        recipeGeneratedImg.classList.add('hidden');
+        imgPlaceholderContent.classList.remove('hidden');
+      }
+    }
+
+    // --- 呼叫 Imagen 4 生成料理美照 ---
+    async function generateRecipeImage() {
+      const curr = selectedRecipes[activeRecipeIndex];
+      if (!curr) return;
+
+      imgLoading.classList.remove('hidden');
+
+      const promptText = `A premium, top-down professional food photography of ${curr.name}, gourmet plating, high-end restaurant aesthetic, cozy natural morning light, shallow depth of field, delicious textures, extremely detailed, highly realistic, 8k resolution`;
+      
+      const payload = {
+        instances: { prompt: promptText },
+        parameters: { sampleCount: 1 }
+      };
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+
+      try {
+        const result = await fetchWithRetry(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const bytesBase64 = result.predictions?.[0]?.bytesBase64Encoded;
+        if (!bytesBase64) throw new Error("無效的 Imagen 回傳影像資料");
+
+        const fullImgUrl = `data:image/png;base64,${bytesBase64}`;
+        
+        // 保存影像到當前食譜狀態中，避免分頁切換遺失
+        curr.generatedImgBase64 = fullImgUrl;
+
+        recipeGeneratedImg.src = fullImgUrl;
+        recipeGeneratedImg.classList.remove('hidden');
+        imgPlaceholderContent.classList.add('hidden');
+        showToast('料理美照繪製成功！快流口水了呢！', 'success');
+
+      } catch (error) {
+        console.error("Imagen API Error:", error);
+        showToast("圖片生成失敗，請稍後重試！", "error");
+      } finally {
+        imgLoading.classList.add('hidden');
+      }
+    }
+
+
+    // ==========================================
+    //   核心：待買清單與購物袋
+    // ==========================================
+
+    // 開關購物籃側板
+    btnToggleShopping.addEventListener('click', () => {
+      shoppingPanel.classList.toggle('hidden');
+    });
+
+    btnCloseShopping.addEventListener('click', () => {
+      shoppingPanel.classList.add('hidden');
+    });
+
+    // 渲染購物籃列表
+    function renderShoppingList() {
+      shoppingListItems.innerHTML = '';
+      
+      if (shoppingList.length === 0) {
+        shoppingEmptyText.classList.remove('hidden');
+        shoppingFooter.classList.add('hidden');
+        shoppingBadge.classList.add('hidden');
+      } else {
+        shoppingEmptyText.classList.add('hidden');
+        shoppingFooter.classList.remove('hidden');
+        
+        // 顯示紅色氣泡數量
+        shoppingBadge.innerText = shoppingList.length;
+        shoppingBadge.classList.remove('hidden');
+
+        shoppingList.forEach((item, idx) => {
+          const div = document.createElement('div');
+          div.className = "flex items-center justify-between py-1.5 border-b border-slate-50";
+          div.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <input type="checkbox" id="shop-chk-${idx}" class="w-4.5 h-4.5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500">
+              <label for="shop-chk-${idx}" class="text-slate-700 text-xs font-semibold cursor-pointer select-none">${item}</label>
+            </div>
+            <button onclick="removeShoppingItem(${idx})" class="text-slate-300 hover:text-rose-500 transition">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          `;
+          shoppingListItems.appendChild(div);
+        });
+      }
+    }
+
+    // 加入單一食材到購物清單
+    window.addSingleToShopping = function(item) {
+      if (!shoppingList.includes(item)) {
+        shoppingList.push(item);
+        renderShoppingList();
+        showToast(`已將 ${item} 加到買菜清單`, 'success');
+      } else {
+        showToast(`${item} 已在清單中`, 'info');
+      }
+    };
+
+    // 一鍵加入全部缺失食材
+    btnAddToShopping.addEventListener('click', () => {
+      const curr = selectedRecipes[activeRecipeIndex];
+      if (!curr || !curr.missingIngredients) return;
+
+      let addedCount = 0;
+      curr.missingIngredients.forEach(item => {
+        if (!shoppingList.includes(item)) {
+          shoppingList.push(item);
+          addedCount++;
+        }
+      });
+
+      renderShoppingList();
+      if (addedCount > 0) {
+        showToast(`成功匯入 ${addedCount} 項食材至採購單`, 'success');
+      } else {
+        showToast('食材均已在待買清單中囉！', 'info');
+      }
+    });
+
+    // 刪除單個購物項
+    window.removeShoppingItem = function(idx) {
+      shoppingList.splice(idx, 1);
+      renderShoppingList();
+    };
+
+    // 清空購物清單
+    btnClearShopping.addEventListener('click', () => {
+      shoppingList = [];
+      renderShoppingList();
+      showToast('購物清單已完全清空。', 'info');
+    });
+
+    // 已買好一鍵放進冰箱
+    btnImportToFridge.addEventListener('click', () => {
+      // 獲取被選中(打勾)的購物項目，若都沒勾，則默認全部買好
+      const checkboxes = shoppingListItems.querySelectorAll('input[type="checkbox"]');
+      let itemsToImport = [];
+
+      checkboxes.forEach((cb, idx) => {
+        if (cb.checked) {
+          itemsToImport.push(shoppingList[idx]);
+        }
+      });
+
+      // 如果完全沒勾，則全部放進冰箱
+      if (itemsToImport.length === 0) {
+        itemsToImport = [...shoppingList];
+      }
+
+      // 將選中食材置入冰箱
+      itemsToImport.forEach(name => {
+        fridgeIngredients.unshift({
+          id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
+          name: name,
+          category: 'other',
+          expiry: getOffsetDate(5), // 預設 5 天效期
+          selected: true
+        });
+      });
+
+      // 從購物清單移除已買好的食材
+      shoppingList = shoppingList.filter(item => !itemsToImport.includes(item));
+      
+      renderFridge();
+      renderShoppingList();
+      shoppingPanel.classList.add('hidden');
+      showToast(`已將 ${itemsToImport.length} 項採購食材收納進冰箱！`, 'success');
+    });
+
+
+    // ==========================================
+    //   核心：UI 功能通知彈窗與初始化
+    // ==========================================
+
+    // 客製化 Toast 通知系統
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `p-4 rounded-xl shadow-lg border text-sm font-bold flex items-center space-x-3 transition-all transform translate-y-2 opacity-0 pointer-events-auto max-w-sm`;
+      
+      let icon = '<i class="fa-solid fa-circle-info"></i>';
+      if (type === 'success') {
+        toast.className += ' bg-emerald-50 text-emerald-800 border-emerald-100';
+        icon = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+      } else if (type === 'error') {
+        toast.className += ' bg-rose-50 text-rose-800 border-rose-100';
+        icon = '<i class="fa-solid fa-circle-exclamation text-rose-500"></i>';
+      } else {
+        toast.className += ' bg-blue-50 text-blue-800 border-blue-100';
+      }
+
+      toast.innerHTML = `${icon} <span>${message}</span>`;
+      toastContainer.appendChild(toast);
+
+      // 動態淡入
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 50);
+
+      // 3秒後自動淡出刪除
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // 註冊綁定按鈕監聽
+    btnGenerateRecipes.addEventListener('click', generateAISuggestions);
+    btnRetryRecipe.addEventListener('click', generateAISuggestions);
+    btnGenerateImg.addEventListener('click', generateRecipeImage);
+
+    // 啟動初始化
+    window.onload = function() {
+      renderFridge();
+      renderShoppingList();
+    };
+  </script>
+</body>
+</html>

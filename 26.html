@@ -1,0 +1,2522 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#STUDYWITHME - 專注寵物島</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --primary-hover: #357abd;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --panel-bg: #edf2f7;
+            --text-color: #2d3748;
+            --text-light: #718096;
+            --border-color: #e2e8f0;
+            --accent: #e53e3e;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            --room-floor: #d1fae5;
+            --room-wall: #f0fdf4;
+        }
+
+        body.theme-pink {
+            --primary: #fd79a8;
+            --primary-hover: #e84393;
+            --bg-gradient: linear-gradient(135deg, #fff0f5 0%, #ffd1dc 100%);
+            --card-bg: rgba(255, 240, 245, 0.95);
+            --panel-bg: #ffe2e2;
+            --text-color: #4d052e;
+            --text-light: #b33939;
+            --border-color: #fbcfe8;
+            --accent: #d63031;
+            --room-floor: #fbcfe8;
+            --room-wall: #ffe4e6;
+        }
+
+        body.theme-blue {
+            --primary: #0984e3;
+            --primary-hover: #0a3d62;
+            --bg-gradient: linear-gradient(135deg, #f1f2f6 0%, #dfe6e9 100%);
+            --card-bg: rgba(234, 242, 250, 0.95);
+            --panel-bg: #dff9fb;
+            --text-color: #1e272e;
+            --text-light: #2c3e50;
+            --border-color: #70a1ff;
+            --accent: #ea2027;
+            --room-floor: #a4b0be;
+            --room-wall: #f1f2f6;
+        }
+
+        body.theme-green {
+            --primary: #2ecc71;
+            --primary-hover: #27ae60;
+            --bg-gradient: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            --card-bg: rgba(240, 249, 241, 0.95);
+            --panel-bg: #e2f3e4;
+            --text-color: #1b5e20;
+            --text-light: #2e7d32;
+            --border-color: #a5d6a7;
+            --accent: #c62828;
+            --room-floor: #a5d6a7;
+            --room-wall: #e8f5e9;
+        }
+
+        body.theme-yellow {
+            --primary: #f1c40f;
+            --primary-hover: #f39c12;
+            --bg-gradient: linear-gradient(135deg, #fffde6 0%, #fef5d1 100%);
+            --card-bg: rgba(255, 254, 245, 0.95);
+            --panel-bg: #fef9e7;
+            --text-color: #7d6608;
+            --text-light: #9a7d0a;
+            --border-color: #f9e79f;
+            --accent: #cb4335;
+            --room-floor: #f9e79f;
+            --room-wall: #fffde6;
+        }
+
+        body.theme-white {
+            --primary: #636e72;
+            --primary-hover: #2d3436;
+            --bg-gradient: linear-gradient(135deg, #f5f6fa 0%, #dfe4ea 100%);
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --panel-bg: #f1f2f6;
+            --text-color: #2f3542;
+            --text-light: #747d8c;
+            --border-color: #ced6e0;
+            --accent: #ff4757;
+            --room-floor: #ced6e0;
+            --room-wall: #f1f2f6;
+        }
+
+        body.theme-transparent {
+            --primary: rgba(255, 255, 255, 0.95);
+            --primary-hover: rgba(255, 255, 255, 1);
+            --bg-gradient: linear-gradient(135deg, #2c3e50 0%, #000000 100%);
+            --card-bg: rgba(20, 20, 30, 0.75);
+            --panel-bg: rgba(255, 255, 255, 0.08);
+            --text-color: #ffffff;
+            --text-light: rgba(255, 255, 255, 0.65);
+            --border-color: rgba(255, 255, 255, 0.2);
+            --accent: #ff6b6b;
+            --room-floor: rgba(255, 255, 255, 0.15);
+            --room-wall: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card-bg);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            box-sizing: border-box;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin: 0 0 4px 0;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 18px;
+        }
+
+        .stage-wrapper {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            background: #fff;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        body.theme-transparent .stage-wrapper {
+            background: #131424; 
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        #pet-canvas {
+            display: block;
+            width: 100%;
+            height: 280px; 
+            background-color: var(--room-wall);
+        }
+
+        .pet-name-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .pet-name-text {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .rename-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 22px; 
+            color: var(--primary);
+            padding: 4px;
+            transition: transform 0.2s ease;
+        }
+
+        .rename-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .status-card {
+            background: var(--panel-bg);
+            padding: 12px;
+            border-radius: 16px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .status-title {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fill-fullness { background: #2ecc71; }
+        .fill-happiness { background: #f1c40f; }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+            box-sizing: border-box;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            font-weight: 700;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        body.theme-transparent button {
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.1);
+        }
+
+        body.theme-transparent button:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #dcdde1;
+            color: #7f8c8d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-cancel {
+            background: var(--accent) !important;
+        }
+
+        .adopt-panel {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .panel-label {
+            font-size: 13px;
+            font-weight: 800;
+            text-align: left;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .focus-panel {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .wallet-display {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        body.theme-transparent .wallet-display {
+            color: #fd79a8;
+        }
+
+        .countdown-display {
+            font-size: 46px;
+            font-weight: 800;
+            font-family: monospace, sans-serif;
+            margin: 10px 0;
+            letter-spacing: 1px;
+        }
+
+        .shop-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 13px;
+            border-radius: 10px;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .shop-item {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.01);
+        }
+
+        .item-name {
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .item-bonus {
+            font-size: 11px;
+            color: var(--text-light);
+            margin: 4px 0 8px 0;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .item-action-btn {
+            padding: 6px;
+            font-size: 11px;
+            border-radius: 8px;
+            margin: 0;
+        }
+
+        .customizer-panel {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+            margin-bottom: 14px;
+        }
+
+        .theme-btn {
+            padding: 8px;
+            font-size: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.15);
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .app-whitelist-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .app-whitelist-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.4);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .app-whitelist-item.active {
+            border-color: var(--primary);
+            background: rgba(74, 144, 226, 0.15);
+        }
+
+        body.theme-transparent .app-whitelist-item {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+
+        body.theme-transparent .app-whitelist-item.active {
+            border-color: #fd79a8;
+            background: rgba(253, 121, 168, 0.2);
+        }
+
+        /* ================= 8. 模擬鎖定遮罩與虛擬App介面 ================= */
+        .lock-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .lock-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .allowed-apps-container {
+            background: var(--panel-bg);
+            border-radius: 18px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .allowed-apps-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .allowed-apps-grid {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .allowed-app-icon {
+            width: 54px;
+            height: 54px;
+            background: white;
+            border-radius: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 26px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .allowed-app-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .virtual-modal {
+            position: absolute;
+            top: 10%;
+            left: 5%;
+            width: 90%;
+            height: 80%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            z-index: 200;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 2px solid var(--primary);
+        }
+
+        body.theme-transparent .virtual-modal {
+            background: #1a1a24;
+            color: #fff;
+            border-color: #fd79a8;
+        }
+
+        .virtual-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        body.theme-transparent .virtual-modal-header {
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .virtual-modal-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .virtual-modal-close {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .death-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            color: #fff;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 32px;
+            box-sizing: border-box;
+        }
+
+        .death-title {
+            color: #ff7675;
+            font-size: 30px;
+            font-weight: 800;
+            margin: 15px 0 8px 0;
+        }
+
+        .death-desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #dfe6e9;
+            margin-bottom: 28px;
+        }
+
+        .toast-msg {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        /* 磨砂玻璃自訂對話框 */
+        .custom-dialog-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .custom-dialog-box {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            padding: 24px;
+            width: 85%;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        body.theme-transparent .custom-dialog-box {
+            background: #1a1a24;
+            color: #fff;
+            border-color: #fd79a8;
+        }
+
+        .custom-dialog-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .custom-dialog-content {
+            font-size: 14px;
+            color: var(--text-color);
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+
+        body.theme-transparent .custom-dialog-content {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .custom-dialog-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body.theme-transparent .custom-dialog-input {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .custom-dialog-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .custom-dialog-btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 13px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="theme-white">
+
+<div class="app-container">
+    <!-- 提示氣泡 -->
+    <div id="toast" class="toast-msg">互動成功！</div>
+
+    <!-- 💡 自訂防禁用的對話框 HTML 機制 (安全替代原生 alert/confirm/prompt) -->
+    <div id="custom-dialog-overlay" class="custom-dialog-overlay" style="display: none;">
+        <div class="custom-dialog-box">
+            <div id="custom-dialog-emoji" style="font-size: 40px; margin-bottom: 10px;">💬</div>
+            <div id="custom-dialog-title" class="custom-dialog-title">提示</div>
+            <div id="custom-dialog-content" class="custom-dialog-content">內容</div>
+            <input type="text" id="custom-dialog-input" class="custom-dialog-input" style="display: none;">
+            <div class="custom-dialog-buttons">
+                <button id="custom-dialog-cancel-btn" class="custom-dialog-btn btn-cancel" style="display: none;">取消</button>
+                <button id="custom-dialog-confirm-btn" class="custom-dialog-btn">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 💀 死亡重置覆蓋面板 -->
+    <div id="death-overlay" class="death-screen" style="display: none;">
+        <div style="font-size: 72px;">🪦</div>
+        <div class="death-title">寵物已不幸離世</div>
+        <div class="death-desc">
+            因為您飽足感降為 0，牠已遺憾地回歸了星空。<br>
+            若要重新領養寵物，必須支付「重置代價」，您的金幣、背包和全部養成進度會全數歸零。
+        </div>
+        <button style="background: #ef4444; width: 85%; max-width: 280px;" onclick="reviveAllState()">🪽 重新開始我的島嶼</button>
+    </div>
+
+    <!-- 🔒 模擬手機鎖定專專倒數覆蓋面板 -->
+    <div id="focus-lock-overlay" class="lock-container" style="display: none;">
+        <div>
+            <div class="lock-title">🔒 專注鎖定中</div>
+            <div style="font-size: 13px; color: var(--text-light); margin-top: 4px;">離開本網頁將視為中斷並判罰失敗！</div>
+            <div id="lock-countdown-disp" class="countdown-display" style="font-size: 56px; margin: 30px 0;">00:00</div>
+        </div>
+
+        <div class="allowed-apps-container">
+            <div class="allowed-apps-title">📱 授權允許使用的應用程式（點擊在內置沙盒運行）：</div>
+            <div id="lock-allowed-grid" class="allowed-apps-grid"></div>
+        </div>
+
+        <button class="btn-cancel" style="margin-top: 15px;" onclick="toggleFocusMode()">❌ 放棄專注並接受懲罰</button>
+    </div>
+
+    <div id="virtual-app-modal" class="virtual-modal" style="display: none;">
+        <div class="virtual-modal-header">
+            <span id="virtual-app-title" class="virtual-modal-title">📞 模擬應用</span>
+            <button class="virtual-modal-close" onclick="closeVirtualApp()">×</button>
+        </div>
+        <div id="virtual-app-content" style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:15px; overflow-y:auto;"></div>
+    </div>
+
+    <h1>#STUDYWITHME</h1>
+    <div class="subtitle">Canvas 動態養成 ✕ 實體家居溫馨環境</div>
+
+    <!-- Canvas 舞台 -->
+    <div class="stage-wrapper">
+        <canvas id="pet-canvas"></canvas>
+    </div>
+
+    <!-- 💡 寵物改名（使用對稱 Spacer 佔位符確保 100% 絕對置中，筆與字體一樣大） -->
+    <div class="pet-name-bar">
+        <span style="font-size: 22px; visibility: hidden; width: 30px; display: inline-block; user-select: none;">✏️</span>
+        <span id="pet-name-disp" class="pet-name-text">我的小寶貝</span>
+        <button class="rename-btn" onclick="renamePet()" style="width: 30px; display: inline-block; padding: 0;" title="永久免費，隨時隨地無限制改名">✏️</button>
+    </div>
+
+    <!-- 養成進度條 (飽足度 1000 / 心情 100) -->
+    <div class="status-grid">
+        <div class="status-card">
+            <div class="status-title">
+                <span>🍖 飽足感</span>
+                <span id="fullness-num">500</span>
+            </div>
+            <div class="progress-track">
+                <div id="fullness-bar" class="progress-bar fill-fullness" style="width: 50%;"></div>
+            </div>
+        </div>
+        <div class="status-card">
+            <div class="status-title">
+                <span>🧸 心情值</span>
+                <span id="happiness-num">50</span>
+            </div>
+            <div class="progress-track">
+                <div id="happiness-bar" class="progress-bar fill-happiness" style="width: 50%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 寵物領養中心 -->
+    <div class="adopt-panel">
+        <div class="panel-label">
+            <span>🐾 領養與更換夥伴</span>
+            <span id="adopt-price-tag" style="font-size:11px; opacity:0.8; font-weight:bold;">首次免費</span>
+        </div>
+        <select id="pet-selector" onchange="changePetRequest()" style="margin: 0;">
+            <option value="🦮">黃金獵犬 (金毛)</option>
+            <option value="🐕‍🦺">薩摩耶</option>
+            <option value="🐕">邊境牧羊犬 (邊牧)</option>
+            <option value="🐈">優雅白貓</option>
+            <option value="🐈‍⬛">軟萌橘貓</option>
+            <option value="🐇">垂耳白兔</option>
+            <option value="🦊">淘氣紅狐</option>
+            <option value="🐻">溫柔棕熊</option>
+        </select>
+    </div>
+
+    <!-- 專注計時與錢包 -->
+    <div class="focus-panel">
+        <div class="wallet-display">🪙 我的金幣: <span id="coin-disp">0</span></div>
+        <select id="timer-selector">
+            <option value="10">專注 10 秒 (獲得 10 金幣)</option>
+            <option value="30">專注 30 秒 (獲得 30 金幣)</option>
+            <option value="60">專注 60 秒 (獲得 60 金幣)</option>
+            <option value="120">專注 120 秒 (獲得 120 金幣)</option>
+        </select>
+        <div id="timer-text" class="countdown-display">00:00</div>
+        <button id="timer-trigger" onclick="toggleFocusMode()">🔒 開始鎖定專注</button>
+    </div>
+
+    <!-- 允許使用的App設定面板 -->
+    <div class="customizer-panel">
+        <div class="panel-label">📱 專注期間允許使用之 App 設定（白名單）</div>
+        <div class="app-whitelist-grid">
+            <div id="wl-app-phone" class="app-whitelist-item active" onclick="toggleWhitelistApp('phone')">
+                <span>📞</span> 電話通話
+            </div>
+            <div id="wl-app-msg" class="app-whitelist-item" onclick="toggleWhitelistApp('msg')">
+                <span>💬</span> 簡訊通訊
+            </div>
+            <div id="wl-app-map" class="app-whitelist-item" onclick="toggleWhitelistApp('map')">
+                <span>🗺️</span> 地圖導航
+            </div>
+            <div id="wl-app-music" class="app-whitelist-item active" onclick="toggleWhitelistApp('music')">
+                <span>🎵</span> 白噪音音樂
+            </div>
+        </div>
+    </div>
+
+    <!-- 背包商店 -->
+    <div class="customizer-panel" style="padding: 12px; margin-bottom: 15px;">
+        <div class="shop-tabs">
+            <button id="tab-food" class="tab-btn active" onclick="switchTab('food')">🍖 買食物</button>
+            <button id="tab-toy" class="tab-btn" onclick="switchTab('toy')">🧸 買玩具</button>
+        </div>
+
+        <!-- 1. 食物網格商店 (飽食上限 1000) -->
+        <div id="shop-food-grid" class="shop-grid">
+            <div class="shop-item">
+                <div>
+                    <div class="item-name">貓狗糧 / 乾草</div>
+                    <div class="item-bonus">飽足 +60</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; font-weight:bold; margin-bottom:2px;">擁有: <span id="inv-food1">0</span></div>
+                    <div class="action-row">
+                        <button class="item-action-btn" style="background:#55efc4; color:#2d3436;" onclick="buyStoreItem('food1', 30)">🛒 30 幣</button>
+                        <button class="item-action-btn" style="background:#2ecc71;" onclick="useStoreItem('food1', 60, 'fullness')">餵食</button>
+                    </div>
+                </div>
+            </div>
+            <div class="shop-item">
+                <div>
+                    <div class="item-name">雞胸肉 / 牛肉</div>
+                    <div class="item-bonus">飽足 +100</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; font-weight:bold; margin-bottom:2px;">擁有: <span id="inv-food2">0</span></div>
+                    <div class="action-row">
+                        <button class="item-action-btn" style="background:#55efc4; color:#2d3436;" onclick="buyStoreItem('food2', 50)">🛒 50 幣</button>
+                        <button class="item-action-btn" style="background:#2ecc71;" onclick="useStoreItem('food2', 100, 'fullness')">餵食</button>
+                    </div>
+                </div>
+            </div>
+            <div class="shop-item">
+                <div>
+                    <div class="item-name">寵物小餅乾</div>
+                    <div class="item-bonus">飽足 +200</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; font-weight:bold; margin-bottom:2px;">擁有: <span id="inv-food3">0</span></div>
+                    <div class="action-row">
+                        <button class="item-action-btn" style="background:#55efc4; color:#2d3436;" onclick="buyStoreItem('food3', 100)">🛒 100 幣</button>
+                        <button class="item-action-btn" style="background:#2ecc71;" onclick="useStoreItem('food3', 200, 'fullness')">餵食</button>
+                    </div>
+                </div>
+            </div>
+            <div class="shop-item">
+                <div>
+                    <div class="item-name">寵物慶生蛋糕</div>
+                    <div class="item-bonus">飽足 +400</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; font-weight:bold; margin-bottom:2px;">擁有: <span id="inv-food4">0</span></div>
+                    <div class="action-row">
+                        <button class="item-action-btn" style="background:#55efc4; color:#2d3436;" onclick="buyStoreItem('food4', 200)">🛒 200 幣</button>
+                        <button class="item-action-btn" style="background:#2ecc71;" onclick="useStoreItem('food4', 400, 'fullness')">餵食</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 玩具網格商店 (心情上限 100) -->
+        <div id="shop-toy-grid" class="shop-grid" style="display: none;">
+            <div class="shop-item">
+                <div>
+                    <div class="item-name">彈性小球</div>
+                    <div class="item-bonus">心情 +20</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; font-weight:bold; margin-bottom:2px;">擁有: <span id="inv-toy1">0</span></div>
+                    <div class="action-row">
+                        <button class="item-action-btn" style="background:#55efc4; color:#2d3436;" onclick="buyStoreItem('toy1', 50)">🛒 50 幣</button>
+                        <button class="item-action-btn" style="background:#f1c40f;" onclick="useStoreItem('toy1', 20, 'happiness')">陪伴</button>
+                    </div>
+                </div>
+            </div>
+            <div class="shop-item">
+                <div>
+                    <div class="item-name">毛絨大沙灘球</div>
+                    <div class="item-bonus">心情 +60</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; font-weight:bold; margin-bottom:2px;">擁有: <span id="inv-toy2">0</span></div>
+                    <div class="action-row">
+                        <button class="item-action-btn" style="background:#55efc4; color:#2d3436;" onclick="buyStoreItem('toy2', 200)">🛒 200 幣</button>
+                        <button class="item-action-btn" style="background:#f1c40f;" onclick="useStoreItem('toy2', 60, 'happiness')">陪伴</button>
+                    </div>
+                </div>
+            </div>
+            <div class="shop-item" style="grid-column: span 2;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="item-name">專屬動物娃娃玩偶</div>
+                        <div class="item-bonus" style="margin-bottom:0;">心情 +80</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size:11px; font-weight:bold; margin-bottom:2px;">擁有: <span id="inv-toy3">0</span></div>
+                        <div style="display:flex; gap: 4px;">
+                            <button class="item-action-btn" style="background:#55efc4; color:#2d3436; width:70px;" onclick="buyStoreItem('toy3', 400)">🛒 400 幣</button>
+                            <button class="item-action-btn" style="background:#f1c40f; width:70px;" onclick="useStoreItem('toy3', 80, 'happiness')">陪玩</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 客製化面板 -->
+    <div class="customizer-panel">
+        <div class="panel-label">🎨 選擇統一配色主題</div>
+        <div class="theme-grid">
+            <div class="theme-btn" style="background:#ffffff; color:#333;" onclick="setThemeStyle('white')">簡約白</div>
+            <div class="theme-btn" style="background:#fbcfe8; color:#9d174d;" onclick="setThemeStyle('pink')">甜美粉</div>
+            <div class="theme-btn" style="background:#bfdbfe; color:#1e3a8a;" onclick="setThemeStyle('blue')">湖水藍</div>
+            <div class="theme-btn" style="background:#a7f3d0; color:#064e3b;" onclick="setThemeStyle('green')">薄荷綠</div>
+            <div class="theme-btn" style="background:#fde68a; color:#78350f;" onclick="setThemeStyle('yellow')">香蕉黃</div>
+            <div class="theme-btn" style="background:linear-gradient(135deg, #74b9ff, #a29bfe); color:#fff;" onclick="setThemeStyle('transparent')">極透明</div>
+        </div>
+
+        <div class="panel-label" style="margin-top: 10px;">🖼️ 上傳手機背景圖片</div>
+        <input type="file" id="bg-file" accept="image/*" onchange="uploadWallpaper()" style="font-size:11px; padding:4px;">
+    </div>
+</div>
+
+<!-- ================= 9. 遊戲核心與繪圖邏輯 ================= -->
+<script>
+    let gameState = {
+        coins: 0,
+        petType: "🦮",
+        petName: "小金",
+        fullness: 500,    
+        happiness: 50,     
+        firstAdopted: false, 
+        themeName: "white",
+        wallpaperBase64: "",
+        inventory: {
+            food1: 0, food2: 0, food3: 0, food4: 0,
+            toy1: 0, toy2: 0, toy3: 0
+        },
+        whitelistApps: {
+            phone: true,
+            msg: false,
+            map: false,
+            music: true
+        },
+        isDead: false,
+        lastInteractiveTime: Date.now()
+    };
+
+    const SAVE_KEY = "canvas_focus_pet_island_saves";
+
+    if(localStorage.getItem(SAVE_KEY)) {
+        try {
+            gameState = JSON.parse(localStorage.getItem(SAVE_KEY));
+        } catch(e) {
+            console.log("偵測到壞檔，自動建立新島嶼");
+        }
+    }
+
+    let focusInterval = null;
+    let focusSecondsLeft = 0;
+    let inFocusingMode = false;
+
+    const canvas = document.getElementById('pet-canvas');
+    const ctx = canvas.getContext('2d');
+    let petX = 0;
+    let petY = 0;
+    let targetX = 0;
+    let animationTicks = 0;
+    let activeEffects = []; 
+
+    const petLabels = {
+        "🦮": "黃金獵犬", "🐕‍🦺": "薩摩耶", "🐕": "邊境牧羊犬",
+        "🐈": "優雅白貓", "🐈‍⬛": "軟萌橘貓", "🐇": "垂耳白兔",
+        "🦊": "淘氣紅狐", "🐻": "溫柔棕熊"
+    };
+
+    // 💡 寵物主題配色（已全面改用高強度、與動物本色一致的代表性底色）
+    const petAuraColors = {
+        "🦮": "hsl(45, 100%, 50%)",    
+        "🐕‍🦺": "hsl(200, 100%, 45%)",  
+        "🐕": "hsl(220, 100%, 40%)",   
+        "🐈": "hsl(280, 100%, 85%)",   
+        "🐈‍⬛": "hsl(25, 100%, 55%)",   
+        "🐇": "hsl(340, 100%, 75%)",   
+        "🦊": "hsl(15, 100%, 50%)",    
+        "🐻": "hsl(35, 100%, 35%)"     
+    };
+
+    window.onload = function() {
+        adjustCanvasLayout();
+        window.addEventListener('resize', adjustCanvasLayout);
+
+        setThemeStyle(gameState.themeName, false);
+        if(gameState.wallpaperBase64) {
+            document.body.style.backgroundImage = `url(${gameState.wallpaperBase64})`;
+        }
+
+        requestAnimationFrame(renderLoop);
+        setInterval(calculateSurvivalLoss, 15000);
+        updateAppView();
+    };
+
+    function adjustCanvasLayout() {
+        canvas.width = canvas.parentElement.clientWidth * 2;
+        canvas.height = 560; 
+        petX = canvas.width / 2;
+        petY = canvas.height * 0.72;
+        targetX = petX;
+    }
+
+    function calculateSurvivalLoss() {
+        if(gameState.isDead) return;
+
+        gameState.fullness = Math.max(0, gameState.fullness - 5);
+        gameState.happiness = Math.max(0, gameState.happiness - 1);
+
+        if(gameState.fullness <= 0) {
+            gameState.isDead = true;
+            triggerDeathSequence();
+        }
+
+        updateAppView();
+        saveGameProgress();
+    }
+
+    function saveGameProgress() {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+    }
+
+    // 💡 100% 寫實無原生彈跳遮蔽的 Promise 自訂對話框機制
+    function showCustomConfirm(title, message, emoji = "❓") {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('custom-dialog-overlay');
+            document.getElementById('custom-dialog-emoji').innerText = emoji;
+            document.getElementById('custom-dialog-title').innerText = title;
+            document.getElementById('custom-dialog-content').innerText = message;
+            
+            const input = document.getElementById('custom-dialog-input');
+            const cancelBtn = document.getElementById('custom-dialog-cancel-btn');
+            const confirmBtn = document.getElementById('custom-dialog-confirm-btn');
+            
+            input.style.display = "none";
+            cancelBtn.style.display = "block";
+            confirmBtn.innerText = "確定";
+            
+            overlay.style.display = "flex";
+            
+            const cleanup = () => {
+                overlay.style.display = "none";
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+            
+            confirmBtn.onclick = () => {
+                cleanup();
+                resolve(true);
+            };
+            cancelBtn.onclick = () => {
+                cleanup();
+                resolve(false);
+            };
+        });
+    }
+
+    function showCustomAlert(title, message, emoji = "⚠️") {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('custom-dialog-overlay');
+            document.getElementById('custom-dialog-emoji').innerText = emoji;
+            document.getElementById('custom-dialog-title').innerText = title;
+            document.getElementById('custom-dialog-content').innerText = message;
+            
+            const input = document.getElementById('custom-dialog-input');
+            const cancelBtn = document.getElementById('custom-dialog-cancel-btn');
+            const confirmBtn = document.getElementById('custom-dialog-confirm-btn');
+            
+            input.style.display = "none";
+            cancelBtn.style.display = "none";
+            confirmBtn.innerText = "好";
+            
+            overlay.style.display = "flex";
+            
+            const cleanup = () => {
+                overlay.style.display = "none";
+                confirmBtn.onclick = null;
+            };
+            
+            confirmBtn.onclick = () => {
+                cleanup();
+                resolve(true);
+            };
+        });
+    }
+
+    function showCustomPrompt(title, message, defaultValue = "", emoji = "✏️") {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('custom-dialog-overlay');
+            document.getElementById('custom-dialog-emoji').innerText = emoji;
+            document.getElementById('custom-dialog-title').innerText = title;
+            document.getElementById('custom-dialog-content').innerText = message;
+            
+            const input = document.getElementById('custom-dialog-input');
+            const cancelBtn = document.getElementById('custom-dialog-cancel-btn');
+            const confirmBtn = document.getElementById('custom-dialog-confirm-btn');
+            
+            input.style.display = "block";
+            input.value = defaultValue;
+            cancelBtn.style.display = "block";
+            confirmBtn.innerText = "確定";
+            
+            overlay.style.display = "flex";
+            input.focus();
+            
+            const cleanup = () => {
+                overlay.style.display = "none";
+                input.style.display = "none";
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+            
+            confirmBtn.onclick = () => {
+                const val = input.value;
+                cleanup();
+                resolve(val);
+            };
+            cancelBtn.onclick = () => {
+                cleanup();
+                resolve(null);
+            };
+        });
+    }
+
+    function updateAppView() {
+        document.getElementById('coin-disp').innerText = gameState.coins;
+        document.getElementById('fullness-num').innerText = `${gameState.fullness}/1000`;
+        document.getElementById('fullness-bar').style.width = `${(gameState.fullness / 1000) * 100}%`;
+
+        document.getElementById('happiness-num').innerText = `${gameState.happiness}/100`;
+        document.getElementById('happiness-bar').style.width = `${gameState.happiness}%`;
+
+        document.getElementById('pet-name-disp').innerText = gameState.petName;
+        document.getElementById('pet-selector').value = gameState.petType;
+
+        document.getElementById('inv-food1').innerText = gameState.inventory.food1;
+        document.getElementById('inv-food2').innerText = gameState.inventory.food2;
+        document.getElementById('inv-food3').innerText = gameState.inventory.food3;
+        document.getElementById('inv-food4').innerText = gameState.inventory.food4;
+
+        document.getElementById('inv-toy1').innerText = gameState.inventory.toy1;
+        document.getElementById('inv-toy2').innerText = gameState.inventory.toy2;
+        document.getElementById('inv-toy3').innerText = gameState.inventory.toy3;
+
+        const appKeys = ['phone', 'msg', 'map', 'music'];
+        appKeys.forEach(key => {
+            const el = document.getElementById(`wl-app-${key}`);
+            if(gameState.whitelistApps[key]) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+
+        const priceTag = document.getElementById('adopt-price-tag');
+        if (gameState.firstAdopted) {
+            priceTag.innerText = "更換需 50 金幣";
+            priceTag.style.color = "var(--accent)";
+        } else {
+            priceTag.innerText = "首次免費";
+            priceTag.style.color = "#2ecc71";
+        }
+
+        if(gameState.isDead) {
+            document.getElementById('death-overlay').style.display = "flex";
+        } else {
+            document.getElementById('death-overlay').style.display = "none";
+        }
+    }
+
+    function toggleWhitelistApp(appKey) {
+        if(inFocusingMode) return;
+        gameState.whitelistApps[appKey] = !gameState.whitelistApps[appKey];
+        updateAppView();
+        saveGameProgress();
+    }
+
+    function switchTab(tab) {
+        if(tab === 'food') {
+            document.getElementById('tab-food').classList.add('active');
+            document.getElementById('tab-toy').classList.remove('active');
+            document.getElementById('shop-food-grid').style.display = 'grid';
+            document.getElementById('shop-toy-grid').style.display = 'none';
+        } else {
+            document.getElementById('tab-food').classList.remove('active');
+            document.getElementById('tab-toy').classList.add('active');
+            document.getElementById('shop-food-grid').style.display = 'none';
+            document.getElementById('shop-toy-grid').style.display = 'grid';
+        }
+    }
+
+    function buyStoreItem(item, price) {
+        if(gameState.isDead) return;
+        if(gameState.coins >= price) {
+            gameState.coins -= price;
+            gameState.inventory[item]++;
+            triggerToast(`🛒 購買成功，扣除 ${price} 幣！`);
+            updateAppView();
+            saveGameProgress();
+        } else {
+            triggerToast("❌ 您的金幣不足！趕快專注獲得獎勵吧。");
+        }
+    }
+
+    function useStoreItem(item, value, type) {
+        if(gameState.isDead) return;
+        if(inFocusingMode) {
+            triggerToast("🔒 專注期間，寵物也和您一起進入安靜狀態！");
+            return;
+        }
+
+        if(gameState.inventory[item] > 0) {
+            gameState.inventory[item]--;
+            if(type === 'fullness') {
+                gameState.fullness = Math.min(1000, gameState.fullness + value);
+                triggerToast(`🍖 餵食寵物，飽足感提升了 +${value}！`);
+                generateParticles('heart');
+            } else {
+                gameState.happiness = Math.min(100, gameState.happiness + value);
+                triggerToast(`🧸 給寵物玩具，心情值提升了 +${value}！`);
+                generateParticles('music');
+            }
+            gameState.lastInteractiveTime = Date.now();
+            updateAppView();
+            saveGameProgress();
+        } else {
+            triggerToast("❌ 沒有多餘的該道具，快去商店採購！");
+        }
+    }
+
+    async function changePetRequest() {
+        if(gameState.isDead || inFocusingMode) {
+            document.getElementById('pet-selector').value = gameState.petType;
+            return;
+        }
+        const select = document.getElementById('pet-selector');
+        const selected = select.value;
+
+        if (selected === gameState.petType) return;
+
+        if(!gameState.firstAdopted) {
+            gameState.petType = selected;
+            gameState.firstAdopted = true;
+            gameState.lastInteractiveTime = Date.now();
+            triggerToast(`🎉 成功領養夥伴：${petLabels[selected]}！`);
+            updateAppView();
+            saveGameProgress();
+        } else {
+            if(gameState.coins >= 50) {
+                const confirmed = await showCustomConfirm(
+                    "領養更換確認",
+                    `更換寵物需要扣除 50 專注幣，確定要把寵物更換為 ${petLabels[selected]} 嗎？`,
+                    "🐾"
+                );
+                if(confirmed) {
+                    gameState.coins -= 50;
+                    gameState.petType = selected;
+                    gameState.lastInteractiveTime = Date.now();
+                    triggerToast(`🎉 成功支付 50 幣，更換為 ${petLabels[selected]}！`);
+                    updateAppView();
+                    saveGameProgress();
+                } else {
+                    select.value = gameState.petType;
+                }
+            } else {
+                await showCustomAlert(
+                    "專注幣不足",
+                    "您的金幣不足 50 個，無法支付更換領養的手續費。趕快去鎖定專注獲得金幣吧！",
+                    "🪙"
+                );
+                select.value = gameState.petType;
+            }
+        }
+    }
+
+    async function renamePet() {
+        const newName = await showCustomPrompt(
+            "永久免費改名",
+            "請輸入寵物的新名字（不限次數、永久隨時免費修改）：",
+            gameState.petName,
+            "✏️"
+        );
+        if(newName && newName.trim() !== "") {
+            gameState.petName = newName.trim();
+            triggerToast("✏️ 名字已成功更換！");
+            updateAppView();
+            saveGameProgress();
+        }
+    }
+
+    async function toggleFocusMode() {
+        if(gameState.isDead) return;
+
+        if(inFocusingMode) {
+            const confirmed = await showCustomConfirm(
+                "中斷專注確認",
+                "現在退出將重置鎖定計時，寵物會因為冷落感到飢餓且心情低落！確定要半途而廢並接受懲罰嗎？",
+                "😿"
+            );
+            if(confirmed) {
+                terminateFocus(false);
+            }
+        } else {
+            const select = document.getElementById('timer-selector');
+            const seconds = parseInt(select.value);
+            focusSecondsLeft = seconds; 
+            inFocusingMode = true;
+
+            document.getElementById('timer-selector').disabled = true;
+            document.getElementById('pet-selector').disabled = true;
+
+            document.getElementById('focus-lock-overlay').style.display = "flex";
+            renderAllowedAppsPanel();
+
+            renderTimer();
+            focusInterval = setInterval(() => {
+                focusSecondsLeft--;
+                renderTimer();
+
+                if (focusSecondsLeft <= 0) {
+                    gameState.coins += seconds; 
+                    gameState.lastInteractiveTime = Date.now();
+                    triggerToast(`🎉 恭喜！專注完畢，順利進帳 ${seconds} 金幣！`);
+                    terminateFocus(true);
+                }
+            }, 1000);
+        }
+    }
+
+    function renderAllowedAppsPanel() {
+        const container = document.getElementById('lock-allowed-grid');
+        container.innerHTML = "";
+
+        const apps = [
+            { key: 'phone', icon: '📞', title: '電話通話' },
+            { key: 'msg', icon: '💬', title: '簡訊通訊' },
+            { key: 'map', icon: '🗺️', title: '地圖導航' },
+            { key: 'music', icon: '🎵', title: '白噪音音樂' }
+        ];
+
+        let allowedCount = 0;
+        apps.forEach(app => {
+            if(gameState.whitelistApps[app.key]) {
+                allowedCount++;
+                const div = document.createElement('div');
+                div.className = 'allowed-app-icon';
+                div.innerHTML = app.icon;
+                div.title = app.title;
+                div.onclick = () => openVirtualApp(app.key, app.title);
+                container.appendChild(div);
+            }
+        });
+
+        if(allowedCount === 0) {
+            container.innerHTML = "<div style='font-size:12px; color:var(--text-light);'>未設定允許之應用程式</div>";
+        }
+    }
+
+    function openVirtualApp(appKey, title) {
+        document.getElementById('virtual-app-title').innerText = `${title}`;
+        const content = document.getElementById('virtual-app-content');
+        content.innerHTML = "";
+
+        if(appKey === 'phone') {
+            content.innerHTML = `
+                <div style="font-size:15px; font-weight:bold; margin-bottom:12px;">📞 緊急撥號通話</div>
+                <input type="text" id="phone-num-mock" value="0912-345-678" style="text-align:center; font-size:18px; font-weight:bold; width:80%;">
+                <button style="background:#2ecc71; margin-top:10px; width:150px;" onclick="triggerToast('撥號通話中...')">📞 撥打</button>
+                <div style="font-size:11px; color:var(--text-light); margin-top:15px;">在專注島內撥打緊急電話，不中斷您的專注計時。</div>
+            `;
+        } else if(appKey === 'msg') {
+            content.innerHTML = `
+                <div style="font-size:14px; font-weight:bold; margin-bottom:8px;">💬 模擬簡訊信箱</div>
+                <div style="background:#f1f2f6; width:100%; height:110px; border-radius:10px; padding:10px; font-size:12px; text-align:left; box-sizing:border-box; overflow-y:auto;">
+                    <b>[系統]</b> 您今日的專注學習目標已達成 50%！<br>
+                    <b>[夥伴]</b> 等等專注完一起去餵貓咪吧！
+                </div>
+                <input type="text" placeholder="輸入回覆..." style="width:100%; margin-top:8px; padding:8px; font-size:12px; border-radius:8px; border:1px solid #ccc; box-sizing:border-box;">
+                <button style="background:#2ecc71; font-size:11px; margin-top:6px; padding:6px;" onclick="triggerToast('模擬訊息已發送！')">送出簡訊</button>
+            `;
+        } else if(appKey === 'map') {
+            content.innerHTML = `
+                <div style="font-size:14px; font-weight:bold; margin-bottom:8px;">🗺️ 模擬安全導航</div>
+                <div style="background:#dfe4ea; width:100%; height:120px; border-radius:10px; display:flex; justify-content:center; align-items:center; position:relative;">
+                    <div style="font-size:32px;">📍</div>
+                    <div style="font-size:11px; font-weight:bold; position:absolute; bottom:8px; background:rgba(0,0,0,0.6); color:white; padding:2px 8px; border-radius:8px;">忠孝東路三段 ➡️ 前進 300 公尺</div>
+                </div>
+                <div style="font-size:11px; color:var(--text-light); margin-top:8px;">導航沙盒已激活，保障您的出行安全。</div>
+            `;
+        } else if(appKey === 'music') {
+            content.innerHTML = `
+                <div style="font-size:15px; font-weight:bold; margin-bottom:10px;">🎵 心流專注白噪音</div>
+                <div style="font-size:36px; animation: pulse 2s infinite;">🌲🌊🌧️</div>
+                <div style="font-size:12px; font-weight:bold; color:var(--primary); margin:8px 0;">當前播放：大自然森林雨聲</div>
+                <div style="display:flex; gap:10px; width:100%;">
+                    <button style="background:#0984e3; font-size:12px; padding:6px;" onclick="triggerToast('播放已暫停')">暫停</button>
+                    <button style="background:#2ecc71; font-size:12px; padding:6px;" onclick="triggerToast('切換下一首自然聲...')">切換風格</button>
+                </div>
+            `;
+        }
+
+        document.getElementById('virtual-app-modal').style.display = "flex";
+    }
+
+    function closeVirtualApp() {
+        document.getElementById('virtual-app-modal').style.display = "none";
+    }
+
+    function terminateFocus(success) {
+        clearInterval(focusInterval);
+        inFocusingMode = false;
+
+        document.getElementById('timer-selector').disabled = false;
+        document.getElementById('pet-selector').disabled = false;
+
+        document.getElementById('focus-lock-overlay').style.display = "none";
+        document.getElementById('virtual-app-modal').style.display = "none";
+        document.getElementById('timer-text').innerText = "00:00";
+
+        if(!success) {
+            gameState.fullness = Math.max(0, gameState.fullness - 150);
+            gameState.happiness = Math.max(0, gameState.happiness - 15);
+            triggerToast("😿 專注中途失敗！寵物感到落寞大哭...");
+            generateParticles('tear');
+
+            if (gameState.fullness <= 0) {
+                gameState.isDead = true;
+                triggerDeathSequence();
+            }
+        }
+
+        updateAppView();
+        saveGameProgress();
+    }
+
+    function renderTimer() {
+        const m = String(Math.floor(focusSecondsLeft / 60)).padStart(2, '0');
+        const s = String(focusSecondsLeft % 60).padStart(2, '0');
+        document.getElementById('timer-text').innerText = `${m}:${s}`;
+        document.getElementById('lock-countdown-disp').innerText = `${m}:${s}`;
+    }
+
+    document.addEventListener("visibilitychange", () => {
+        if(document.hidden && inFocusingMode) {
+            terminateFocus(false);
+        }
+    });
+
+    function triggerDeathSequence() {
+        gameState.isDead = true;
+        updateAppView();
+    }
+
+    function reviveAllState() {
+        gameState = {
+            coins: 0,
+            petType: "🦮",
+            petName: "新小寶貝",
+            fullness: 500,
+            happiness: 50,
+            firstAdopted: false,
+            themeName: "white",
+            wallpaperBase64: "",
+            inventory: {
+                food1: 0, food2: 0, food3: 0, food4: 0,
+                toy1: 0, toy2: 0, toy3: 0
+            },
+            whitelistApps: {
+                phone: true,
+                msg: false,
+                map: false,
+                music: true
+            },
+            isDead: false,
+            lastInteractiveTime: Date.now()
+        };
+        document.body.style.backgroundImage = "none";
+        document.getElementById('bg-file').value = "";
+        
+        triggerToast("🪽 島嶼已淨化重啟，迎接全新起點！");
+        updateAppView();
+        saveGameProgress();
+    }
+
+    function setThemeStyle(theme, save = true) {
+        document.body.className = "";
+        document.body.classList.add(`theme-${theme}`);
+        if(save) {
+            gameState.themeName = theme;
+            saveGameProgress();
+        }
+    }
+
+    function uploadWallpaper() {
+        const file = document.getElementById('bg-file').files[0];
+        if(!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            gameState.wallpaperBase64 = e.target.result;
+            document.body.style.backgroundImage = `url(${gameState.wallpaperBase64})`;
+            saveGameProgress();
+            triggerToast("🖼️ 手機桌布設定成功！");
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function triggerToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        toast.style.opacity = '1';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 3000);
+    }
+
+    function generateParticles(type) {
+        for(let i = 0; i < 10; i++) {
+            activeEffects.push({
+                x: petX + (Math.random() - 0.5) * 40,
+                y: petY - 50,
+                vx: (Math.random() - 0.5) * 5,
+                vy: -Math.random() * 4 - 2,
+                opacity: 1,
+                size: Math.random() * 12 + 12,
+                type: type 
+            });
+        }
+    }
+
+    function renderLoop() {
+        animationTicks++;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawRoomBackground();
+        drawCozyHomeElements();
+        drawPetSofa();
+
+        let breathScale = Math.sin(animationTicks * 0.08) * 3.2; 
+        let swayAngle = Math.cos(animationTicks * 0.04) * 0.04; 
+
+        // 💡 寵物只在沙發前微微晃動，不跑不飄，安靜陪伴
+        targetX = canvas.width / 2; 
+        let subtleSwayX = Math.sin(animationTicks * 0.02) * 14; 
+        petX += (targetX + subtleSwayX - petX) * 0.045;
+
+        drawPetEntity(petX, petY + breathScale, swayAngle);
+        drawAndTickParticles();
+
+        requestAnimationFrame(renderLoop);
+    }
+
+    function drawRoomBackground() {
+        ctx.save();
+        ctx.globalAlpha = 1.0; 
+
+        let wallColor = "#f0fdf4"; 
+        let floorColor = "#d1fae5"; 
+
+        if (gameState.themeName === 'transparent') {
+            ctx.fillStyle = "#131424"; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            wallColor = "#1a1b3a";
+            floorColor = "#2c2d54";
+        } else if (gameState.themeName === 'pink') {
+            wallColor = "#ffe4e6";
+            floorColor = "#fbcfe8";
+        } else if (gameState.themeName === 'blue') {
+            wallColor = "#f1f2f6";
+            floorColor = "#b2bec3";
+        } else if (gameState.themeName === 'green') {
+            wallColor = "#e8f5e9";
+            floorColor = "#a5d6a7";
+        } else if (gameState.themeName === 'yellow') {
+            wallColor = "#fffde6";
+            floorColor = "#f9e79f";
+        } else { 
+            wallColor = "#f8f9fa";
+            floorColor = "#e9ecef";
+        }
+
+        ctx.fillStyle = wallColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height * 0.72);
+
+        ctx.fillStyle = floorColor;
+        ctx.fillRect(0, canvas.height * 0.72, canvas.width, canvas.height * 0.28);
+
+        ctx.strokeStyle = "rgba(0,0,0,0.07)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height * 0.72);
+        ctx.lineTo(canvas.width, canvas.height * 0.72);
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.fillRect(canvas.width * 0.42, canvas.height * 0.08, canvas.width * 0.16, canvas.height * 0.22);
+        ctx.strokeStyle = "rgba(0,0,0,0.12)";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(canvas.width * 0.42, canvas.height * 0.08, canvas.width * 0.16, canvas.height * 0.22);
+        
+        ctx.beginPath();
+        ctx.moveTo(canvas.width * 0.5, canvas.height * 0.08);
+        ctx.lineTo(canvas.width * 0.5, canvas.height * 0.3);
+        ctx.moveTo(canvas.width * 0.42, canvas.height * 0.19);
+        ctx.lineTo(canvas.width * 0.58, canvas.height * 0.19);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function drawCozyHomeElements() {
+        ctx.save();
+        ctx.globalAlpha = 1.0; 
+
+        let plantX = canvas.width * 0.12;
+        let plantY = canvas.height * 0.72;
+
+        ctx.fillStyle = "#e67e22"; 
+        ctx.beginPath();
+        ctx.moveTo(plantX - 22, plantY - 32);
+        ctx.lineTo(plantX + 22, plantY - 32);
+        ctx.lineTo(plantX + 16, plantY);
+        ctx.lineTo(plantX - 16, plantY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#d35400"; 
+        ctx.fillRect(plantX - 25, plantY - 38, 50, 6);
+
+        ctx.strokeStyle = "#1b5e20";
+        ctx.lineWidth = 4;
+
+        ctx.beginPath();
+        ctx.quadraticCurveTo(plantX, plantY - 32, plantX - 18, plantY - 75);
+        ctx.stroke();
+        ctx.fillStyle = "#2e7d32";
+        ctx.beginPath();
+        ctx.ellipse(plantX - 18, plantY - 75, 18, 11, -Math.PI/6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.quadraticCurveTo(plantX, plantY - 32, plantX, plantY - 95);
+        ctx.stroke();
+        ctx.fillStyle = "#4caf50";
+        ctx.beginPath();
+        ctx.ellipse(plantX, plantY - 95, 22, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.quadraticCurveTo(plantX, plantY - 32, plantX + 20, plantY - 70);
+        ctx.stroke();
+        ctx.fillStyle = "#2e7d32";
+        ctx.beginPath();
+        ctx.ellipse(plantX + 20, plantY - 70, 16, 10, Math.PI/6, 0, Math.PI * 2);
+        ctx.fill();
+
+        let tableX = canvas.width * 0.88;
+        let tableY = canvas.height * 0.72;
+
+        ctx.fillStyle = "#8b4513"; 
+        ctx.fillRect(tableX - 6, tableY - 45, 12, 45);
+        ctx.fillStyle = "#a0522d"; 
+        ctx.fillRect(tableX - 35, tableY - 52, 70, 8);
+
+        ctx.fillStyle = "#00ced1"; 
+        ctx.beginPath();
+        ctx.arc(tableX, tableY - 68, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(tableX - 7, tableY - 84, 14, 16); 
+
+        ctx.strokeStyle = "#2e7d32";
+        ctx.lineWidth = 2.5;
+        
+        ctx.beginPath();
+        ctx.moveTo(tableX, tableY - 84);
+        ctx.lineTo(tableX - 12, tableY - 105);
+        ctx.stroke();
+        ctx.fillStyle = "#ff4757"; 
+        ctx.beginPath();
+        ctx.arc(tableX - 12, tableY - 105, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(tableX, tableY - 84);
+        ctx.lineTo(tableX + 10, tableY - 108);
+        ctx.stroke();
+        ctx.fillStyle = "#ffa502"; 
+        ctx.beginPath();
+        ctx.arc(tableX + 10, tableY - 108, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawPetSofa() {
+        ctx.save();
+        ctx.globalAlpha = 1.0; 
+
+        let sofaX = canvas.width / 2;
+        let sofaY = canvas.height * 0.72;
+
+        ctx.fillStyle = "#ff7f50"; 
+        ctx.beginPath();
+        ctx.ellipse(sofaX, sofaY - 20, 60, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#e9573f";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(sofaX, sofaY - 20, 60, 28, 0, 0.15, Math.PI - 0.15);
+        ctx.stroke();
+
+        ctx.fillStyle = "#e9573f";
+        ctx.beginPath();
+        ctx.ellipse(sofaX - 58, sofaY - 6, 16, 20, -0.08, 0, Math.PI * 2);
+        ctx.ellipse(sofaX + 58, sofaY - 6, 16, 20, 0.08, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#ff6b6b"; 
+        ctx.beginPath();
+        ctx.ellipse(sofaX, sofaY + 6, 65, 17, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // 💡 繪製 100% 寫實向量寵物，配備完整頭部與身體，無 Emoji，100% 飽和度且絕對不透明
+    function drawVectorPet(ctx, type, isDead, isFocusing) {
+        ctx.save();
+        ctx.globalAlpha = 1.0; 
+
+        ctx.strokeStyle = "#1e272e";
+        ctx.lineWidth = 4.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        const drawEyes = (ctx, xL, xR, y, size) => {
+            if (isDead) {
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.moveTo(xL - size, y - size); ctx.lineTo(xL + size, y + size);
+                ctx.moveTo(xL + size, y - size); ctx.lineTo(xL - size, y + size);
+                ctx.moveTo(xR - size, y - size); ctx.lineTo(xR + size, y + size);
+                ctx.moveTo(xR + size, y - size); ctx.lineTo(xR - size, y + size);
+                ctx.stroke();
+            } else if (isFocusing) {
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(xL, y + size/2, size, Math.PI, 0, false);
+                ctx.arc(xR, y + size/2, size, Math.PI, 0, false);
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = "#1e272e";
+                ctx.beginPath();
+                ctx.arc(xL, y, size, 0, Math.PI * 2);
+                ctx.arc(xR, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.arc(xL - size/3, y - size/3, size/3.2, 0, Math.PI * 2);
+                ctx.arc(xR - size/3, y - size/3, size/3.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        };
+
+        const drawBlush = (ctx, xL, xR, y, radius) => {
+            if (isDead) return;
+            ctx.fillStyle = "hsl(350, 100%, 75%)"; 
+            ctx.beginPath();
+            ctx.arc(xL, y, radius, 0, Math.PI * 2);
+            ctx.arc(xR, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        };
+
+        switch(type) {
+            case "🦮": // 1. 黃金獵犬 (Golden Retriever)
+                let goldGrad = ctx.createLinearGradient(0, -30, 0, 30);
+                goldGrad.addColorStop(0, "hsl(43, 100%, 55%)");
+                goldGrad.addColorStop(1, "hsl(35, 100%, 45%)");
+                ctx.fillStyle = goldGrad;
+
+                // Tail
+                ctx.beginPath();
+                ctx.moveTo(18, 12);
+                ctx.quadraticCurveTo(35, 2, 28, -20);
+                ctx.quadraticCurveTo(22, -10, 15, 6);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+
+                // Body
+                ctx.beginPath();
+                ctx.ellipse(0, 9, 26, 22, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Chest fluff with golden-yellow gradients
+                let chestGrad = ctx.createLinearGradient(0, -5, 0, 20);
+                chestGrad.addColorStop(0, "hsl(45, 100%, 88%)");
+                chestGrad.addColorStop(1, "hsl(43, 100%, 55%)");
+                ctx.fillStyle = chestGrad;
+                ctx.beginPath();
+                ctx.moveTo(-12, 4);
+                ctx.quadraticCurveTo(0, 18, 12, 4);
+                ctx.quadraticCurveTo(8, -8, -8, -8);
+                ctx.closePath();
+                ctx.fill();
+
+                // Red collar with gold medal
+                ctx.fillStyle = "hsl(0, 100%, 55%)";
+                ctx.fillRect(-16, -6, 32, 5);
+                ctx.fillStyle = "hsl(50, 100%, 50%)";
+                ctx.beginPath(); ctx.arc(0, -1, 5, 0, Math.PI * 2); ctx.fill();
+
+                // Feet
+                ctx.fillStyle = goldGrad;
+                ctx.beginPath(); ctx.ellipse(-11, 26, 8, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(11, 26, 8, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // Head
+                ctx.fillStyle = goldGrad;
+                ctx.beginPath();
+                ctx.arc(0, -22, 30, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // 💡 Golden Retriever floppy droop ears (耳朵拉長：高度 22 加長至 30)
+                ctx.fillStyle = "hsl(35, 100%, 35%)";
+                ctx.beginPath();
+                ctx.ellipse(-30, -18, 9, 30, Math.PI/12, 0, Math.PI*2);
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(30, -18, 9, 30, -Math.PI/12, 0, Math.PI*2);
+                ctx.fill(); ctx.stroke();
+
+                // Snout
+                ctx.fillStyle = "hsl(45, 100%, 88%)";
+                ctx.beginPath();
+                ctx.ellipse(0, -12, 17, 13, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                if (!isDead && !isFocusing) {
+                    ctx.fillStyle = "hsl(350, 100%, 65%)";
+                    ctx.beginPath();
+                    ctx.arc(0, -1, 6.5, 0, Math.PI);
+                    ctx.fill(); ctx.stroke();
+                }
+                ctx.fillStyle = "#1e272e";
+                ctx.beginPath();
+                ctx.ellipse(0, -16, 7.5, 4.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                drawEyes(ctx, -12, 12, -26, 5);
+                drawBlush(ctx, -21, 21, -15, 5);
+                break;
+
+            case "🐕‍🦺": // 2. 薩摩耶 (Samoyed)
+                let samGrad = ctx.createLinearGradient(0, -30, 0, 30);
+                samGrad.addColorStop(0, "#ffffff");
+                samGrad.addColorStop(1, "hsl(210, 20%, 93%)"); 
+                ctx.fillStyle = samGrad;
+
+                // Tail (Plush curly tail over back)
+                ctx.beginPath();
+                ctx.arc(22, -10, 18, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.arc(20, -13, 13, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Body
+                ctx.fillStyle = samGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, 9, 28, 24, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Chest fluff
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.moveTo(-18, 5);
+                ctx.quadraticCurveTo(-25, 18, 0, 26);
+                ctx.quadraticCurveTo(25, 18, 18, 5);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+
+                // Feet
+                ctx.fillStyle = samGrad;
+                ctx.beginPath(); ctx.ellipse(-11, 26, 8, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(11, 26, 8, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // 💡 耳根完美貼合在頭皮下方：薩摩耶立耳拉長！(耳尖從 -48 向上延伸至 -65)
+                ctx.fillStyle = samGrad;
+                
+                // 左耳：垂直向上立耳
+                ctx.beginPath();
+                ctx.moveTo(-30, -18);      // 左外側耳根
+                ctx.lineTo(-24, -65);      // 左耳尖 (垂直拉長)
+                ctx.lineTo(-18, -24);      // 左內側耳根
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                
+                // 右耳：垂直向上立耳
+                ctx.beginPath();
+                ctx.moveTo(30, -18);       // 右外側耳根
+                ctx.lineTo(24, -65);       // 右耳尖 (垂直拉長)
+                ctx.lineTo(18, -24);       // 右內側耳根
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+
+                // 內耳粉嫩細毛
+                ctx.fillStyle = "hsl(350, 100%, 88%)";
+                ctx.beginPath();
+                ctx.moveTo(-28, -19); 
+                ctx.lineTo(-24, -57); 
+                ctx.lineTo(-20, -23); 
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(29, -19); 
+                ctx.lineTo(24, -57); 
+                ctx.lineTo(20, -23); 
+                ctx.closePath();
+                ctx.fill();
+
+                // Head Circle (在耳朵之上繪製，使耳根剛好落在頭皮輪廓線下)
+                ctx.fillStyle = samGrad;
+                ctx.beginPath();
+                ctx.arc(0, -22, 31, 0, Math.PI * 2); 
+                ctx.fill(); ctx.stroke();
+
+                // Smile snout (Samoyed Smile)
+                ctx.strokeStyle = "#1e272e";
+                ctx.lineWidth = 3.5;
+                ctx.beginPath(); ctx.arc(-5.5, -8, 5, 0, Math.PI, false); ctx.stroke();
+                ctx.beginPath(); ctx.arc(5.5, -8, 5, 0, Math.PI, false); ctx.stroke();
+                
+                if (!isDead && !isFocusing) {
+                    ctx.fillStyle = "hsl(350, 100%, 75%)";
+                    ctx.beginPath();
+                    ctx.arc(0, -4, 4.5, 0, Math.PI);
+                    ctx.fill();
+                }
+
+                ctx.fillStyle = "#1e272e";
+                ctx.beginPath(); ctx.ellipse(0, -11, 6.5, 4.5, 0, 0, Math.PI*2); ctx.fill();
+
+                drawEyes(ctx, -13, 13, -24, 5.5);
+                drawBlush(ctx, -21, 21, -14, 6.5);
+                break;
+
+            case "🐕": // 3. 邊境牧羊犬 (Border Collie)
+                let bcBlack = "hsl(220, 30%, 15%)";
+                ctx.fillStyle = bcBlack;
+
+                // Tail (feathered)
+                ctx.beginPath();
+                ctx.ellipse(20, 5, 9, 19, Math.PI / 4, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.ellipse(25, -2, 6, 11, Math.PI / 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Body
+                ctx.fillStyle = bcBlack;
+                ctx.beginPath();
+                ctx.ellipse(0, 9, 25, 21, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // White symmetric blaze on collar/chest
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.ellipse(0, 8, 14, 21, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Feet
+                ctx.beginPath(); ctx.ellipse(-11, 26, 7.5, 6.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(11, 26, 7.5, 6.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // Head (Collie pattern)
+                ctx.fillStyle = bcBlack;
+                ctx.beginPath();
+                ctx.arc(0, -22, 30, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // White stripe on head
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.moveTo(-8, -52); ctx.lineTo(8, -52);
+                ctx.lineTo(13, -18); ctx.lineTo(18, -4);
+                ctx.lineTo(-18, -4); ctx.lineTo(-13, -18);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+
+                // Collie folder ears (Semi-erect ears - slightly longer)
+                ctx.fillStyle = bcBlack;
+                ctx.beginPath();
+                ctx.ellipse(-26, -34, 11, 18, Math.PI/4, 0, Math.PI*2);
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(26, -34, 11, 18, -Math.PI/4, 0, Math.PI*2);
+                ctx.fill(); ctx.stroke();
+
+                if (!isDead && !isFocusing) {
+                    ctx.fillStyle = "hsl(350, 100%, 65%)";
+                    ctx.beginPath(); ctx.arc(0, -1, 5.5, 0, Math.PI); ctx.fill(); ctx.stroke();
+                }
+                ctx.fillStyle = "#1e272e";
+                ctx.beginPath();
+                ctx.ellipse(0, -11, 6, 4, 0, 0, Math.PI*2);
+                ctx.fill();
+
+                drawEyes(ctx, -14, 14, -24, 5);
+                drawBlush(ctx, -22, 22, -14, 5);
+                break;
+
+            case "🐈": // 4. 優雅白貓 (White Cat)
+                let catGrad = ctx.createLinearGradient(0, -30, 0, 30);
+                catGrad.addColorStop(0, "#ffffff");
+                catGrad.addColorStop(1, "hsl(210, 15%, 95%)");
+                ctx.fillStyle = catGrad;
+
+                // Tail (Elegant curve)
+                ctx.strokeStyle = "#1e272e"; ctx.lineWidth = 6.5;
+                ctx.beginPath(); ctx.moveTo(14, 11); ctx.quadraticCurveTo(31, 10, 25, -16); ctx.stroke();
+                ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(14, 11); ctx.quadraticCurveTo(31, 10, 25, -16); ctx.stroke();
+                ctx.strokeStyle = "#1e272e"; ctx.lineWidth = 4.5; 
+
+                // Body
+                ctx.fillStyle = catGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, 9, 21, 19, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Pink bow
+                ctx.fillStyle = "hsl(340, 100%, 75%)";
+                ctx.fillRect(-12, -6, 24, 4);
+
+                // Feet
+                ctx.fillStyle = catGrad;
+                ctx.beginPath(); ctx.ellipse(-9, 26, 6.5, 5.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(9, 26, 6.5, 5.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // 💡 耳朵先畫，使耳根完美貼合在頭皮下方 (貓耳拉長至 -46)
+                ctx.fillStyle = catGrad;
+                ctx.beginPath();
+                ctx.moveTo(-31, -46); ctx.lineTo(-7, -40); ctx.lineTo(-13, -18); ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(31, -46); ctx.lineTo(7, -40); ctx.lineTo(13, -18); ctx.closePath();
+                ctx.fill(); ctx.stroke();
+
+                ctx.fillStyle = "hsl(350, 100%, 85%)";
+                ctx.beginPath();
+                ctx.moveTo(-27, -42); ctx.lineTo(-11, -36); ctx.lineTo(-14, -21); ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(27, -42); ctx.lineTo(11, -36); ctx.lineTo(14, -21); ctx.closePath();
+                ctx.fill();
+
+                // Head
+                ctx.fillStyle = catGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, -20, 29, 26, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Whiskers
+                ctx.strokeStyle = "#1e272e"; ctx.lineWidth = 2.0;
+                ctx.beginPath(); ctx.moveTo(-20, -10); ctx.lineTo(-42, -12); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-20, -7); ctx.lineTo(-44, -6); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(20, -10); ctx.lineTo(42, -12); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(20, -7); ctx.lineTo(44, -6); ctx.stroke();
+                ctx.strokeStyle = "#1e272e"; ctx.lineWidth = 4.5;
+
+                // Snout
+                ctx.fillStyle = "hsl(350, 100%, 75%)";
+                ctx.beginPath();
+                ctx.ellipse(0, -12, 3.8, 2.8, 0, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(-3.5, -8, 3.5, 0, Math.PI); ctx.stroke();
+                ctx.beginPath(); ctx.arc(3.5, -8, 3.5, 0, Math.PI); ctx.stroke();
+
+                if (!isDead && !isFocusing) {
+                    // Emerald eyes
+                    ctx.fillStyle = "hsl(145, 100%, 45%)";
+                    ctx.beginPath(); ctx.arc(-11, -21, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(11, -21, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = "#1e272e";
+                    ctx.fillRect(-12, -25, 2, 8);
+                    ctx.fillRect(10, -25, 2, 8);
+                } else {
+                    drawEyes(ctx, -11, 11, -21, 5.5);
+                }
+                break;
+
+            case "🐈‍⬛": // 5. 軟萌橘貓 (Orange Tabby Cat)
+                let orangeGrad = ctx.createLinearGradient(0, -30, 0, 30);
+                orangeGrad.addColorStop(0, "hsl(28, 100%, 60%)");
+                orangeGrad.addColorStop(1, "hsl(20, 100%, 48%)");
+                ctx.fillStyle = orangeGrad;
+
+                // Tail (Orange stripe)
+                ctx.strokeStyle = "#1e272e"; ctx.lineWidth = 6.5;
+                ctx.beginPath(); ctx.moveTo(14, 11); ctx.quadraticCurveTo(31, 10, 25, -16); ctx.stroke();
+                ctx.strokeStyle = "hsl(28, 100%, 60%)"; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(14, 11); ctx.quadraticCurveTo(31, 10, 25, -16); ctx.stroke();
+                ctx.strokeStyle = "#1e272e"; ctx.lineWidth = 4.5;
+
+                // Body
+                ctx.fillStyle = orangeGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, 9, 21, 19, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Stripes on body
+                ctx.fillStyle = "hsl(15, 100%, 40%)";
+                ctx.fillRect(-16, 6, 7, 3); ctx.fillRect(10, 6, 7, 3);
+
+                // Collar
+                ctx.fillStyle = "hsl(120, 100%, 40%)";
+                ctx.fillRect(-12, -6, 24, 4);
+
+                // Feet
+                ctx.fillStyle = orangeGrad;
+                ctx.beginPath(); ctx.ellipse(-9, 26, 6.5, 5.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(9, 26, 6.5, 5.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // 💡 耳朵先畫，使耳根完美貼合在頭皮下方 (貓耳拉長至 -46)
+                ctx.fillStyle = orangeGrad;
+                ctx.beginPath();
+                ctx.moveTo(-31, -46); ctx.lineTo(-7, -40); ctx.lineTo(-13, -18); ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(31, -46); ctx.lineTo(7, -40); ctx.lineTo(13, -18); ctx.closePath();
+                ctx.fill(); ctx.stroke();
+
+                // Head
+                ctx.fillStyle = orangeGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, -20, 29, 26, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Forehead M markings
+                ctx.fillStyle = "hsl(15, 100%, 40%)";
+                ctx.fillRect(-3, -46, 6, 11);
+                ctx.fillRect(-11, -43, 3, 7);
+                ctx.fillRect(8, -43, 3, 7);
+
+                // Whiskers
+                ctx.strokeStyle = "#1e272e"; ctx.lineWidth = 2.0;
+                ctx.beginPath(); ctx.moveTo(-20, -10); ctx.lineTo(-42, -12); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-20, -7); ctx.lineTo(-44, -6); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(20, -10); ctx.lineTo(42, -12); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(20, -7); ctx.lineTo(44, -6); ctx.stroke();
+                ctx.strokeStyle = "#1e272e"; ctx.lineWidth = 4.5;
+
+                // Snout
+                ctx.fillStyle = "hsl(350, 100%, 75%)";
+                ctx.beginPath();
+                ctx.ellipse(0, -12, 3.8, 2.8, 0, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(-3.5, -8, 3.5, 0, Math.PI); ctx.stroke();
+                ctx.beginPath(); ctx.arc(3.5, -8, 3.5, 0, Math.PI); ctx.stroke();
+
+                if (!isDead && !isFocusing) {
+                    // Gold-green eyes
+                    ctx.fillStyle = "hsl(45, 100%, 50%)";
+                    ctx.beginPath(); ctx.arc(-11, -21, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(11, -21, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = "#1e272e";
+                    ctx.fillRect(-12, -25, 2, 8);
+                    ctx.fillRect(10, -25, 2, 8);
+                } else {
+                    drawEyes(ctx, -11, 11, -21, 5.5);
+                }
+                break;
+
+            case "🐇": // 6. 垂耳白兔 (Fluffy Lop-eared Rabbit)
+                let bunnyGrad = ctx.createLinearGradient(0, -30, 0, 30);
+                bunnyGrad.addColorStop(0, "#ffffff");
+                bunnyGrad.addColorStop(1, "hsl(340, 20%, 94%)");
+                ctx.fillStyle = bunnyGrad;
+
+                // Tail (Round puff)
+                ctx.beginPath(); ctx.arc(22, 12, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // Body (Chubby squat pose)
+                ctx.beginPath();
+                ctx.ellipse(0, 10, 26, 21, 0, 0, Math.PI * 2); 
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(12, 14, 15, 12, Math.PI/6, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Feet
+                ctx.beginPath(); ctx.ellipse(-10, 26, 7.5, 6.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(10, 26, 8.5, 6.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // 💡 垂耳白兔：耳朵拉長，更顯蓬鬆圓潤！(長度從 23 大幅拉長至 35)
+                ctx.fillStyle = bunnyGrad;
+                // Outer fluffy ears (Ellipse rotating outwards with maximum fluff)
+                ctx.beginPath();
+                ctx.ellipse(-26, -18, 14, 35, -Math.PI/6, 0, Math.PI * 2); 
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(26, -18, 14, 35, Math.PI/6, 0, Math.PI * 2); 
+                ctx.fill(); ctx.stroke();
+
+                // Inner soft pink fluff (拉長至 27)
+                ctx.fillStyle = "hsl(340, 100%, 88%)";
+                ctx.beginPath();
+                ctx.ellipse(-24, -17, 8, 27, -Math.PI/6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(26, -17, 8, 27, Math.PI/6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Head Circle (壓在耳根之上，使耳根完美落在頭皮上)
+                ctx.fillStyle = bunnyGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, -20, 29, 25, 0, 0, Math.PI*2);
+                ctx.fill(); ctx.stroke();
+
+                // Snout
+                ctx.strokeStyle = "hsl(345, 100%, 65%)";
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, -11); ctx.lineTo(0, -6); ctx.lineTo(-4.5, -4);
+                ctx.moveTo(0, -6); ctx.lineTo(4.5, -4);
+                ctx.stroke();
+                ctx.fillStyle = "hsl(345, 100%, 75%)";
+                ctx.beginPath();
+                ctx.ellipse(0, -12, 3.5, 2.5, 0, 0, Math.PI*2); ctx.fill();
+
+                // Glossy Black Eyes (純黑大眼睛，無辜水靈)
+                drawEyes(ctx, -11, 11, -21, 6);
+                break;
+
+            case "🦊": // 7. 淘氣紅狐 (Red Fox)
+                let foxGrad = ctx.createLinearGradient(0, -30, 0, 30);
+                foxGrad.addColorStop(0, "hsl(15, 100%, 53%)");
+                foxGrad.addColorStop(1, "hsl(10, 100%, 45%)");
+                ctx.fillStyle = foxGrad;
+
+                // Tail (Massive white tipped red tail)
+                ctx.beginPath();
+                ctx.ellipse(22, 6, 11, 22, Math.PI / 4, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.ellipse(28, -3, 6, 11, Math.PI / 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Body
+                ctx.fillStyle = foxGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, 8, 22, 18, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // White belly chest
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.ellipse(0, 6, 11, 15, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Black feet ("Black socks" trait)
+                ctx.fillStyle = "#1e272e";
+                ctx.beginPath(); ctx.ellipse(-10, 26, 6.5, 5.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(10, 26, 6.5, 5.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // 💡 耳朵先畫，使耳根完美貼合在頭皮下方 (狐耳拉長，頂點延伸至 -54)
+                ctx.fillStyle = foxGrad;
+                ctx.beginPath();
+                ctx.moveTo(-31, -32); ctx.lineTo(-9, -54); ctx.lineTo(-13, -18); ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(31, -32); ctx.lineTo(9, -54); ctx.lineTo(13, -18); ctx.closePath();
+                ctx.fill(); ctx.stroke();
+
+                ctx.fillStyle = "#1e272e";
+                ctx.beginPath();
+                ctx.moveTo(-31, -32); ctx.lineTo(-21, -44); ctx.lineTo(-25, -25); ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(31, -32); ctx.lineTo(21, -44); ctx.lineTo(25, -25); ctx.closePath();
+                ctx.fill();
+
+                // Head (Triangular wedge snout)
+                ctx.fillStyle = foxGrad;
+                ctx.beginPath();
+                ctx.moveTo(-31, -17); ctx.quadraticCurveTo(-35, -5, 0, 3); ctx.quadraticCurveTo(35, -5, 31, -17);
+                ctx.lineTo(25, -37); ctx.lineTo(-25, -37);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+
+                // White cheeks
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.moveTo(-31, -17); ctx.quadraticCurveTo(-29, -5, -7, -5); ctx.lineTo(0, 3); ctx.quadraticCurveTo(-14, -3, -31, -17);
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(31, -17); ctx.quadraticCurveTo(29, -5, 7, -5); ctx.lineTo(0, 3); ctx.quadraticCurveTo(14, -3, 31, -17);
+                ctx.fill(); ctx.stroke();
+
+                // Nose tip
+                ctx.fillStyle = "#1e272e";
+                ctx.beginPath(); ctx.arc(0, -1, 4.5, 0, Math.PI*2); ctx.fill();
+
+                drawEyes(ctx, -13, 13, -19, 5.5);
+                drawBlush(ctx, -19, 19, -11, 4.5);
+                break;
+
+            case "🐻": // 8. 溫柔棕熊 (Brown Bear)
+                let bearGrad = ctx.createLinearGradient(0, -30, 0, 30);
+                bearGrad.addColorStop(0, "hsl(28, 100%, 32%)");
+                bearGrad.addColorStop(1, "hsl(25, 100%, 20%)");
+                ctx.fillStyle = bearGrad;
+
+                // Tail
+                ctx.beginPath(); ctx.arc(22, 10, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // Body
+                ctx.beginPath();
+                ctx.ellipse(0, 9, 28, 25, 0, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Cream belly crescent (U-neck crescent)
+                ctx.fillStyle = "hsl(35, 100%, 75%)";
+                ctx.beginPath();
+                ctx.ellipse(0, 10, 16, 14, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Feet
+                ctx.fillStyle = bearGrad;
+                ctx.beginPath(); ctx.ellipse(-12, 26, 8.5, 7.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(12, 26, 8.5, 7.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                // 💡 耳朵先畫，使耳根完美貼合在頭皮下方 (小熊圓耳放大至 13)
+                ctx.fillStyle = bearGrad;
+                ctx.beginPath(); ctx.arc(-24, -34, 13, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(24, -34, 13, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = "hsl(35, 100%, 75%)";
+                ctx.beginPath(); ctx.arc(-24, -34, 7.5, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(24, -34, 7.5, 0, Math.PI*2); ctx.fill();
+
+                // Head
+                ctx.fillStyle = bearGrad;
+                ctx.beginPath();
+                ctx.arc(0, -19, 32, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Bear snout
+                ctx.fillStyle = "hsl(35, 100%, 75%)";
+                ctx.beginPath();
+                ctx.ellipse(0, -9, 15, 11, 0, 0, Math.PI*2);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = "#1e272e";
+                ctx.beginPath();
+                ctx.ellipse(0, -13, 6, 4, 0, 0, Math.PI*2);
+                ctx.fill();
+
+                drawEyes(ctx, -12, 12, -21, 5.5);
+                drawBlush(ctx, -20, 20, -12, 5);
+                break;
+
+            default:
+                break;
+        }
+
+        ctx.restore();
+    }
+
+    function drawPetEntity(x, y, angle) {
+        ctx.save();
+        
+        ctx.globalAlpha = 1.0; 
+
+        let petColor = petAuraColors[gameState.petType] || "hsl(210, 100%, 50%)";
+
+        ctx.fillStyle = "rgba(0,0,0,0.08)";
+        ctx.beginPath();
+        ctx.ellipse(x, y + 25, 48, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if(inFocusingMode) {
+            ctx.strokeStyle = "rgba(46, 204, 113, 0.65)"; 
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(x, y - 90, 32, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (gameState.happiness > 75) {
+            ctx.strokeStyle = "rgba(241, 196, 15, 0.7)"; 
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(x, y - 90, 32, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        ctx.save();
+        ctx.translate(x, y - 25);
+        ctx.rotate(angle);
+        
+        drawVectorPet(ctx, gameState.petType, gameState.isDead, inFocusingMode);
+        ctx.restore();
+
+        // 💡 精緻小名字標籤 (高反差排版：白毛/淡色寵物名牌內建黑字，保持100%飽和不透明度)
+        ctx.save();
+        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = petColor;
+        
+        ctx.beginPath();
+        ctx.roundRect(x - 52, y + 36, 104, 21, 6);
+        ctx.fill();
+        
+        // 💡 如果是白貓、垂耳白兔或薩摩耶，文字加上黑色高對比，避免淹沒在雪白底色中
+        if (gameState.petType === "🐕‍🦺" || gameState.petType === "🐈" || gameState.petType === "🐇") {
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = "#1e272e";
+        } else {
+            ctx.fillStyle = "#ffffff";
+        }
+        
+        ctx.font = "bold 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(gameState.petName, x, y + 47);
+        ctx.restore();
+    }
+
+    function drawAndTickParticles() {
+        for (let i = activeEffects.length - 1; i >= 0; i--) {
+            let p = activeEffects[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.opacity -= 0.016;
+
+            ctx.save();
+            ctx.globalAlpha = p.opacity;
+            ctx.font = `${p.size}px sans-serif`;
+
+            let particleChar = "❤️";
+            if (p.type === 'music') particleChar = "🎵";
+            if (p.type === 'tear') particleChar = "💧";
+
+            ctx.fillText(particleChar, p.x, p.y);
+            ctx.restore();
+
+            if (p.opacity <= 0) {
+                activeEffects.splice(i, 1);
+            }
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CosmoQuery Pro - 智能星表檢索與多維演化模型</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Space Grotesk', 'sans-serif'],
+                        mono: ['Share Tech Mono', 'monospace'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 8s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- 依賴庫: Lucide Icons, Three.js, Chart.js -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .font-mono-tech {
+            font-family: 'Share Tech Mono', monospace;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1329; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .tarot-card-glow {
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        .tarot-card-glow:hover {
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200">
+
+<!-- 頂部導航欄 -->
+<header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+        <div class="p-2 bg-sky-500/20 border border-sky-400 rounded-lg animate-pulse">
+            <i data-lucide="telescope" class="w-6 h-6 text-sky-400"></i>
+        </div>
+        <div>
+            <h1 class="text-xl font-bold tracking-wider text-sky-400 font-mono-tech uppercase">CosmoQuery Pro</h1>
+            <p class="text-xs text-slate-400">智能光譜合成 ‧ 亞角秒定位 ‧ 多維演化模型</p>
+        </div>
+    </div>
+    <div class="flex items-center space-x-4 hidden md:flex">
+        <span class="px-3 py-1 bg-sky-500/10 border border-sky-500/30 text-sky-400 rounded-full text-xs flex items-center space-x-1 font-mono-tech">
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping mr-1"></span>
+            MULTI-PARAMETRIC ENGINE ACTIVE
+        </span>
+    </div>
+</header>
+
+<!-- 主工作區 -->
+<main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
+    
+    <!-- 左側控制面板 -->
+    <section class="lg:col-span-5 flex flex-col space-y-6">
+        
+        <!-- 天體查詢組件 -->
+        <div class="glass-panel p-5 rounded-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-md font-semibold font-mono-tech text-sky-400 flex items-center space-x-2">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    <span>1. 智能參數定位與篩選系統</span>
+                </h2>
+            </div>
+
+            <!-- 查詢類型分頁切換 -->
+            <div class="grid grid-cols-3 gap-2 bg-slate-900/90 p-1 rounded-lg border border-slate-800 text-sm">
+                <button id="tab-name" onclick="window.switchQueryType('name')" class="py-1.5 rounded-md font-medium text-sky-400 bg-slate-800 border border-slate-700/50 transition text-[11px]">
+                    功能一：名稱
+                </button>
+                <button id="tab-coord" onclick="window.switchQueryType('coord')" class="py-1.5 rounded-md font-medium text-slate-400 hover:text-white transition text-[11px]">
+                    功能二：坐標
+                </button>
+                <button id="tab-filter" onclick="window.switchQueryType('filter')" class="py-1.5 rounded-md font-medium text-slate-400 hover:text-white transition text-[11px] flex items-center justify-center gap-1">
+                    功能三：篩選
+                </button>
+            </div>
+
+            <!-- 輸入區：名稱 (功能一) -->
+            <div id="query-input-name" class="space-y-3">
+                <label class="block text-xs text-slate-400 font-mono-tech leading-relaxed">
+                    <span class="uppercase">天體識別名</span><br>
+                    <span class="text-[10px] text-sky-500/80">自動辨識：M, NGC, UGC, Arp, JADES, PSO J, SDSS, QSO 等</span>
+                </label>
+                <div class="flex space-x-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="target-name-input" placeholder="例如: NGC 1300, Sirius..." class="w-full bg-slate-950/90 border border-slate-700 rounded-lg pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:border-sky-500 font-mono-tech transition">
+                        <button id="clear-name-btn" onclick="window.clearInput('name')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-400 transition hidden">
+                            <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <button onclick="window.executeQuery('name')" class="bg-sky-600 hover:bg-sky-500 text-white px-5 rounded-lg text-sm font-semibold flex items-center space-x-1 transition shadow-lg shadow-sky-500/20">
+                        <span>解析</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 輸入區：座標/赤緯 (功能二) -->
+            <div id="query-input-coord" class="space-y-3 hidden">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 uppercase font-mono-tech mb-1">赤經 RA (可選)</label>
+                        <input type="number" id="target-ra-input" step="0.000001" placeholder="例如: 101.2871" class="w-full bg-slate-950/90 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500 font-mono-tech">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 uppercase font-mono-tech mb-1 text-sky-400 font-bold">赤緯 Dec (必填)</label>
+                        <input type="number" id="target-dec-input" step="0.000001" placeholder="例如: 41.26875" class="w-full bg-slate-950/90 border border-sky-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500 font-mono-tech">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="window.executeQuery('coord')" class="col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-500/20">
+                        <i data-lucide="radar" class="w-4 h-4"></i>
+                        <span>掃描指定赤緯星區</span>
+                    </button>
+                    <button onclick="window.clearInput('coord')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center space-x-1.5 transition">
+                        <i data-lucide="eraser" class="w-4 h-4"></i>
+                        <span>清空</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 輸入區：物理參數篩選 (功能三) -->
+            <div id="query-input-filter" class="space-y-4 hidden">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs text-slate-400 font-mono-tech mb-1">紅移 (z) 範圍</label>
+                        <div class="flex items-center space-x-1">
+                            <input type="number" id="f-min-z" placeholder="Min" class="w-full bg-slate-950/90 border border-slate-700 rounded p-1.5 text-xs text-center focus:outline-none focus:border-violet-500">
+                            <span class="text-slate-500">-</span>
+                            <input type="number" id="f-max-z" placeholder="Max" class="w-full bg-slate-950/90 border border-slate-700 rounded p-1.5 text-xs text-center focus:outline-none focus:border-violet-500">
+                        </div>
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs text-slate-400 font-mono-tech mb-1">SFR (M☉/yr)</label>
+                        <div class="flex items-center space-x-1">
+                            <input type="number" id="f-min-sfr" placeholder="Min" class="w-full bg-slate-950/90 border border-slate-700 rounded p-1.5 text-xs text-center focus:outline-none focus:border-violet-500">
+                            <span class="text-slate-500">-</span>
+                            <input type="number" id="f-max-sfr" placeholder="Max" class="w-full bg-slate-950/90 border border-slate-700 rounded p-1.5 text-xs text-center focus:outline-none focus:border-violet-500">
+                        </div>
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs text-slate-400 font-mono-tech mb-1">氣體分率 (fgas)</label>
+                        <div class="flex items-center space-x-1">
+                            <input type="number" id="f-min-gas" placeholder="Min (0~1)" class="w-full bg-slate-950/90 border border-slate-700 rounded p-1.5 text-xs text-center focus:outline-none focus:border-violet-500">
+                            <span class="text-slate-500">-</span>
+                            <input type="number" id="f-max-gas" placeholder="Max (0~1)" class="w-full bg-slate-950/90 border border-slate-700 rounded p-1.5 text-xs text-center focus:outline-none focus:border-violet-500">
+                        </div>
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs text-slate-400 font-mono-tech mb-1">天體大類 (Otype)</label>
+                        <select id="f-otype" class="w-full bg-slate-950/90 border border-slate-700 rounded p-1.5 text-xs focus:outline-none focus:border-violet-500 text-slate-200">
+                            <option value="ALL">全部 (All Types)</option>
+                            <option value="GALAXY">星系 (Galaxy)</option>
+                            <option value="ELLIPTICAL_GALAXY">橢圓星系 (Elliptical)</option>
+                            <option value="STAR_CLUSTER">恆星/星團 (Star)</option>
+                            <option value="BLACK_HOLE">黑洞/類星體 (QSO)</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="window.executeFilterQuery()" class="w-full bg-violet-600 hover:bg-violet-500 text-white py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center space-x-2 transition shadow-lg shadow-violet-500/20">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    <span>依條件篩選並生成圖表</span>
+                </button>
+            </div>
+
+            <!-- 隨機探索與快捷按鈕組 -->
+            <div class="grid grid-cols-2 gap-2 border-t border-slate-800/80 pt-3">
+                <button onclick="window.loadRandomTarget()" class="col-span-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white py-2.5 rounded-lg text-sm font-bold flex items-center justify-center space-x-2 transition shadow-lg shadow-sky-500/10">
+                    <i data-lucide="dice-5" class="w-5 h-5 text-yellow-300 animate-spin"></i>
+                    <span>🎲 一鍵隨機探索未知宇宙 (Random Target)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 數據庫與物理參數面板 -->
+        <div class="glass-panel p-5 rounded-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-md font-semibold font-mono-tech text-sky-400 flex items-center space-x-2">
+                    <i data-lucide="database" class="w-4 h-4"></i>
+                    <span>2. 物理特徵資料庫與狀態</span>
+                </h2>
+            </div>
+
+            <!-- 已解析天體信息卡 -->
+            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-semibold text-slate-200" id="info-title">天體：等待查詢...</span>
+                    <span class="text-xs bg-sky-500/10 text-sky-300 border border-sky-500/20 px-2 py-0.5 rounded font-mono-tech" id="info-type">NONE</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm font-mono-tech text-slate-400">
+                    <div>RA: <span class="text-slate-100 font-bold" id="info-ra">-</span></div>
+                    <div>Dec: <span class="text-slate-100 font-bold" id="info-dec">-</span></div>
+                    <div class="col-span-2 mt-1">智能型態分類: <span class="text-amber-400 font-semibold" id="info-otype">-</span></div>
+                </div>
+
+                <hr class="border-slate-800/80">
+
+                <div class="space-y-4 pt-1 pointer-events-none opacity-85">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400 font-mono-tech">紅移值 Redshift (z)</span>
+                            <span class="text-sky-400 font-bold font-mono-tech" id="val-z">0.0000</span>
+                        </div>
+                        <input type="range" id="slider-z" min="-0.01" max="15.0" step="0.01" value="0" class="w-full accent-sky-500 bg-slate-800 h-1.5 rounded-lg appearance-none">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400 font-mono-tech">恆星形成速率 SFR (M☉/yr)</span>
+                            <span class="text-pink-400 font-bold font-mono-tech" id="val-sfr">0.00</span>
+                        </div>
+                        <input type="range" id="slider-sfr" min="0.0" max="100" step="0.05" value="0" class="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400 font-mono-tech">氣體分子分率 Gas Fraction (fgas)</span>
+                            <span class="text-emerald-400 font-bold font-mono-tech" id="val-gas">0.0%</span>
+                        </div>
+                        <input type="range" id="slider-gas" min="0.0" max="0.8" step="0.01" value="0" class="w-full accent-emerald-500 bg-slate-800 h-1.5 rounded-lg appearance-none">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/60 font-mono text-xs text-slate-300 space-y-1 max-h-[100px] overflow-y-auto" id="console-logs"></div>
+        </div>
+
+    </section>
+
+    <!-- 右側可視化模擬、圖表與清單 -->
+    <section class="lg:col-span-7 flex flex-col space-y-6 relative">
+        
+        <!-- 3D 模型區 -->
+        <div class="glass-panel rounded-xl overflow-hidden flex flex-col h-[400px] relative">
+            <div class="px-5 py-3 border-b border-slate-800 bg-slate-950/90 flex justify-between items-center z-10">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="orbit" class="text-sky-400 w-4 h-4 animate-spin-slow"></i>
+                    <span class="font-bold text-sm tracking-wide font-mono-tech text-slate-200 flex items-center">
+                        3D 空間物理渲染引擎
+                        <span class="text-[10px] text-emerald-400 ml-3 hidden sm:flex items-center">
+                            <i data-lucide="mouse" class="w-3 h-3 mr-1"></i> 支援滑鼠滾輪/觸控手勢縮放
+                        </span>
+                    </span>
+                </div>
+                <div class="flex space-x-1.5">
+                    <button onclick="window.zoom3D(0.85)" title="放大" class="px-2.5 py-1 text-[10px] bg-slate-800 border border-slate-700 rounded text-slate-300 hover:text-sky-300 transition flex items-center gap-1">
+                        <i data-lucide="zoom-in" class="w-3 h-3"></i> <span class="hidden sm:inline">放大</span>
+                    </button>
+                    <button onclick="window.zoom3D(1.15)" title="縮小" class="px-2.5 py-1 text-[10px] bg-slate-800 border border-slate-700 rounded text-slate-300 hover:text-sky-300 transition flex items-center gap-1">
+                        <i data-lucide="zoom-out" class="w-3 h-3"></i> <span class="hidden sm:inline">縮小</span>
+                    </button>
+                    <button onclick="window.resetCamera()" title="重置視角" class="px-2.5 py-1 text-[10px] bg-slate-800 border border-slate-700 rounded text-slate-300 hover:text-sky-500 transition">
+                        重置
+                    </button>
+                </div>
+            </div>
+            <div id="canvas-container" class="flex-1 w-full relative bg-slate-950 cursor-move">
+                <div class="absolute bottom-4 left-4 p-3 bg-slate-950/90 border border-slate-800 rounded-lg text-xs font-mono-tech text-slate-300 space-y-1 pointer-events-none z-10">
+                    <div class="text-sky-400 font-bold border-b border-slate-800 pb-1 mb-1">物理特徵即時推演</div>
+                    <div>推演型態: <span id="hud-type" class="text-amber-400">無 (空白)</span></div>
+                    <div>運算粒子數: <span id="hud-particles" class="text-slate-400">0 Ptc</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 掃描與篩選結果列表 -->
+        <div id="filter-results-modal" class="hidden glass-panel rounded-xl flex-col border border-emerald-500/40 shadow-xl max-h-[250px] overflow-hidden">
+            <div class="px-5 py-3 border-b border-slate-800 flex justify-between items-center bg-slate-900/80 sticky top-0 z-10">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="list-tree" class="w-4 h-4 text-emerald-400"></i>
+                    <h3 class="text-sm text-emerald-400 font-bold font-mono-tech tracking-wide" id="results-title">檢索目標列表 (依 otype 分類)</h3>
+                </div>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1 font-mono text-sm text-slate-300" id="filter-results-body">
+                <!-- 動態注入 -->
+            </div>
+        </div>
+
+        <!-- 多維物理參數散佈圖與趨勢分析面板 -->
+        <div id="chart-section" class="hidden glass-panel p-5 rounded-xl flex-col space-y-4 border border-violet-500/40 shadow-lg">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-md font-semibold font-mono-tech text-violet-400 flex items-center space-x-2">
+                    <i data-lucide="line-chart" class="w-4 h-4"></i>
+                    <span>📊 星系群多維物理參數散佈圖</span>
+                </h2>
+                <div class="text-[10px] text-slate-400 font-mono-tech">支援點擊資料點連動 3D 模型與占卜</div>
+            </div>
+            
+            <!-- 圖表控制項 (次數與變數選擇) -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-900/40 p-3 rounded-lg border border-slate-800/80">
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-slate-400 font-bold">X軸變數</label>
+                    <select id="chart-x" onchange="window.updateChart()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-violet-500">
+                        <option value="z">Redshift (紅移 z)</option>
+                        <option value="sfr">SFR (恆星形成率)</option>
+                        <option value="gas" selected>Gas (氣體分率)</option>
+                    </select>
+                    <label class="block text-[9px] text-slate-500 mt-1">X軸次數轉換</label>
+                    <select id="chart-x-transform" onchange="window.updateChart()" class="w-full bg-slate-900/60 border border-slate-800 rounded px-1 py-0.5 text-[10px] text-slate-300 focus:outline-none">
+                        <option value="linear">一次 (Linear)</option>
+                        <option value="ln">對數 (ln)</option>
+                        <option value="square">二次方 (x²)</option>
+                        <option value="sqrt">平方根 (√x)</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-slate-400 font-bold">Y軸變數</label>
+                    <select id="chart-y" onchange="window.updateChart()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-violet-500">
+                        <option value="sfr" selected>SFR (恆星形成率)</option>
+                        <option value="z">Redshift (紅移 z)</option>
+                        <option value="gas">Gas (氣體分率)</option>
+                    </select>
+                    <label class="block text-[9px] text-slate-500 mt-1">Y軸次數轉換</label>
+                    <select id="chart-y-transform" onchange="window.updateChart()" class="w-full bg-slate-900/60 border border-slate-800 rounded px-1 py-0.5 text-[10px] text-slate-300 focus:outline-none">
+                        <option value="linear">一次 (Linear)</option>
+                        <option value="ln">對數 (ln)</option>
+                        <option value="square">二次方 (y²)</option>
+                        <option value="sqrt">平方根 (√y)</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-slate-400 font-bold">圖表天體篩選</label>
+                    <select id="chart-otype" onchange="window.updateChart()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-violet-500">
+                        <option value="ALL">繪製全部 (All)</option>
+                        <option value="GALAXY">僅星系 (Galaxy)</option>
+                        <option value="ELLIPTICAL_GALAXY">僅橢圓 (Elliptical)</option>
+                        <option value="STAR_CLUSTER">僅恆星 (Star)</option>
+                        <option value="BLACK_HOLE">僅黑洞 (Black Hole)</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-slate-400 font-bold">趨勢迴歸線型</label>
+                    <select id="chart-trend" onchange="window.updateChart()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-violet-500">
+                        <option value="linear">線性方程 (y = ax+b)</option>
+                        <option value="poly2">二次函數 (y = ax²+bx+c)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 自動最佳化按鈕 -->
+            <button onclick="window.findGlobalBestFit()" class="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-slate-100 py-2 rounded text-xs font-bold font-mono-tech transition flex items-center justify-center gap-1.5 shadow-md shadow-violet-500/20">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-yellow-300 animate-pulse"></i>
+                <span>尋找最高 R² 自動擬合 (最佳化次數並設為預設)</span>
+            </button>
+
+            <!-- 算數平均數與方程式數據區 -->
+            <div class="bg-slate-900/50 p-3 rounded border border-slate-700 flex flex-col md:flex-row flex-wrap justify-between text-xs font-mono-tech text-slate-300 gap-2">
+                <div class="flex items-center space-x-3 text-[11px]">
+                    <span class="text-slate-500 mr-1">算數平均(略零/缺失):</span>
+                    <span>Z: <span id="mean-z" class="text-sky-300 font-bold">0.00</span></span>
+                    <span>SFR: <span id="mean-sfr" class="text-pink-300 font-bold">0.00</span></span>
+                    <span>f_gas: <span id="mean-gas" class="text-emerald-300 font-bold">0.0%</span></span>
+                </div>
+                <div class="flex items-center space-x-4 bg-violet-900/30 px-2 py-1 rounded border border-violet-500/30">
+                    <span><span class="text-slate-400">趨勢方程:</span> <span id="trend-eq" class="text-yellow-300 font-bold">-</span></span>
+                    <span><span class="text-slate-400">R² =</span> <span id="trend-r2" class="text-white font-bold">-</span></span>
+                </div>
+            </div>
+
+            <!-- 圖表水平推拉滑桿 -->
+            <div class="bg-slate-900/40 p-2.5 rounded-lg border border-slate-800 flex items-center space-x-3 text-xs">
+                <div class="flex items-center space-x-1.5 text-violet-400 font-mono-tech">
+                    <i data-lucide="move-horizontal" class="w-4 h-4"></i><span>視窗推拉:</span>
+                </div>
+                <div class="flex-1 flex items-center space-x-2">
+                    <input type="range" id="chart-pan-slider" min="0" max="100" value="0" oninput="window.handleChartPan(this.value)" class="flex-1 accent-violet-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Chart Canvas Wrapper -->
+            <div id="chart-scroll-wrapper" class="w-full h-[280px] overflow-x-auto bg-slate-950/50 rounded border border-slate-800 p-2 scroll-smooth">
+                <div id="chart-zoom-container" class="h-full w-[160%] min-w-[800px]">
+                    <canvas id="physicsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- 宇宙星際塔羅占卜面板 (跨全欄) -->
+    <section class="lg:col-span-12 glass-panel p-6 rounded-xl space-y-4 border-amber-500/30">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center space-x-2">
+                <i data-lucide="sparkles" class="w-5 h-5 text-amber-400 animate-pulse"></i>
+                <h2 class="text-md font-semibold font-mono-tech text-amber-400">
+                    🔮 宇宙星際塔羅天文導航對齊儀 (Deterministic Cosmic Oracle)
+                </h2>
+            </div>
+            <span class="text-[10px] text-slate-500 font-mono-tech">算法：Trunc(RA,Dec)*1000 mod 78 | 獨佔順延無重複 | 定位正逆位</span>
+        </div>
+        
+        <div id="tarot-container" class="grid grid-cols-3 gap-2 sm:gap-6">
+            <div class="bg-slate-950/80 p-2 sm:p-4 rounded-xl border border-slate-800/80 text-center tarot-card-glow flex flex-col items-center">
+                <div class="text-[8px] sm:text-[10px] text-violet-400 font-mono-tech uppercase tracking-widest mb-2">過去 (Past-RA)</div>
+                <div class="w-full max-w-[140px] aspect-[2/3] bg-slate-900/50 rounded-xl mb-3 flex items-center justify-center border border-violet-500/10 shadow-inner overflow-hidden relative" id="tarot-wrapper-past">
+                    <div id="tarot-img-past" class="w-full h-full flex items-center justify-center transition-transform duration-700">
+                        <i data-lucide="sparkles" class="w-6 sm:w-10 h-6 sm:h-10 text-violet-500/20 animate-pulse"></i>
+                    </div>
+                </div>
+                <div id="tarot-past-val" class="text-[7px] sm:text-[10px] font-mono-tech text-sky-400 mb-1 truncate w-full">RA: -</div>
+                <div id="tarot-past-card" class="text-[9px] sm:text-sm font-semibold text-slate-100 h-12 flex flex-col items-center justify-center line-clamp-2 leading-tight text-center">-</div>
+            </div>
+
+            <div class="bg-slate-950/80 p-2 sm:p-4 rounded-xl border border-slate-800/80 text-center tarot-card-glow flex flex-col items-center">
+                <div class="text-[8px] sm:text-[10px] text-pink-400 font-mono-tech uppercase tracking-widest mb-2">現在 (Present-Dec)</div>
+                <div class="w-full max-w-[140px] aspect-[2/3] bg-slate-900/50 rounded-xl mb-3 flex items-center justify-center border border-pink-500/10 shadow-inner overflow-hidden relative" id="tarot-wrapper-present">
+                    <div id="tarot-img-present" class="w-full h-full flex items-center justify-center transition-transform duration-700">
+                        <i data-lucide="orbit" class="w-6 sm:w-10 h-6 sm:h-10 text-pink-500/20 animate-pulse"></i>
+                    </div>
+                </div>
+                <div id="tarot-present-val" class="text-[7px] sm:text-[10px] font-mono-tech text-pink-400 mb-1 truncate w-full">Dec: -</div>
+                <div id="tarot-present-card" class="text-[9px] sm:text-sm font-semibold text-slate-100 h-12 flex flex-col items-center justify-center line-clamp-2 leading-tight text-center">-</div>
+            </div>
+
+            <div class="bg-slate-950/80 p-2 sm:p-4 rounded-xl border border-slate-800/80 text-center tarot-card-glow flex flex-col items-center">
+                <div class="text-[8px] sm:text-[10px] text-emerald-400 font-mono-tech uppercase tracking-widest mb-2">未來 (Future-Sum)</div>
+                <div class="w-full max-w-[140px] aspect-[2/3] bg-slate-900/50 rounded-xl mb-3 flex items-center justify-center border border-emerald-500/10 shadow-inner overflow-hidden relative" id="tarot-wrapper-future">
+                    <div id="tarot-img-future" class="w-full h-full flex items-center justify-center transition-transform duration-700">
+                        <i data-lucide="galaxy" class="w-6 sm:w-10 h-6 sm:h-10 text-emerald-500/20 animate-pulse"></i>
+                    </div>
+                </div>
+                <div id="tarot-future-val" class="text-[7px] sm:text-[10px] font-mono-tech text-emerald-400 mb-1 truncate w-full">Sum: -</div>
+                <div id="tarot-future-card" class="text-[9px] sm:text-sm font-semibold text-slate-100 h-12 flex flex-col items-center justify-center line-clamp-2 leading-tight text-center">-</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 絕對底部：觀測資料終端機 -->
+    <section class="lg:col-span-12 glass-panel rounded-xl overflow-hidden flex flex-col">
+        <div class="px-5 py-3 border-b border-slate-800 bg-slate-950/90 flex justify-between items-center">
+            <span class="font-bold text-sm tracking-wide font-mono-tech text-sky-400 flex items-center space-x-2">
+                <i data-lucide="terminal" class="w-4 h-4"></i>
+                <span>🖥️ Pipeline Data (SDSS DR16 觀測數據庫匯出)</span>
+            </span>
+            <button onclick="window.exportToExcel()" class="px-3 py-1.5 bg-sky-600/20 hover:bg-sky-500/40 border border-sky-500/50 text-sky-300 rounded md text-xs font-mono-tech transition flex items-center space-x-1.5 shadow-lg shadow-sky-500/10">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>匯出 Excel (.csv)</span>
+            </button>
+        </div>
+        <div class="bg-slate-950 p-4 font-mono text-[11px] overflow-x-auto leading-relaxed max-h-[250px] min-h-[150px]">
+            <div id="code-content-py" class="text-sky-300 select-all font-mono whitespace-pre">specObjID          ra          dec        redshift     SFR       f_gas
+------------------ ----------- ------------ ---------- --------- --------
+[等待輸入查詢指令...]</div>
+        </div>
+    </section>
+
+</main>
+
+<script>
+    // =========================================================================
+    // 【狀態宣告區】全域變數與 3D 渲染控制
+    // =========================================================================
+    window.activeQueryType = "name";
+    window.currentFilterResults = []; 
+    window.physicsChartInstance = null;
+    window.currentTerminalData = []; // 儲存當前終端機內的資料以供匯出
+
+    window.galaxyParticles = null;
+    window.coreMesh = null;
+    window.container = null;
+    window.animationFrameId = null;
+    window.rotationSpeed = 0.003;
+    window.cameraZoom = 1.0; 
+    window.scene = null;
+    window.camera = null;
+    window.renderer = null;
+
+    // 塔羅牌庫構建
+    const TAROT_DECK = [
+        "愚者 (The Fool)", "魔術師 (The Magician)", "女祭司 (The High Priestess)", "女皇 (The Empress)", "皇帝 (The Emperor)",
+        "教皇 (The Hierophant)", "戀人 (The Lovers)", "戰車 (The Chariot)", "力量 (Strength)", "隱者 (The Hermit)",
+        "命運之輪 (Wheel of Fortune)", "正義 (Justice)", "倒吊人 (The Hanged Man)", "死神 (Death)", "節制 (Temperance)",
+        "惡魔 (The Devil)", "高塔 (The Tower)", "星星 (The Star)", "月亮 (The Moon)", "太陽 (The Sun)",
+        "審判 (Judgement)", "世界 (The World)"
+    ];
+    const suits = ["權杖", "聖杯", "寶劍", "星幣"];
+    const ranks = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "侍從", "騎士", "皇后", "國王"];
+    suits.forEach(suit => { ranks.forEach(rank => { TAROT_DECK.push(`${suit}-${rank}`); }); });
+
+    // =========================================================================
+    // 【區塊一：UTILITIES & 輔助函式】
+    // =========================================================================
+    function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
+    function safeSetHTML(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
+    function safeSetValue(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+    
+    function writeLog(text, type = "info") {
+        const consoleBox = document.getElementById("console-logs");
+        if (!consoleBox) return;
+        const time = new Date().toLocaleTimeString();
+        let colorClass = "text-slate-400";
+        if (type === "success") colorClass = "text-emerald-400 font-semibold";
+        if (type === "error") colorClass = "text-red-400 font-semibold";
+        if (type === "warn") colorClass = "text-amber-400";
+        consoleBox.innerHTML += `<div class="${colorClass}">[${time}] ${text}</div>`;
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
+    function seedRandom(seedStr) {
+        let hash = 0;
+        for (let i = 0; i < seedStr.length; i++) hash = seedStr.charCodeAt(i) + ((hash << 5) - hash);
+        return function() { let x = Math.sin(hash++) * 10000; return x - Math.floor(x); };
+    }
+
+    function formatVal(val, decimals, suffix = "", isPercent = false) {
+        if (val === "- -" || val === null || isNaN(val)) return "- -";
+        let v = parseFloat(val);
+        if (isPercent) v = v * 100;
+        return v.toFixed(decimals) + suffix;
+    }
+
+    function safeParseFloat(val, fallback = 0) {
+        if (val === "- -" || val === null || isNaN(val)) return fallback;
+        return parseFloat(val);
+    }
+
+    function switchQueryType(type) {
+        window.activeQueryType = type;
+        ['name', 'coord', 'filter'].forEach(t => {
+            const btn = document.getElementById(`tab-${t}`);
+            const panel = document.getElementById(`query-input-${t}`);
+            if (btn && panel) {
+                if (t === type) {
+                    btn.className = "py-1.5 rounded-md font-medium text-sky-400 bg-slate-800 border border-slate-700/50 transition text-[11px] flex items-center justify-center gap-1";
+                    panel.classList.remove("hidden");
+                } else {
+                    btn.className = "py-1.5 rounded-md font-medium text-slate-400 hover:text-white transition text-[11px] flex items-center justify-center gap-1";
+                    panel.classList.add("hidden");
+                }
+            }
+        });
+    }
+
+    function clearInput(type) {
+        if (type === 'name') {
+            safeSetValue("target-name-input", "");
+            document.getElementById("clear-name-btn").classList.add("hidden");
+            writeLog("已清除名稱搜尋。");
+        } else if (type === 'coord') {
+            safeSetValue("target-ra-input", "");
+            safeSetValue("target-dec-input", "");
+            writeLog("已清除座標搜尋。");
+        }
+        document.getElementById("filter-results-modal").classList.add("hidden");
+        document.getElementById("filter-results-modal").classList.remove("flex");
+        const chartSect = document.getElementById('chart-section');
+        if(chartSect) chartSect.classList.add("hidden");
+        clearSimulation();
+    }
+
+    // =========================================================================
+    // 【區塊二：3D PHYSICS ENGINE & WEBGL】
+    // =========================================================================
+    function init3D() {
+        container = document.getElementById('canvas-container');
+        if(!container || scene) return;
+
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020617, 0.008);
+        
+        let initW = container.clientWidth || 800;
+        let initH = container.clientHeight || 400;
+        
+        camera = new THREE.PerspectiveCamera(60, initW / initH, 0.1, 1000);
+        updateCameraZoom(); 
+        
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(initW, initH);
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        
+        renderer.domElement.style.position = "absolute";
+        renderer.domElement.style.top = "0";
+        renderer.domElement.style.left = "0";
+        container.appendChild(renderer.domElement);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(() => {
+                if (container && camera && renderer && container.clientWidth > 0) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            }).observe(container);
+        }
+
+        let isDragging = false, prevX = 0, prevY = 0;
+        container.addEventListener('mousedown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
+        container.addEventListener('mousemove', e => {
+            if (!isDragging || !galaxyParticles) return;
+            galaxyParticles.rotation.y += (e.clientX - prevX) * 0.005;
+            galaxyParticles.rotation.x += (e.clientY - prevY) * 0.005;
+            prevX = e.clientX; prevY = e.clientY;
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('mouseleave', () => isDragging = false);
+
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault(); 
+            cameraZoom += e.deltaY * 0.0015;
+            cameraZoom = Math.max(0.1, Math.min(cameraZoom, 3.0));
+            updateCameraZoom();
+        }, { passive: false });
+
+        animate();
+    }
+
+    function rebuildGalaxyMesh(z, sfr, gas, type) {
+        if (!scene) return;
+        if (galaxyParticles) scene.remove(galaxyParticles);
+        if (coreMesh) scene.remove(coreMesh);
+        if (type === "NONE") return;
+
+        const particleCount = type === "STAR_CLUSTER" ? (sfr === 0 ? 300 : 3000) : 22000;
+        safeSetText("hud-particles", `~ ${particleCount.toLocaleString()} Ptc`);
+
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        let pZ = safeParseFloat(z), pSfr = safeParseFloat(sfr), pGas = safeParseFloat(gas, 0.05);
+
+        if (type === "BLACK_HOLE") {
+            const coreGeo = new THREE.SphereGeometry(2, 32, 32);
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            coreMesh = new THREE.Mesh(coreGeo, coreMat);
+            scene.add(coreMesh);
+            for (let i = 0; i < particleCount; i++) {
+                const r = 3.0 + Math.pow(Math.random(), 2) * 25.0;
+                const theta = Math.random() * Math.PI * 2;
+                positions[i*3] = r * Math.cos(theta);
+                positions[i*3+1] = (Math.random() - 0.5) * (8/r);
+                positions[i*3+2] = r * Math.sin(theta);
+                colors[i*3] = 1.0; colors[i*3+1] = 0.5 + Math.random()*0.3; colors[i*3+2] = 0.2;
+            }
+        } else if (type === "STAR_CLUSTER") {
+            const isSingleStar = pSfr === 0;
+            const spread = isSingleStar ? 3.0 : 18.0; 
+            for (let i = 0; i < particleCount; i++) {
+                const r = Math.pow(Math.random(), 3) * spread;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                positions[i*3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i*3+2] = r * Math.cos(phi);
+                if (isSingleStar) {
+                    colors[i*3] = 0.8 + Math.random()*0.2; colors[i*3+1] = 0.9 + Math.random()*0.1; colors[i*3+2] = 1.0;
+                } else {
+                    colors[i*3] = 0.9; colors[i*3+1] = 0.7; colors[i*3+2] = 0.5;
+                }
+            }
+        } else {
+            for (let i = 0; i < particleCount; i++) {
+                const r = 2.0 + Math.pow(Math.random(), 1.5) * 35.0;
+                const arms = pGas > 0.1 ? 3 : 2;
+                const theta = (i % arms) * (Math.PI*2/arms) + r * 0.2 + (Math.random()-0.5)*0.6;
+                positions[i*3] = r * Math.cos(theta);
+                positions[i*3+1] = (Math.random() - 0.5) * (type === "ELLIPTICAL_GALAXY" ? r*0.9 : 2.5);
+                positions[i*3+2] = r * Math.sin(theta);
+                
+                colors[i*3] = 0.4 + Math.random()*0.6; colors[i*3+1] = 0.6 + Math.random()*0.4; colors[i*3+2] = 0.8 + Math.random()*0.2;
+                if(pZ > 0) {
+                    colors[i*3] = Math.min(1, colors[i*3] + pZ*0.05);
+                    colors[i*3+1] *= Math.max(0.2, 1 - pZ*0.1);
+                    colors[i*3+2] *= Math.max(0.2, 1 - pZ*0.15);
+                }
+            }
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: type === "BLACK_HOLE" ? 0.25 : (type==="STAR_CLUSTER" && pSfr===0 ? 0.6 : 0.35),
+            vertexColors: true, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending
+        });
+
+        galaxyParticles = new THREE.Points(geometry, material);
+        scene.add(galaxyParticles);
+    }
+
+    function animate() {
+        animationFrameId = requestAnimationFrame(animate);
+        if (galaxyParticles) galaxyParticles.rotation.y += rotationSpeed;
+        if(renderer && scene && camera) renderer.render(scene, camera);
+    }
+
+    function zoom3D(factor) { cameraZoom = Math.max(0.1, Math.min(cameraZoom * factor, 3.0)); updateCameraZoom(); }
+    function updateCameraZoom() { if(camera) { camera.position.set(0, 30*cameraZoom, 45*cameraZoom); camera.lookAt(0,0,0); } }
+    function resetCamera() { cameraZoom = 1.0; updateCameraZoom(); if(galaxyParticles) galaxyParticles.rotation.set(0,0,0); }
+    function clearSimulation() { 
+        if(galaxyParticles){scene.remove(galaxyParticles); galaxyParticles=null;} 
+        if(coreMesh){scene.remove(coreMesh); coreMesh=null;}
+        safeSetText("info-title", "等待查詢..."); safeSetText("info-ra", "-"); safeSetText("info-dec", "-");
+    }
+
+    // =========================================================================
+    // 【區塊三：ASTRONOMY DATABASE & PIPELINE】
+    // =========================================================================
+    function getProceduralTarget(nameInput, raInput, decInput) {
+        let seed = "", ra = raInput, dec = decInput, name = nameInput ? nameInput.trim() : "";
+        let cleanName = name.toUpperCase().replace(/\s+/g, '');
+
+        if (name) { 
+            seed = `NAME_${cleanName}`; 
+        } else if (dec !== null) {
+            name = `Target_J${(ra||0).toFixed(2)}${dec>0?'+':''}${dec.toFixed(2)}`;
+            seed = `COORDS_${ra}_${dec}`;
+        } else { return null; }
+
+        const rand = seedRandom(seed);
+        if (ra === null || isNaN(ra)) ra = rand() * 360; 
+        if (dec === null || isNaN(dec)) dec = (rand() * 180) - 90; 
+
+        let determinedType = "GALAXY", determinedOtype = "Sb (螺旋星系)";
+        let baseZ = rand() * 2.0, baseSfr = rand() * 12.0, baseGas = 0.04 + rand() * 0.35;
+
+        if (cleanName.includes("SIRIUS") || cleanName === "天狼星") {
+            ra = 101.28716; dec = -16.71612; baseZ = -0.000025; baseSfr = 0; baseGas = 0;
+            determinedType = "STAR_CLUSTER"; determinedOtype = "Star (主序星)"; name = "Sirius (天狼星)";
+        } else if (cleanName.includes("M31") || cleanName.includes("ANDROMEDA")) {
+            ra = 10.684710; dec = 41.268750; baseZ = -0.001001; baseSfr = 0.40; baseGas = 0.05;
+            determinedType = "GALAXY"; determinedOtype = "Sb (螺旋星系)"; name = "M31 (仙女座星系)";
+        } else if (cleanName.includes("M87")) {
+            ra = 187.705930; dec = 12.391120; baseZ = 0.004280; baseSfr = 0.10; baseGas = 0.01;
+            determinedType = "ELLIPTICAL_GALAXY"; determinedOtype = "cD (巨橢圓星系)"; name = "M87";
+        } else if (cleanName.includes("NGC1300")) {
+            ra = 49.920830; dec = -19.409170; baseZ = 0.009400; baseSfr = 1.20; baseGas = 0.18;
+            determinedType = "GALAXY"; determinedOtype = "SBa (棒旋星系)"; name = "NGC 1300";
+        } else if (/QSO|QUASAR|SMBH/i.test(cleanName)) {
+            determinedType = "BLACK_HOLE"; determinedOtype = "QSO (活躍星系核/類星體)";
+            baseZ = 1.0 + rand() * 6.0; baseSfr = 50 + rand() * 200; baseGas = 0.2 + rand() * 0.5;
+        } else if (/JADES|CEERS|JWST/i.test(cleanName)) {
+            determinedType = "GALAXY"; determinedOtype = "High-z Galaxy (極早期星系)";
+            baseZ = 8.0 + rand() * 6.0; baseSfr = rand() * 5.0; baseGas = "- -"; 
+        } else if (/ELLIPTICAL|CD/i.test(cleanName)) {
+            determinedType = "ELLIPTICAL_GALAXY"; determinedOtype = "cD (巨橢圓星系)";
+            baseZ = rand() * 0.1; baseSfr = rand() * 0.5; baseGas = rand() * 0.02;
+        } else if (/SIRIUS|STAR|PSO|BROWN|DWARF/i.test(cleanName)) {
+            determinedType = "STAR_CLUSTER"; determinedOtype = "Star (恆星/矮星系)";
+            baseZ = (rand() - 0.5) * 0.0001; baseSfr = 0; baseGas = 0;
+        } else if (/NGC|M\d+|UGC|ARP/i.test(cleanName)) {
+            determinedType = "GALAXY"; determinedOtype = rand() > 0.5 ? "Sb (螺旋星系)" : "SBa (棒旋星系)";
+            baseZ = rand() * 0.5; 
+        } else {
+            const otypes = [
+                { type: "GALAXY", otype: "Sb (螺旋星系)" }, { type: "GALAXY", otype: "Sc (不規則/晚期螺旋)" },
+                { type: "ELLIPTICAL_GALAXY", otype: "cD (巨橢圓星系)" }, { type: "STAR_CLUSTER", otype: "Cl* (星團/星協)" }
+            ];
+            let pick = otypes[Math.floor(rand() * otypes.length)];
+            determinedType = pick.type; determinedOtype = pick.otype;
+            if(determinedType === "STAR_CLUSTER") { baseSfr = rand()*0.5; baseGas = rand()*0.02; baseZ = (rand()-0.5)*0.01; }
+            if(determinedType === "ELLIPTICAL_GALAXY") { baseSfr = rand()*0.3; baseGas = rand()*0.03; baseZ = rand()*1.5; }
+        }
+
+        if (determinedType !== "STAR_CLUSTER" && rand() < 0.1) baseSfr = "- -";
+        if (determinedType !== "STAR_CLUSTER" && rand() < 0.1) baseGas = "- -";
+
+        return { name: name, type: determinedType, otype: determinedOtype, ra: ra, dec: dec, z: baseZ, sfr: baseSfr, gas: baseGas };
+    }
+
+    function updateBottomTerminal(dataList) {
+        window.currentTerminalData = dataList; // 將最新資料記錄至全域
+        let output = `specObjID          ra          dec        redshift     SFR       f_gas\n`;
+        output += `------------------ ----------- ------------ ---------- --------- --------\n`;
+        dataList.forEach(data => {
+            if (!data) return;
+            const rand = seedRandom("ID_" + data.name);
+            let specObjID = "299" + Math.floor(rand() * 100000000000000).toString().padStart(15, '0');
+            let rowRA = (data.ra !== null && data.ra !== undefined) ? data.ra.toFixed(5) : "-";
+            let rowDec = (data.dec !== null && data.dec !== undefined) ? data.dec.toFixed(5) : "-";
+            let rowZ = data.z === "- -" ? "- -" : parseFloat(data.z).toFixed(4);
+            let rowSfr = data.sfr === "- -" ? "- -" : parseFloat(data.sfr).toFixed(2);
+            let rowGas = data.gas === "- -" ? "- -" : parseFloat(data.gas).toFixed(3);
+            output += `${specObjID} ${rowRA.padStart(11, ' ')} ${rowDec.padStart(12, ' ')} ${rowZ.padStart(10, ' ')} ${rowSfr.padStart(9, ' ')} ${rowGas.padStart(8, ' ')}\n`;
+        });
+        safeSetText("code-content-py", output);
+    }
+
+    function exportToExcel() {
+        if (!window.currentTerminalData || window.currentTerminalData.length === 0) {
+            writeLog("目前沒有可供匯出的資料表！", "warn");
+            return;
+        }
+
+        // 建立 CSV 標頭
+        let csvContent = "specObjID,ra,dec,redshift,SFR,f_gas\n";
+        
+        // 匯入資料陣列
+        window.currentTerminalData.forEach(data => {
+            if (!data) return;
+            const rand = seedRandom("ID_" + data.name);
+            let specObjID = "299" + Math.floor(rand() * 100000000000000).toString().padStart(15, '0');
+            let rowRA = (data.ra !== null && data.ra !== undefined) ? data.ra.toFixed(5) : "";
+            let rowDec = (data.dec !== null && data.dec !== undefined) ? data.dec.toFixed(5) : "";
+            let rowZ = data.z === "- -" ? "" : parseFloat(data.z).toFixed(4);
+            let rowSfr = data.sfr === "- -" ? "" : parseFloat(data.sfr).toFixed(2);
+            let rowGas = data.gas === "- -" ? "" : parseFloat(data.gas).toFixed(3);
+            
+            csvContent += `${specObjID},${rowRA},${rowDec},${rowZ},${rowSfr},${rowGas}\n`;
+        });
+
+        // 加上 BOM (\ufeff) 讓 Excel 能夠正確解析 UTF-8 編碼
+        const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", "CosmoQuery_Data.csv");
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        writeLog(`成功匯出 ${window.currentTerminalData.length} 筆天體資料至 Excel (CSV)！`, "success");
+    }
+
+    function loadRandomTarget() {
+        const presets = ["M31", "Sirius", "M87", "NGC1300"];
+        let mockName = (Math.random() < 0.4) ? presets[Math.floor(Math.random() * presets.length)] : `SDSS J${(Math.random() * 360).toFixed(4)}`;
+        
+        writeLog(`隨機探索星系: ${mockName}...`);
+        switchQueryType('name');
+        safeSetValue("target-name-input", mockName);
+        document.getElementById("clear-name-btn").classList.remove("hidden");
+        document.getElementById("filter-results-modal").classList.add("hidden");
+        document.getElementById("filter-results-modal").classList.remove("flex");
+        const chartSect = document.getElementById('chart-section');
+        if(chartSect) chartSect.classList.add("hidden");
+
+        const targetData = getProceduralTarget(mockName, null, null);
+        applyTargetData(targetData);
+        updateBottomTerminal([targetData]);
+    }
+
+    function applyTargetData(data, skipLog = false) {
+        if (!data) return;
+        safeSetText("info-title", `天體：${data.name}`);
+        safeSetText("info-type", data.type);
+        safeSetText("info-ra", `${data.ra !== null && data.ra !== undefined ? data.ra.toFixed(5) : '-'}°`);
+        safeSetText("info-dec", `${data.dec !== null && data.dec !== undefined ? data.dec.toFixed(5) : '-'}°`);
+        safeSetText("info-otype", data.otype);
+        
+        safeSetValue("slider-z", safeParseFloat(data.z));
+        safeSetValue("slider-sfr", safeParseFloat(data.sfr));
+        safeSetValue("slider-gas", safeParseFloat(data.gas));
+
+        updateValues(data.z, data.sfr, data.gas, data.type);
+        if(!skipLog) writeLog(`[實時合成] 分類: ${data.otype} | 紅移: ${formatVal(data.z, 4)}`, "success");
+        calculateTarotOracle(data);
+    }
+
+    function updateValues(z, sfr, gas, type) {
+        safeSetText("val-z", z === "- -" ? "- -" : parseFloat(z).toFixed(4));
+        safeSetText("val-sfr", sfr === "- -" ? "- -" : parseFloat(sfr).toFixed(2));
+        safeSetText("val-gas", gas === "- -" ? "- -" : (parseFloat(gas) * 100).toFixed(1) + "%");
+
+        let modelTypeStr = "恆星/星團";
+        if (type === "BLACK_HOLE") modelTypeStr = "超大質量黑洞 / 吸積盤";
+        else if (type === "GALAXY") modelTypeStr = gas === "- -" ? "遙遠星系" : (gas < 0.1 ? "透鏡星系" : "旋渦星系");
+        else if (type === "ELLIPTICAL_GALAXY") modelTypeStr = "橢圓星系";
+        
+        safeSetText("hud-type", modelTypeStr);
+        rebuildGalaxyMesh(z, sfr, gas, type);
+    }
+
+    // =========================================================================
+    // 【區塊四：執行路由與名稱、座標掃描模組】
+    // =========================================================================
+    function executeQuery(mode) {
+        if (mode === 'name') executeNameQuery();
+        else if (mode === 'coord') executeCoordinateQuery();
+    }
+
+    function executeNameQuery() {
+        const nameInput = document.getElementById("target-name-input");
+        if (!nameInput || !nameInput.value.trim()) { writeLog("請輸入天體名稱！", "error"); return; }
+        const nameVal = nameInput.value.trim();
+        document.getElementById("clear-name-btn").classList.remove("hidden");
+        writeLog(`[智能解析] 解析 '${nameVal}'...`);
+        
+        document.getElementById("filter-results-modal").classList.add("hidden");
+        document.getElementById("filter-results-modal").classList.remove("flex");
+        const chartSect = document.getElementById('chart-section');
+        if(chartSect) chartSect.classList.add("hidden");
+
+        setTimeout(() => {
+            const targetData = getProceduralTarget(nameVal, null, null);
+            if (targetData) { applyTargetData(targetData); updateBottomTerminal([targetData]); }
+        }, 400);
+    }
+
+    function executeCoordinateQuery() {
+        const raInputStr = document.getElementById("target-ra-input").value;
+        const decInputStr = document.getElementById("target-dec-input").value;
+        if (!decInputStr) { writeLog("請輸入必填的 Dec (赤緯) 座標！", "error"); return; }
+        const dec = parseFloat(decInputStr); const ra = raInputStr ? parseFloat(raInputStr) : null; 
+        if (isNaN(dec)) { writeLog("請輸入有效的實數赤緯座標！", "error"); return; }
+        
+        writeLog(`[區域掃描] 正在掃描赤緯 Dec: ${dec} 附近的星系...`);
+
+        setTimeout(() => {
+            let results = [];
+            const rand = seedRandom(`SCAN_${dec}`);
+            const count = Math.floor(rand() * 8) + 5; 
+            for(let i=0; i<count; i++) {
+                let rRa = (ra !== null ? ra : (rand() * 360)) + (rand() - 0.5) * 0.8;
+                let rDec = dec + (rand() - 0.5) * 0.08; 
+                let prefix = ["SDSS J", "PSO J", "NGC "][Math.floor(rand()*3)];
+                let mockName = `${prefix}${(rRa).toFixed(2)}${rDec>0?'+':''}${(rDec).toFixed(3)}`;
+                if(rand() > 0.85) mockName = `QSO J${(rRa).toFixed(2)}`;
+                let obj = getProceduralTarget(mockName, rRa, rDec);
+                if(obj) results.push(obj);
+            }
+            currentFilterResults = results;
+            safeSetText("results-title", `區域掃描目標列表 (依 otype 分類)`);
+            showFilterResultsModal(results); 
+            updateBottomTerminal(results);   
+            
+            const chartSect = document.getElementById('chart-section');
+            if(chartSect) { chartSect.classList.remove('hidden'); chartSect.classList.add('flex'); }
+            findGlobalBestFit(true);
+
+            if(results.length > 0) applyTargetData(results[0], true);
+            writeLog(`[掃描完成] 發現 ${results.length} 個天體，已列表並產生分佈圖表。`, "success");
+        }, 600);
+    }
+
+    // =========================================================================
+    // 【區塊五：參數條件篩選與多維度圖表分析】
+    // =========================================================================
+    function executeFilterQuery() {
+        writeLog(`啟動多維參數星表條件篩選...`);
+        const minZ = parseFloat(document.getElementById('f-min-z').value) || -999;
+        const maxZ = parseFloat(document.getElementById('f-max-z').value) || 999;
+        const minSfr = parseFloat(document.getElementById('f-min-sfr').value) || -999;
+        const maxSfr = parseFloat(document.getElementById('f-max-sfr').value) || 999;
+        const minGas = parseFloat(document.getElementById('f-min-gas').value) || -999;
+        const maxGas = parseFloat(document.getElementById('f-max-gas').value) || 999;
+        const filterType = document.getElementById('f-otype').value;
+
+        let results = [];
+        const rand = seedRandom("FILTER_SCAN_PROCEDURAL");
+        
+        for(let i=0; i<400; i++) {
+            let rRa = rand() * 360; let rDec = (rand() * 180) - 90;
+            let prefix = ["SDSS J", "PSO J", "NGC "][Math.floor(rand()*3)];
+            let mockName = `${prefix}${(rRa).toFixed(2)}${rDec>0?'+':''}${(rDec).toFixed(3)}`;
+            if(rand() > 0.9) mockName = `QSO J${(rRa).toFixed(2)}`;
+
+            let obj = getProceduralTarget(mockName, rRa, rDec);
+            if (obj && obj.z !== "- -" && obj.sfr !== "- -" && obj.gas !== "- -") {
+                if (obj.z >= minZ && obj.z <= maxZ && obj.sfr >= minSfr && obj.sfr <= maxSfr && obj.gas >= minGas && obj.gas <= maxGas) {
+                    if (filterType === 'ALL' || obj.type === filterType) {
+                        results.push(obj);
+                    }
+                }
+            }
+        }
+
+        if(results.length === 0) {
+            writeLog(`[條件過苛] 於所選參數範圍內未搜尋到天體。`, "warn");
+            const modal = document.getElementById("filter-results-modal");
+            const body = document.getElementById("filter-results-body");
+            if(modal && body) {
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+                body.innerHTML = "<div class='p-10 text-center text-slate-500 font-bold'>未搜尋到天體。請放寬篩選條件。</div>";
+                safeSetText("results-title", `篩選結果 (0 筆)`);
+            }
+            const chartSect = document.getElementById('chart-section');
+            if(chartSect) { chartSect.classList.add("hidden"); chartSect.classList.remove("flex"); }
+            return;
+        }
+
+        currentFilterResults = results; 
+        safeSetText("results-title", `條件篩選結果 (${results.length} 筆)`);
+        showFilterResultsModal(results);
+        updateBottomTerminal(results);
+        
+        const chartSect = document.getElementById('chart-section');
+        if(chartSect) { chartSect.classList.remove('hidden'); chartSect.classList.add('flex'); }
+        
+        findGlobalBestFit(true); 
+        if(results.length > 0) applyTargetData(results[0], true);
+        writeLog(`[篩選完成] 發現 ${results.length} 個天體，已自動繪製多維分佈圖表。`, "success");
+    }
+
+    function showFilterResultsModal(results) {
+        const modal = document.getElementById("filter-results-modal");
+        const body = document.getElementById("filter-results-body");
+        if(!modal || !body) return;
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        const grouped = {};
+        results.forEach(r => {
+            const cat = r.otype || "未知類型";
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(r);
+        });
+
+        let html = "";
+        for (let cat in grouped) {
+            html += `<div class="mb-4 bg-slate-900/50 rounded-lg p-3 border border-slate-800"><h4 class="text-sky-300 font-bold mb-2 flex items-center space-x-2 text-xs"><i data-lucide="folder-tree" class="w-3.5 h-3.5"></i><span>${cat}</span><span class="text-slate-500 font-normal">(${grouped[cat].length})</span></h4><div class="overflow-x-auto"><table class="w-full text-left border-collapse whitespace-nowrap"><thead><tr class="text-[10px] text-slate-400 border-b border-slate-700/80 uppercase"><th class="py-1 pr-3 pl-1 font-medium">Object Name</th><th class="py-1 pr-3 font-medium">RA (deg)</th><th class="py-1 pr-3 font-medium">Dec (deg)</th><th class="py-1 pr-3 font-medium text-pink-400">z</th><th class="py-1 pr-3 font-medium text-emerald-400">SFR</th></tr></thead><tbody>`;
+            grouped[cat].forEach(r => {
+                const dataStr = encodeURIComponent(JSON.stringify(r)).replace(/'/g, "%27");
+                const raDisplay = (r.ra !== null && r.ra !== undefined) ? r.ra.toFixed(4) : "-";
+                const decDisplay = (r.dec !== null && r.dec !== undefined) ? r.dec.toFixed(4) : "-";
+                html += `<tr class="border-b border-slate-800/40 hover:bg-sky-900/30 transition text-[11px]"><td class="py-1.5 pr-3 pl-1"><button onclick="window.loadFilteredTarget('${dataStr}')" class="text-sky-300 hover:text-white font-bold flex items-center gap-1 transition"><i data-lucide="target" class="w-3 h-3 text-emerald-500"></i><span class="underline decoration-slate-600 decoration-dashed">${r.name}</span></button></td><td class="py-1.5 pr-3 text-slate-300">${raDisplay}</td><td class="py-1.5 pr-3 text-slate-300">${decDisplay}</td><td class="py-1.5 pr-3 text-pink-300/80 font-mono-tech">${formatVal(r.z, 3)}</td><td class="py-1.5 pr-3 text-emerald-300/80 font-mono-tech">${formatVal(r.sfr, 1)}</td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+        }
+        body.innerHTML = html;
+        if(window.lucide) lucide.createIcons();
+    }
+
+    function loadFilteredTarget(dataStr) {
+        try {
+            let data = JSON.parse(decodeURIComponent(dataStr));
+            applyTargetData(data, true); 
+            updateBottomTerminal([data]);
+            writeLog(`[選定目標] 已連動 3D 模型與占卜面板：${data.name}`, "success");
+            const canvasContainer = document.getElementById("canvas-container");
+            if (canvasContainer) canvasContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {
+            writeLog(`載入目標資料時發生錯誤。`, "error");
+        }
+    }
+
+    function applyCoordinateTransform(val, type) {
+        if (val === "- -" || isNaN(val) || val === null) return null;
+        let v = parseFloat(val);
+        if (type === 'ln') return v > 0 ? Math.log(v) : null; 
+        if (type === 'square') return v * v;
+        if (type === 'sqrt') return v >= 0 ? Math.sqrt(v) : null; 
+        return v; 
+    }
+
+    function solveGaussianElimination(A, B) {
+        let n = B.length;
+        for (let i = 0; i < n; i++) {
+            let maxRow = i;
+            for (let k = i + 1; k < n; k++) { if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k; }
+            let tempRow = A[i]; A[i] = A[maxRow]; A[maxRow] = tempRow;
+            let tempVal = B[i]; B[i] = B[maxRow]; B[maxRow] = tempVal;
+            if (Math.abs(A[i][i]) < 1e-12) return null; 
+            for (let k = i + 1; k < n; k++) {
+                let factor = A[k][i] / A[i][i];
+                for (let j = i; j < n; j++) { A[k][j] -= factor * A[i][j]; }
+                B[k] -= factor * B[i];
+            }
+        }
+        let solution = new Array(n).fill(0);
+        for (let i = n - 1; i >= 0; i--) {
+            let sum = 0;
+            for (let j = i + 1; j < n; j++) { sum += A[i][j] * solution[j]; }
+            solution[i] = (B[i] - sum) / A[i][i];
+        }
+        return solution;
+    }
+
+    function calculateFitPerformance(points, trendType) {
+        let n = points.length;
+        if (n < 3 && trendType === 'poly2') return { r2: -Infinity, eq: "N/A" };
+        if (n < 2) return { r2: -Infinity, eq: "N/A" };
+
+        let sumY = 0; points.forEach(p => sumY += p.y);
+        let meanY = sumY / n;
+        let ssTot = 0; points.forEach(p => ssTot += Math.pow(p.y - meanY, 2));
+        if (ssTot === 0) return { r2: 1, eq: "Constant Y" };
+
+        let ssRes = 0;
+        if (trendType === 'linear') {
+            let sumX = 0, sumXY = 0, sumX2 = 0;
+            points.forEach(p => { sumX += p.x; sumXY += p.x * p.y; sumX2 += p.x * p.x; });
+            let denom = (n * sumX2 - sumX * sumX);
+            if (denom === 0) return { r2: -Infinity, eq: "N/A" };
+            let a = (n * sumXY - sumX * sumY) / denom;
+            let b = (sumY - a * sumX) / n;
+            points.forEach(p => { ssRes += Math.pow(p.y - (a * p.x + b), 2); });
+            return { r2: 1 - (ssRes / ssTot), eq: `y = ${a.toFixed(3)}x ${b >= 0 ? '+' : ''}${b.toFixed(3)}` };
+        } else if (trendType === 'poly2') {
+            let degree = 2; let m = degree + 1;
+            let AMat = Array.from({ length: m }, () => new Array(m).fill(0));
+            let BMat = new Array(m).fill(0);
+            for (let row = 0; row < m; row++) {
+                for (let col = 0; col < m; col++) {
+                    let sumPowerX = 0; points.forEach(p => sumPowerX += Math.pow(p.x, row + col));
+                    AMat[row][col] = sumPowerX;
+                }
+                let sumPowerXY = 0; points.forEach(p => sumPowerXY += p.y * Math.pow(p.x, row));
+                BMat[row] = sumPowerXY;
+            }
+            let coeffs = solveGaussianElimination(AMat, BMat);
+            if (!coeffs) return { r2: -Infinity, eq: "N/A" };
+            points.forEach(p => {
+                let yPred = 0; for (let d = 0; d <= degree; d++) yPred += coeffs[d] * Math.pow(p.x, d);
+                ssRes += Math.pow(p.y - yPred, 2);
+            });
+            let eq = `y = ${coeffs[2].toFixed(3)}x² ${coeffs[1] >= 0 ? '+' : ''}${coeffs[1].toFixed(3)}x ${coeffs[0] >= 0 ? '+' : ''}${coeffs[0].toFixed(3)}`;
+            return { r2: 1 - (ssRes / ssTot), eq: eq };
+        }
+        return { r2: -Infinity, eq: "N/A" };
+    }
+
+    function findGlobalBestFit(silent = false) {
+        if(!currentFilterResults.length) return;
+        const xProp = document.getElementById("chart-x").value;
+        const yProp = document.getElementById("chart-y").value;
+        const filterOtype = document.getElementById("chart-otype").value;
+
+        let baseFilteredData = currentFilterResults.filter(d => d[xProp] !== "- -" && d[yProp] !== "- -");
+        if (filterOtype !== "ALL") baseFilteredData = baseFilteredData.filter(d => d.type === filterOtype);
+
+        if (baseFilteredData.length < 3) return;
+
+        const xTransforms = ['linear', 'square', 'sqrt', 'ln'];
+        const yTransforms = ['linear', 'square', 'sqrt', 'ln'];
+        const trendTypes = ['linear', 'poly2']; 
+
+        let bestXTrans = 'linear', bestYTrans = 'linear', bestTrend = 'linear', bestR2 = -Infinity;
+
+        xTransforms.forEach(xt => {
+            yTransforms.forEach(yt => {
+                trendTypes.forEach(trend => {
+                    let transformedPoints = [];
+                    baseFilteredData.forEach(d => {
+                        let tx = applyCoordinateTransform(d[xProp], xt);
+                        let ty = applyCoordinateTransform(d[yProp], yt);
+                        if (tx !== null && ty !== null && isFinite(tx) && isFinite(ty)) {
+                            transformedPoints.push({ x: tx, y: ty });
+                        }
+                    });
+                    if (transformedPoints.length >= 3) {
+                        let fit = calculateFitPerformance(transformedPoints, trend);
+                        if (!isNaN(fit.r2) && isFinite(fit.r2) && fit.r2 <= 1.0 && fit.r2 > bestR2) {
+                            bestR2 = fit.r2; bestXTrans = xt; bestYTrans = yt; bestTrend = trend; 
+                        }
+                    }
+                });
+            });
+        });
+
+        if (bestR2 !== -Infinity) {
+            safeSetValue("chart-x-transform", bestXTrans);
+            safeSetValue("chart-y-transform", bestYTrans);
+            safeSetValue("chart-trend", bestTrend);
+            if (!silent) writeLog(`[全域最佳化] 已找出最高相關次數！ R² = ${bestR2.toFixed(4)}`, "success");
+            updateChart();
+        }
+    }
+
+    function handleChartPan(pct) {
+        const scrollWrapper = document.getElementById("chart-scroll-wrapper");
+        if (scrollWrapper) {
+            const maxScrollLeft = scrollWrapper.scrollWidth - scrollWrapper.clientWidth;
+            scrollWrapper.scrollLeft = (parseFloat(pct) / 100) * maxScrollLeft;
+        }
+    }
+
+    function updateChart() {
+        if(!currentFilterResults || currentFilterResults.length === 0) return;
+
+        const xProp = document.getElementById("chart-x").value; 
+        const yProp = document.getElementById("chart-y").value;
+        const filterOtype = document.getElementById("chart-otype").value;
+        const trendType = document.getElementById("chart-trend").value;
+        const xTransType = document.getElementById("chart-x-transform").value;
+        const yTransType = document.getElementById("chart-y-transform").value;
+
+        let baseFilteredData = currentFilterResults.filter(d => d[xProp] !== "- -" && d[yProp] !== "- -");
+        if (filterOtype !== "ALL") baseFilteredData = baseFilteredData.filter(d => d.type === filterOtype);
+
+        let sumZ = 0, sumSfr = 0, sumGas = 0;
+        let countZ = 0, countSfr = 0, countGas = 0;
+        
+        baseFilteredData.forEach(d => {
+            let vz = parseFloat(d.z), vsfr = parseFloat(d.sfr), vgas = parseFloat(d.gas);
+            if (d.z !== "- -" && vz !== 0 && !isNaN(vz)) { sumZ += vz; countZ++; }
+            if (d.sfr !== "- -" && vsfr !== 0 && !isNaN(vsfr)) { sumSfr += vsfr; countSfr++; }
+            if (d.gas !== "- -" && vgas !== 0 && !isNaN(vgas)) { sumGas += vgas; countGas++; }
+        });
+        
+        safeSetText("mean-z", countZ > 0 ? (sumZ / countZ).toFixed(4) : "無資料");
+        safeSetText("mean-sfr", countSfr > 0 ? (sumSfr / countSfr).toFixed(3) : "無資料");
+        safeSetText("mean-gas", countGas > 0 ? ((sumGas / countGas)*100).toFixed(2) + "%" : "無資料");
+
+        let scatterPoints = [];
+        baseFilteredData.forEach(d => {
+            let tx = applyCoordinateTransform(d[xProp], xTransType);
+            let ty = applyCoordinateTransform(d[yProp], yTransType);
+            if (tx !== null && ty !== null && isFinite(tx) && isFinite(ty)) scatterPoints.push({ x: tx, y: ty, rawData: d });
+        });
+
+        if (scatterPoints.length < 2) {
+            safeSetText("trend-eq", "點數不足"); safeSetText("trend-r2", "-");
+            renderChart(scatterPoints, [], xProp, yProp, xTransType, yTransType);
+            return;
+        }
+
+        scatterPoints.sort((a,b) => a.x - b.x);
+        let fit = calculateFitPerformance(scatterPoints, trendType);
+        
+        let trendLinePoints = [];
+        if(fit.r2 !== -Infinity && scatterPoints.length > 0) {
+            let minX = scatterPoints[0].x, maxX = scatterPoints[scatterPoints.length-1].x;
+            if (trendType === 'linear') {
+                let n = scatterPoints.length; let sumX=0, sumY=0, sumXY=0, sumX2=0;
+                scatterPoints.forEach(p => { sumX+=p.x; sumY+=p.y; sumXY+=p.x*p.y; sumX2+=p.x*p.x; });
+                let denom = (n*sumX2 - sumX*sumX);
+                if (denom !== 0) {
+                    let a = (n*sumXY - sumX*sumY)/denom; let b = (sumY - a*sumX)/n;
+                    trendLinePoints.push({x: minX, y: a*minX+b}); trendLinePoints.push({x: maxX, y: a*maxX+b});
+                }
+            } else if (trendType === 'poly2') {
+                let degree = 2, m = degree + 1; 
+                let A = Array.from({ length: m }, () => new Array(m).fill(0)), B = new Array(m).fill(0);
+                for (let row = 0; row < m; row++) {
+                    for (let col = 0; col < m; col++) {
+                        let sumPowerX = 0; scatterPoints.forEach(p => sumPowerX += Math.pow(p.x, row + col));
+                        A[row][col] = sumPowerX;
+                    }
+                    let sumPowerXY = 0; scatterPoints.forEach(p => sumPowerXY += p.y * Math.pow(p.x, row));
+                    B[row] = sumPowerXY;
+                }
+                let coeffs = solveGaussianElimination(A, B); 
+                if (coeffs) {
+                    let step = (maxX - minX) / 50;
+                    if (step > 0) {
+                        for (let cx = minX; cx <= maxX; cx += step) {
+                            let cy = 0; for (let d = 0; d <= degree; d++) cy += coeffs[d] * Math.pow(cx, d);
+                            trendLinePoints.push({ x: cx, y: cy });
+                        }
+                    } else {
+                        let cy = 0; for (let d = 0; d <= degree; d++) cy += coeffs[d] * Math.pow(minX, d);
+                        trendLinePoints.push({ x: minX, y: cy });
+                    }
+                }
+            }
+        }
+
+        safeSetText("trend-eq", fit.eq);
+        safeSetText("trend-r2", fit.r2 === -Infinity ? "N/A" : fit.r2.toFixed(4));
+        renderChart(scatterPoints, trendLinePoints, xProp, yProp, xTransType, yTransType);
+    }
+
+    function getTransformLabelSuffix(type) {
+        if (type === 'ln') return ' (ln)'; if (type === 'square') return ' (²)'; if (type === 'sqrt') return ' (√)'; return '';
+    }
+
+    function renderChart(scatterPoints, trendLinePoints, xProp, yProp, xTrans, yTrans) {
+        const ctx = document.getElementById('physicsChart').getContext('2d');
+        if(physicsChartInstance) physicsChartInstance.destroy();
+
+        const xLabel = xProp.toUpperCase() + getTransformLabelSuffix(xTrans);
+        const yLabel = yProp.toUpperCase() + getTransformLabelSuffix(yTrans);
+
+        physicsChartInstance = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: '天體資料點 (點擊連動占卜與模型)',
+                    data: scatterPoints,
+                    backgroundColor: 'rgba(167, 139, 250, 0.7)', 
+                    borderColor: 'rgba(139, 92, 246, 1)',
+                    borderWidth: 1, pointRadius: 5, pointHoverRadius: 8,
+                    pointHoverBackgroundColor: 'rgba(56, 189, 248, 0.9)',
+                    pointHoverBorderColor: 'white'
+                }, {
+                    type: 'line', label: `趨勢迴歸線`, data: trendLinePoints,
+                    borderColor: 'rgba(234, 179, 8, 0.8)', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.15 
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                onClick: (event, elements, chart) => {
+                    if (elements.length > 0) {
+                        const firstPoint = elements[0];
+                        if (firstPoint.datasetIndex === 0) { 
+                            const pointData = chart.data.datasets[0].data[firstPoint.index];
+                            if (pointData && pointData.rawData) {
+                                applyTargetData(pointData.rawData, true); 
+                                updateBottomTerminal([pointData.rawData]);
+                                writeLog(`[圖表連動] 已在星表選中 ${pointData.rawData.name}，更新 3D 模型與占卜面板。`, "success");
+                                const canvasContainer = document.getElementById("canvas-container");
+                                if (canvasContainer) canvasContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }
+                    }
+                },
+                onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default'; },
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1', font: { family: "'Share Tech Mono', monospace" } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const point = context.raw;
+                                const name = point.rawData ? point.rawData.name : '趨勢迴歸線';
+                                return `${name} | X: ${context.parsed.x.toFixed(3)}, Y: ${context.parsed.y.toFixed(3)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { title: { display: true, text: xLabel, color: '#94a3b8' }, grid: { color: 'rgba(51, 65, 85, 0.4)' }, ticks: { color: '#94a3b8' } },
+                    y: { title: { display: true, text: yLabel, color: '#94a3b8' }, grid: { color: 'rgba(51, 65, 85, 0.4)' }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+    }
+
+    // =========================================================================
+    // 【區塊六：占卜導航 - 星際塔羅命運神諭系統】
+    // =========================================================================
+    function getTruncatedInt3Dec(val) {
+        if (val === null || val === undefined || isNaN(val)) return 0;
+        const absVal = Math.abs(val);
+        const parts = absVal.toFixed(8).split('.');
+        return parseInt(parts[0] + (parts[1] || "000").substring(0, 3).padEnd(3, '0'), 10);
+    }
+
+    function getTarotCardSVG(cardName, isUpright) {
+        const rotationClass = isUpright ? "" : "transform rotate-180";
+        let mainColor = "#8b5cf6"; let innerIcon = "";
+        
+        if (cardName.includes("權杖")) {
+            mainColor = "#f43f5e"; 
+            innerIcon = `<line x1="50" y1="25" x2="50" y2="125" stroke="${mainColor}" stroke-width="4" stroke-linecap="round"/><circle cx="50" cy="20" r="6" fill="#fff" stroke="${mainColor}" stroke-width="2"/><path d="M42,50 C45,55 55,55 58,50" stroke="${mainColor}" stroke-width="2" fill="none"/><path d="M42,80 C45,85 55,85 58,80" stroke="${mainColor}" stroke-width="2" fill="none"/>`;
+        } else if (cardName.includes("聖杯")) {
+            mainColor = "#3b82f6"; 
+            innerIcon = `<path d="M35,40 C35,80 65,80 65,40 Z" fill="none" stroke="${mainColor}" stroke-width="3" stroke-linejoin="round"/><line x1="50" y1="75" x2="50" y2="115" stroke="${mainColor}" stroke-width="3"/><line x1="40" y1="115" x2="60" y2="115" stroke="${mainColor}" stroke-width="3" stroke-linecap="round"/><path d="M38,30 Q50,42 62,30" stroke="#60a5fa" stroke-width="1.5" fill="none"/>`;
+        } else if (cardName.includes("寶劍")) {
+            mainColor = "#06b6d4"; 
+            innerIcon = `<line x1="50" y1="20" x2="50" y2="110" stroke="${mainColor}" stroke-width="3" stroke-linecap="round"/><line x1="35" y1="110" x2="65" y2="110" stroke="${mainColor}" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="110" x2="50" y2="130" stroke="${mainColor}" stroke-width="4" stroke-linecap="round"/><polygon points="50,10 56,25 44,25" fill="${mainColor}"/>`;
+        } else if (cardName.includes("星幣")) {
+            mainColor = "#10b981"; 
+            innerIcon = `<circle cx="50" cy="75" r="30" stroke="${mainColor}" stroke-width="3" fill="none" stroke-dasharray="1,1"/><polygon points="50,48 58,68 80,68 62,81 69,102 50,89 31,102 38,81 20,68 42,68" stroke="${mainColor}" stroke-width="2.5" fill="none" stroke-linejoin="round"/>`;
+        } else {
+            innerIcon = `<circle cx="50" cy="75" r="32" stroke="${mainColor}" stroke-width="2" fill="none" stroke-dasharray="3,3"/><polygon points="50,37 82,93 18,93" stroke="${mainColor}" stroke-width="1.5" fill="none"/><polygon points="50,113 82,57 18,57" stroke="${mainColor}" stroke-width="1.5" fill="none"/><circle cx="50" cy="75" r="10" fill="${mainColor}" fill-opacity="0.2" stroke="${mainColor}" stroke-width="2"/><circle cx="50" cy="75" r="3" fill="#fff"/>`;
+        }
+
+        return `<svg viewBox="0 0 100 150" class="w-full h-full p-1 ${rotationClass} transition-transform duration-500"><defs><linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#090d16" /><stop offset="100%" stop-color="#020617" /></linearGradient></defs><rect x="2" y="2" width="96" height="146" rx="10" fill="url(#cardBg)" stroke="${mainColor}" stroke-width="1.5" stroke-opacity="0.5"/><rect x="6" y="6" width="88" height="138" rx="8" fill="none" stroke="${mainColor}" stroke-width="0.5" stroke-opacity="0.2"/><circle cx="10" cy="10" r="1.5" fill="${mainColor}"/><circle cx="90" cy="10" r="1.5" fill="${mainColor}"/><circle cx="10" cy="140" r="1.5" fill="${mainColor}"/><circle cx="90" cy="140" r="1.5" fill="${mainColor}"/><ellipse cx="50" cy="75" rx="42" ry="15" stroke="${mainColor}" stroke-width="0.5" stroke-opacity="0.15" fill="none" transform="rotate(-15 50 75)"/><ellipse cx="50" cy="75" rx="15" ry="42" stroke="${mainColor}" stroke-width="0.5" stroke-opacity="0.15" fill="none" transform="rotate(30 50 75)"/>${innerIcon}<path d="M30,132 Q50,125 70,132" stroke="${mainColor}" stroke-width="1" stroke-opacity="0.4" fill="none"/></svg>`;
+    }
+
+    function calculateTarotOracle(data) {
+        if (!data || data.ra === null || data.dec === null) return;
+        const raInt = getTruncatedInt3Dec(data.ra);
+        const decInt = getTruncatedInt3Dec(data.dec);
+        const sumInt = getTruncatedInt3Dec(data.ra + data.dec);
+
+        let pastIndex = raInt % 78;
+        let presentIndex = decInt % 78;
+        while (presentIndex === pastIndex) { presentIndex = (presentIndex + 1) % 78; }
+        let futureIndex = sumInt % 78;
+        while (futureIndex === pastIndex || futureIndex === presentIndex) { futureIndex = (futureIndex + 1) % 78; }
+
+        const pastCardName = TAROT_DECK[pastIndex];
+        const presentCardName = TAROT_DECK[presentIndex];
+        const futureCardName = TAROT_DECK[futureIndex];
+
+        const isPastUpright = ((raInt * 17) % 2) === 0;
+        const isPresentUpright = ((decInt * 23) % 2) === 0;
+        const isFutureUpright = ((sumInt * 31) % 2) === 0;
+
+        safeSetText("tarot-past-val", `RA: ${data.ra.toFixed(3)} → ${raInt}`);
+        safeSetHTML("tarot-past-card", `<span class="${isPastUpright ? 'text-sky-300' : 'text-amber-500'} font-bold">${isPastUpright ? '【正位】' : '【逆位】'}</span><span class="text-slate-100 block mt-0.5">${pastCardName}</span>`);
+        safeSetText("tarot-present-val", `Dec: ${data.dec.toFixed(3)} → ${decInt}`);
+        safeSetHTML("tarot-present-card", `<span class="${isPresentUpright ? 'text-pink-300' : 'text-amber-500'} font-bold">${isPresentUpright ? '【正位】' : '【逆位】'}</span><span class="text-slate-100 block mt-0.5">${presentCardName}</span>`);
+        safeSetText("tarot-future-val", `Sum: ${(data.ra + data.dec).toFixed(3)} → ${sumInt}`);
+        safeSetHTML("tarot-future-card", `<span class="${isFutureUpright ? 'text-emerald-300' : 'text-amber-500'} font-bold">${isFutureUpright ? '【正位】' : '【逆位】'}</span><span class="text-slate-100 block mt-0.5">${futureCardName}</span>`);
+
+        safeSetHTML("tarot-img-past", getTarotCardSVG(pastCardName, isPastUpright));
+        safeSetHTML("tarot-img-present", getTarotCardSVG(presentCardName, isPresentUpright));
+        safeSetHTML("tarot-img-future", getTarotCardSVG(futureCardName, isFutureUpright));
+    }
+
+    // =========================================================================
+    // 【區塊七：生命週期與全域 API 註冊】
+    // =========================================================================
+    
+    // 安全導出所有會被 HTML 屬性 (如 onclick, onchange) 呼叫到的函數至 Window 全域環境
+    window.switchQueryType = switchQueryType;
+    window.clearInput = clearInput;
+    window.executeQuery = executeQuery;
+    window.executeFilterQuery = executeFilterQuery;
+    window.loadRandomTarget = loadRandomTarget;
+    window.loadFilteredTarget = loadFilteredTarget;
+    window.findGlobalBestFit = findGlobalBestFit;
+    window.handleChartPan = handleChartPan;
+    window.updateChart = updateChart;
+    window.zoom3D = zoom3D;
+    window.resetCamera = resetCamera;
+    window.exportToExcel = exportToExcel;
+
+    function bootSystem() {
+        if (!document.getElementById('canvas-container')) { setTimeout(bootSystem, 50); return; }
+        if (scene) return;
+        
+        lucide.createIcons();
+        init3D();
+        
+        const scrollWrapper = document.getElementById("chart-scroll-wrapper");
+        const panSlider = document.getElementById("chart-pan-slider");
+        if (scrollWrapper && panSlider) {
+            scrollWrapper.addEventListener('scroll', () => {
+                const maxScroll = scrollWrapper.scrollWidth - scrollWrapper.clientWidth;
+                if (maxScroll > 0) panSlider.value = Math.round((scrollWrapper.scrollLeft / maxScroll) * 100);
+            });
+        }
+
+        writeLog("高精度星表引擎與多維物理模型啟動成功。", "success");
+        
+        setTimeout(() => {
+            switchQueryType('name');
+            safeSetValue("target-name-input", 'M31');
+            executeQuery('name');
+        }, 300);
+    }
+
+    window.onload = bootSystem;
+</script>
+</body>
+</html>

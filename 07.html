@@ -1,0 +1,3507 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>專治選擇困難症 - 決策救星</title>
+
+<!-- 引入 FontAwesome 圖標 -->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Google Fonts 載入圓潤字體 -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+
+
+<style>
+
+:root {
+
+--bg-color: #f7f9fc;
+
+--primary-color: #ff7e67;
+
+--secondary-color: #a0e7e5;
+
+--accent-color: #ffeb99;
+
+--purple-color: #bfa2db;
+
+--text-color: #2c3e50;
+
+--card-bg: #ffffff;
+
+--shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+
+--transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+}
+
+
+* {
+
+box-sizing: border-box;
+
+margin: 0;
+
+padding: 0;
+
+-webkit-tap-highlight-color: transparent;
+
+}
+
+
+body {
+
+font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+
+background-color: var(--bg-color);
+
+color: var(--text-color);
+
+min-height: 100vh;
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+overflow-x: hidden;
+
+padding-bottom: 60px;
+
+}
+
+
+/* 標題與導覽 */
+
+header {
+
+width: 100%;
+
+text-align: center;
+
+padding: 24px 16px;
+
+background: var(--card-bg);
+
+box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+
+position: sticky;
+
+top: 0;
+
+z-index: 100;
+
+}
+
+
+h1 {
+
+font-size: 1.8rem;
+
+font-weight: 700;
+
+color: var(--primary-color);
+
+letter-spacing: 1px;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+gap: 8px;
+
+}
+
+
+/* 功能頁籤切換 */
+
+.tabs {
+
+display: flex;
+
+background: #ededf5;
+
+padding: 6px;
+
+border-radius: 30px;
+
+margin: 16px auto;
+
+width: 92%;
+
+max-width: 550px;
+
+box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+
+overflow-x: auto;
+
+}
+
+
+.tab-btn {
+
+flex: 1;
+
+border: none;
+
+background: none;
+
+padding: 10px 6px;
+
+font-size: 0.85rem;
+
+font-weight: 600;
+
+color: #7f8c8d;
+
+cursor: pointer;
+
+border-radius: 25px;
+
+transition: var(--transition);
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+gap: 4px;
+
+min-width: 80px;
+
+}
+
+
+.tab-btn i {
+
+font-size: 1.1rem;
+
+}
+
+
+.tab-btn.active {
+
+background: var(--card-bg);
+
+color: var(--primary-color);
+
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+
+}
+
+
+/* 主容器 */
+
+main {
+
+width: 100%;
+
+max-width: 500px;
+
+padding: 0 16px;
+
+flex-grow: 1;
+
+display: flex;
+
+flex-direction: column;
+
+justify-content: flex-start;
+
+}
+
+
+/* 區塊包裝 */
+
+.app-section {
+
+display: none;
+
+background: var(--card-bg);
+
+border-radius: 24px;
+
+padding: 24px;
+
+box-shadow: var(--shadow);
+
+width: 100%;
+
+animation: slideUp 0.4s ease forwards;
+
+text-align: center;
+
+}
+
+
+.app-section.active {
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+gap: 20px;
+
+}
+
+
+@keyframes slideUp {
+
+from {
+
+opacity: 0;
+
+transform: translateY(15px);
+
+}
+
+to {
+
+opacity: 1;
+
+transform: translateY(0);
+
+}
+
+}
+
+
+/* 按鈕通用設計 */
+
+.btn {
+
+border: none;
+
+outline: none;
+
+padding: 14px 28px;
+
+font-size: 1.1rem;
+
+font-weight: 600;
+
+color: #fff;
+
+border-radius: 50px;
+
+cursor: pointer;
+
+box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+
+transition: var(--transition);
+
+display: inline-flex;
+
+align-items: center;
+
+justify-content: center;
+
+gap: 8px;
+
+width: 100%;
+
+max-width: 280px;
+
+}
+
+
+.btn:active {
+
+transform: scale(0.95);
+
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+}
+
+
+.btn-primary {
+
+background: var(--primary-color);
+
+}
+
+
+.btn-secondary {
+
+background: var(--purple-color);
+
+}
+
+
+.btn-accent {
+
+background: var(--secondary-color);
+
+color: #2c3e50;
+
+}
+
+
+/* === 內建分頁切換 (通用) === */
+
+.sub-tabs {
+
+display: flex;
+
+background: #f1f2f6;
+
+padding: 4px;
+
+border-radius: 16px;
+
+width: 100%;
+
+margin-bottom: 8px;
+
+}
+
+
+.sub-tab-btn {
+
+flex: 1;
+
+border: none;
+
+background: none;
+
+padding: 8px;
+
+font-size: 0.9rem;
+
+font-weight: 600;
+
+color: #7f8c8d;
+
+cursor: pointer;
+
+border-radius: 12px;
+
+transition: var(--transition);
+
+}
+
+
+.sub-tab-btn.active {
+
+background: #fff;
+
+color: var(--purple-color);
+
+box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+
+}
+
+
+.sub-content {
+
+display: none;
+
+width: 100%;
+
+flex-direction: column;
+
+align-items: center;
+
+gap: 16px;
+
+}
+
+
+.sub-content.active {
+
+display: flex;
+
+}
+
+
+/* === 1. 轉盤樣式 === */
+
+.wheel-container {
+
+position: relative;
+
+width: 280px;
+
+height: 280px;
+
+margin: 10px auto;
+
+}
+
+
+.wheel-pointer {
+
+position: absolute;
+
+top: -15px;
+
+left: 50%;
+
+transform: translateX(-50%);
+
+width: 32px;
+
+height: 40px;
+
+background: #2c3e50;
+
+clip-path: polygon(50% 100%, 0 0, 100% 0);
+
+z-index: 10;
+
+filter: drop-shadow(0 4px 3px rgba(0,0,0,0.2));
+
+}
+
+
+.wheel-pointer-inner {
+
+position: absolute;
+
+top: 2px;
+
+left: 50%;
+
+transform: translateX(-50%);
+
+width: 10px;
+
+height: 10px;
+
+background: #ff4757;
+
+border-radius: 50%;
+
+}
+
+
+canvas {
+
+width: 100%;
+
+height: 100%;
+
+border-radius: 50%;
+
+box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+
+transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1);
+
+}
+
+
+.wheel-btn {
+
+position: absolute;
+
+top: 50%;
+
+left: 50%;
+
+transform: translate(-50%, -50%);
+
+width: 60px;
+
+height: 60px;
+
+background-color: #ffffff;
+
+border-radius: 50%;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+font-size: 1.1rem;
+
+font-weight: bold;
+
+color: var(--primary-color);
+
+box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
+cursor: pointer;
+
+user-select: none;
+
+z-index: 5;
+
+border: 4px solid #fff;
+
+transition: transform 0.1s;
+
+}
+
+
+.wheel-btn:active {
+
+transform: translate(-50%, -50%) scale(0.9);
+
+}
+
+
+/* 轉盤設定區 */
+
+.inputs-container {
+
+width: 100%;
+
+margin-top: 10px;
+
+}
+
+
+.tags-container {
+
+display: flex;
+
+flex-wrap: wrap;
+
+gap: 8px;
+
+justify-content: center;
+
+max-height: 120px;
+
+overflow-y: auto;
+
+padding: 8px;
+
+background: #fdfdfd;
+
+border: 1px dashed #e2e8f0;
+
+border-radius: 12px;
+
+margin-bottom: 12px;
+
+}
+
+
+.tag {
+
+background: #f1f2f6;
+
+padding: 6px 12px;
+
+border-radius: 20px;
+
+font-size: 0.9rem;
+
+display: inline-flex;
+
+align-items: center;
+
+gap: 6px;
+
+animation: popIn 0.2s ease;
+
+}
+
+
+.tag i {
+
+cursor: pointer;
+
+color: #ff4757;
+
+font-size: 0.8rem;
+
+}
+
+
+@keyframes popIn {
+
+0% { transform: scale(0.7); opacity: 0; }
+
+100% { transform: scale(1); opacity: 1; }
+
+}
+
+
+.add-input-group {
+
+display: flex;
+
+width: 100%;
+
+gap: 8px;
+
+}
+
+
+.input-text {
+
+flex: 1;
+
+border: 2px solid #e2e8f0;
+
+padding: 12px 16px;
+
+border-radius: 25px;
+
+outline: none;
+
+font-size: 0.95rem;
+
+transition: var(--transition);
+
+font-family: inherit;
+
+}
+
+
+.input-text:focus {
+
+border-color: var(--primary-color);
+
+}
+
+
+.add-btn {
+
+background: var(--secondary-color);
+
+color: #2c3e50;
+
+border: none;
+
+width: 48px;
+
+height: 48px;
+
+border-radius: 50%;
+
+cursor: pointer;
+
+font-size: 1.2rem;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+box-shadow: 0 4px 10px rgba(160, 231, 229, 0.4);
+
+transition: var(--transition);
+
+}
+
+
+.add-btn:active {
+
+transform: scale(0.9);
+
+}
+
+
+/* === 2. 亂數分組樣式 === */
+
+.number-picker-box {
+
+width: 100%;
+
+display: flex;
+
+flex-direction: column;
+
+gap: 16px;
+
+align-items: center;
+
+}
+
+
+.range-inputs {
+
+display: flex;
+
+justify-content: space-around;
+
+align-items: center;
+
+gap: 12px;
+
+width: 100%;
+
+}
+
+
+.range-field {
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+gap: 6px;
+
+flex: 1;
+
+}
+
+
+.range-field label {
+
+font-size: 0.85rem;
+
+font-weight: 600;
+
+color: #7f8c8d;
+
+}
+
+
+.input-num {
+
+width: 100%;
+
+max-width: 110px;
+
+border: 2px solid #e2e8f0;
+
+padding: 10px;
+
+border-radius: 16px;
+
+text-align: center;
+
+font-size: 1.1rem;
+
+font-weight: 600;
+
+color: var(--text-color);
+
+outline: none;
+
+transition: var(--transition);
+
+}
+
+
+.input-num:focus {
+
+border-color: var(--purple-color);
+
+}
+
+
+.range-divider {
+
+font-size: 1.5rem;
+
+color: #bdc3c7;
+
+padding-top: 15px;
+
+}
+
+
+.num-display-container {
+
+height: 120px;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+}
+
+
+.num-result {
+
+font-size: 4.5rem;
+
+font-weight: 700;
+
+color: var(--purple-color);
+
+transition: all 0.1s ease;
+
+text-shadow: 2px 4px 10px rgba(191, 162, 219, 0.2);
+
+}
+
+
+.num-result.rolling {
+
+animation: scalePulse 0.15s infinite alternate;
+
+}
+
+
+/* 分組結果樣式 */
+
+.group-results-box {
+
+width: 100%;
+
+max-height: 250px;
+
+overflow-y: auto;
+
+display: flex;
+
+flex-direction: column;
+
+gap: 10px;
+
+padding: 4px;
+
+margin-top: 10px;
+
+}
+
+
+.group-card {
+
+background: #fafafc;
+
+border-left: 5px solid var(--purple-color);
+
+padding: 12px 16px;
+
+border-radius: 12px;
+
+text-align: left;
+
+box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+
+animation: popIn 0.3s ease;
+
+}
+
+
+.group-card-title {
+
+font-weight: 700;
+
+font-size: 0.95rem;
+
+color: #2c3e50;
+
+margin-bottom: 6px;
+
+}
+
+
+.group-card-members {
+
+font-size: 0.9rem;
+
+color: var(--text-color);
+
+word-wrap: break-word;
+
+line-height: 1.4;
+
+}
+
+
+/* === 3. 快速抉擇樣式 === */
+
+.card-picker-box {
+
+width: 100%;
+
+display: flex;
+
+flex-direction: column;
+
+gap: 20px;
+
+align-items: center;
+
+}
+
+
+/* === 4. 抽籤功能樣式 === */
+
+.draw-picker-box {
+
+width: 100%;
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+gap: 16px;
+
+}
+
+
+.stick-container {
+
+position: relative;
+
+width: 120px;
+
+height: 160px;
+
+margin: 10px auto;
+
+}
+
+
+.fortune-cup {
+
+position: absolute;
+
+bottom: 0;
+
+left: 50%;
+
+transform: translateX(-50%);
+
+width: 90px;
+
+height: 110px;
+
+background: linear-gradient(135deg, var(--primary-color), #ff9a8b);
+
+border-radius: 12px 12px 30px 30px;
+
+box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+color: #fff;
+
+font-size: 1.6rem;
+
+z-index: 5;
+
+}
+
+
+.fortune-cup::after {
+
+content: "籤";
+
+font-family: 'Noto Sans TC', sans-serif;
+
+font-weight: 700;
+
+background: rgba(255,255,255,0.2);
+
+padding: 4px 10px;
+
+border-radius: 50%;
+
+font-size: 1.1rem;
+
+}
+
+
+.fortune-sticks {
+
+position: absolute;
+
+bottom: 50px;
+
+left: 50%;
+
+transform: translateX(-50%);
+
+display: flex;
+
+gap: 3px;
+
+z-index: 2;
+
+transition: bottom 0.5s ease;
+
+}
+
+
+.fortune-stick {
+
+width: 6px;
+
+height: 80px;
+
+background: #eccc68;
+
+border-radius: 3px;
+
+transform-origin: bottom center;
+
+}
+
+
+.fortune-stick:nth-child(2) { transform: rotate(-8deg); }
+
+.fortune-stick:nth-child(3) { transform: rotate(8deg); }
+
+.fortune-stick:nth-child(4) { transform: rotate(-4deg); }
+
+.fortune-stick:nth-child(5) { transform: rotate(4deg); }
+
+
+/* 出籤動畫 */
+
+.fortune-stick.active-out {
+
+animation: stickPop 1.5s ease-in-out forwards;
+
+background: #ff4757;
+
+z-index: 10;
+
+}
+
+
+@keyframes stickPop {
+
+0% { transform: translateY(0) rotate(0); }
+
+50% { transform: translateY(-45px) rotate(0); }
+
+100% { transform: translateY(-15px) rotate(5deg); }
+
+}
+
+
+/* 籤筒抖動動畫 */
+
+.cup-shake {
+
+animation: shake 0.5s ease-in-out 2;
+
+}
+
+
+@keyframes shake {
+
+0%, 100% { transform: translateX(-50%) rotate(0); }
+
+20% { transform: translateX(-55%) rotate(-8deg); }
+
+40% { transform: translateX(-45%) rotate(8deg); }
+
+60% { transform: translateX(-53%) rotate(-5deg); }
+
+80% { transform: translateX(-47%) rotate(5deg); }
+
+}
+
+
+/* === 5. 富蘭克林決策樣式 === */
+
+.franklin-container {
+
+width: 100%;
+
+display: flex;
+
+flex-direction: column;
+
+gap: 16px;
+
+align-items: center;
+
+}
+
+
+.franklin-columns {
+
+display: flex;
+
+gap: 16px;
+
+width: 100%;
+
+margin-top: 10px;
+
+}
+
+
+.franklin-column {
+
+flex: 1;
+
+background: #fafafc;
+
+border-radius: 16px;
+
+padding: 16px;
+
+display: flex;
+
+flex-direction: column;
+
+gap: 12px;
+
+min-height: 220px;
+
+box-shadow: inset 0 2px 6px rgba(0,0,0,0.02);
+
+/* 限制在背景白框內，防止內容溢出 */
+
+overflow: hidden;
+
+}
+
+
+.franklin-column.column-pros {
+
+border-top: 6px solid var(--secondary-color);
+
+}
+
+
+.franklin-column.column-cons {
+
+border-top: 6px solid var(--primary-color);
+
+}
+
+
+.franklin-column-header {
+
+font-weight: 700;
+
+font-size: 1rem;
+
+color: #2c3e50;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+gap: 6px;
+
+}
+
+
+.add-reason-group {
+
+display: flex;
+
+gap: 6px;
+
+width: 100%;
+
+}
+
+
+.input-text-sm {
+
+flex: 1;
+
+border: 2px solid #e2e8f0;
+
+padding: 8px 12px;
+
+border-radius: 16px;
+
+outline: none;
+
+font-size: 0.85rem;
+
+font-family: inherit;
+
+}
+
+
+.input-text-sm:focus {
+
+border-color: var(--purple-color);
+
+}
+
+
+.add-btn-sm {
+
+background: var(--purple-color);
+
+color: white;
+
+border: none;
+
+width: 34px;
+
+height: 34px;
+
+border-radius: 50%;
+
+cursor: pointer;
+
+font-size: 1rem;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+}
+
+
+.reason-list {
+
+display: flex;
+
+flex-direction: column;
+
+gap: 8px;
+
+overflow-y: auto;
+
+max-height: 180px;
+
+padding-right: 4px;
+
+}
+
+
+.reason-item {
+
+display: flex;
+
+align-items: center;
+
+justify-content: space-between;
+
+background: white;
+
+border: 1px solid #e2e8f0;
+
+border-radius: 12px;
+
+padding: 8px 10px;
+
+font-size: 0.85rem;
+
+cursor: pointer;
+
+transition: var(--transition);
+
+user-select: none;
+
+}
+
+
+.reason-item span {
+
+flex: 1;
+
+text-align: left;
+
+word-break: break-all;
+
+}
+
+
+.reason-item.crossed {
+
+background: #f1f2f6;
+
+border-color: #e2e8f0;
+
+}
+
+
+.reason-item.crossed span {
+
+text-decoration: line-through;
+
+opacity: 0.5;
+
+}
+
+
+.reason-item i.delete-reason-btn {
+
+color: #ff4757;
+
+padding: 2px 6px;
+
+cursor: pointer;
+
+transition: transform 0.1s;
+
+}
+
+
+.reason-item i.delete-reason-btn:hover {
+
+transform: scale(1.2);
+
+}
+
+
+/* 成功彈出視窗與全畫面遮罩 */
+
+.overlay {
+
+position: fixed;
+
+top: 0;
+
+left: 0;
+
+width: 100%;
+
+height: 100%;
+
+background: rgba(44, 62, 80, 0.4);
+
+backdrop-filter: blur(4px);
+
+z-index: 1000;
+
+opacity: 0;
+
+visibility: hidden;
+
+transition: var(--transition);
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+}
+
+
+.overlay.active {
+
+opacity: 1;
+
+visibility: visible;
+
+}
+
+
+.modal {
+
+background: #fff;
+
+padding: 30px;
+
+border-radius: 28px;
+
+width: 85%;
+
+max-width: 360px;
+
+text-align: center;
+
+box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+
+transform: scale(0.8);
+
+transition: var(--transition);
+
+}
+
+
+.overlay.active .modal {
+
+transform: scale(1);
+
+}
+
+
+.modal-title {
+
+font-size: 1.1rem;
+
+color: #7f8c8d;
+
+margin-bottom: 10px;
+
+}
+
+
+.modal-result {
+
+font-size: 2.2rem;
+
+font-weight: 700;
+
+color: var(--primary-color);
+
+margin-bottom: 24px;
+
+word-break: break-word;
+
+}
+
+
+/* 響應式優化 */
+
+@media (max-width: 480px) {
+
+.wheel-container {
+
+width: 240px;
+
+height: 240px;
+
+}
+
+.num-result {
+
+font-size: 3.5rem;
+
+}
+
+.franklin-columns {
+
+flex-direction: column;
+
+gap: 12px;
+
+}
+
+.franklin-column {
+
+min-height: 180px;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<header>
+
+<h1><i class="fa-solid fa-wand-magic-sparkles"></i>專治選擇困難症</h1>
+
+</header>
+
+
+<!-- 功能頁籤 -->
+
+<div class="tabs">
+
+<button class="tab-btn active" onclick="switchTab('wheel')">
+
+<i class="fa-solid fa-circle-notch"></i>
+
+<span>轉盤</span>
+
+</button>
+
+<button class="tab-btn" onclick="switchTab('number')">
+
+<i class="fa-solid fa-dice"></i>
+
+<span>亂數分組</span>
+
+</button>
+
+<button class="tab-btn" onclick="switchTab('cards')">
+
+<i class="fa-solid fa-arrows-split-up-and-left"></i>
+
+<span>快速抉擇</span>
+
+</button>
+
+<button class="tab-btn" onclick="switchTab('draw')">
+
+<i class="fa-solid fa-scroll"></i>
+
+<span>抽籤</span>
+
+</button>
+
+<button class="tab-btn" onclick="switchTab('franklin')">
+
+<i class="fa-solid fa-scale-balanced"></i>
+
+<span>富蘭克林決策</span>
+
+</button>
+
+</div>
+
+
+<main>
+
+<!-- 1. 轉盤決策 -->
+
+<section id="wheel-section" class="app-section active">
+
+<!-- 轉盤主題顯示 -->
+
+<h3 id="wheel-current-title" style="font-size: 1.3rem; color: var(--primary-color); margin-top: 5px;"><i class="fa-solid fa-bowl-food"></i> 今天吃什麼？</h3>
+
+
+<div class="wheel-container">
+
+<div class="wheel-pointer">
+
+<div class="wheel-pointer-inner"></div>
+
+</div>
+
+<div class="wheel-btn" id="spin-btn">GO!</div>
+
+<canvas id="wheel-canvas" width="500" height="500"></canvas>
+
+</div>
+
+
+<div class="inputs-container">
+
+<!-- 自訂轉盤主題設定 -->
+
+<div style="display: flex; gap: 8px; margin-bottom: 12px; width: 100%;">
+
+<input type="text" id="wheel-title-input" class="input-text" placeholder="修改自訂轉盤主題 (例：今天看哪部動漫？)" value="今天吃什麼？" maxlength="20" style="text-align: center; font-weight: bold; border-color: var(--secondary-color);">
+
+</div>
+
+
+<div class="tags-container" id="tags-box">
+
+<!-- 標籤會動態產生在此 -->
+
+</div>
+
+<div class="add-input-group">
+
+<input type="text" id="food-input" class="input-text" placeholder="加入新選項... (例：義大利麵)" maxlength="12">
+
+<button class="add-btn" id="add-option-btn"><i class="fa-solid fa-plus"></i></button>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- 2. 亂數分組 -->
+
+<section id="number-section" class="app-section">
+
+<div class="sub-tabs">
+
+<button class="sub-tab-btn active" onclick="switchSubTab('single')">單一抽出</button>
+
+<button class="sub-tab-btn" onclick="switchSubTab('group')">隨機分組</button>
+
+</div>
+
+
+<!-- 子分頁 A：單數抽籤 -->
+
+<div id="sub-single" class="sub-content active">
+
+<div class="number-picker-box">
+
+<div class="range-inputs">
+
+<div class="range-field">
+
+<label>最小值</label>
+
+<input type="number" id="min-num" class="input-num" value="1">
+
+</div>
+
+<div class="range-divider">~</div>
+
+<div class="range-field">
+
+<label>最大值</label>
+
+<input type="number" id="max-num" class="input-num" value="100">
+
+</div>
+
+</div>
+
+
+<div class="num-display-container">
+
+<div class="num-result" id="num-display">?</div>
+
+</div>
+
+
+<button class="btn btn-secondary" id="pick-num-btn">
+
+<i class="fa-solid fa-dice"></i> 抽數字
+
+</button>
+
+</div>
+
+</div>
+
+
+<!-- 子分頁 B：隨機分組 -->
+
+<div id="sub-group" class="sub-content">
+
+<div class="number-picker-box" style="gap: 12px;">
+
+<div class="range-inputs" style="flex-wrap: wrap; gap: 8px;">
+
+<div class="range-field">
+
+<label>名單起點</label>
+
+<input type="number" id="group-min" class="input-num" value="1">
+
+</div>
+
+<div class="range-field">
+
+<label>名單終點</label>
+
+<input type="number" id="group-max" class="input-num" value="30">
+
+</div>
+
+<div class="range-field">
+
+<label>分成幾組</label>
+
+<input type="number" id="group-count" class="input-num" value="3">
+
+</div>
+
+<div class="range-field">
+
+<label>每組人數</label>
+
+<input type="number" id="group-size" class="input-num" value="10">
+
+</div>
+
+</div>
+
+
+<button class="btn btn-secondary" id="start-group-btn" style="background-color: var(--purple-color);">
+
+<i class="fa-solid fa-users-viewfinder"></i> 開始分組
+
+</button>
+
+
+<div class="group-results-box" id="group-results">
+
+<!-- 分組結果動態生成 -->
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- 3. 快速抉擇 -->
+
+<section id="cards-section" class="app-section">
+
+<div class="sub-tabs">
+
+<button class="sub-tab-btn active" onclick="switchCardsSubTab('yn')">是或否</button>
+
+<button class="sub-tab-btn" onclick="switchCardsSubTab('gd')">好或不好</button>
+
+<button class="sub-tab-btn" onclick="switchCardsSubTab('lr')">左或右</button>
+
+<button class="sub-tab-btn" onclick="switchCardsSubTab('fb')">先或後</button>
+
+</div>
+
+
+<!-- 子分頁 1：是或否 -->
+
+<div id="sub-cards-yn" class="sub-content active">
+
+<div class="num-display-container">
+
+<div class="num-result" id="yn-display">?</div>
+
+</div>
+
+<button class="btn btn-primary" id="pick-yn-btn" style="background-color: var(--primary-color);">
+
+<i class="fa-solid fa-question"></i> 決定是或否
+
+</button>
+
+</div>
+
+
+<!-- 子分頁 2：好或不好 -->
+
+<div id="sub-cards-gd" class="sub-content">
+
+<div class="num-display-container">
+
+<div class="num-result" id="gd-display" style="color: var(--purple-color); text-shadow: 2px 4px 10px rgba(191, 162, 219, 0.2);">?</div>
+
+</div>
+
+<button class="btn btn-primary" id="pick-gd-btn" style="background-color: var(--purple-color);">
+
+<i class="fa-solid fa-thumbs-up"></i> 決定好或不好
+
+</button>
+
+</div>
+
+
+<!-- 子分頁 3：左或右 -->
+
+<div id="sub-cards-lr" class="sub-content">
+
+<div class="num-display-container">
+
+<div class="num-result" id="lr-display" style="color: var(--secondary-color); text-shadow: 2px 4px 10px rgba(160, 231, 229, 0.2);">?</div>
+
+</div>
+
+<button class="btn btn-primary" id="pick-lr-btn" style="background-color: var(--secondary-color); color: #2c3e50;">
+
+<i class="fa-solid fa-arrows-left-right"></i> 決定左或右
+
+</button>
+
+</div>
+
+
+<!-- 子分頁 4：先或後 -->
+
+<div id="sub-cards-fb" class="sub-content">
+
+<div class="num-display-container">
+
+<div class="num-result" id="fb-display" style="color: var(--primary-color); text-shadow: 2px 4px 10px rgba(255, 126, 103, 0.2);">?</div>
+
+</div>
+
+<button class="btn btn-primary" id="pick-fb-btn" style="background-color: var(--primary-color); color: white;">
+
+<i class="fa-solid fa-hourglass-start"></i> 決定先或後
+
+</button>
+
+</div>
+
+</section>
+
+
+<!-- 4. 抽籤問事 -->
+
+<section id="draw-section" class="app-section">
+
+<div class="draw-picker-box">
+
+<input type="text" id="draw-input" class="input-text" placeholder="求問何事？ (例：今天學鋼琴好嗎)" maxlength="20" style="width: 100%; max-width: 300px; text-align: center;">
+
+
+<div class="stick-container">
+
+<div class="fortune-sticks" id="sticks-pool">
+
+<div class="fortune-stick"></div>
+
+<div class="fortune-stick"></div>
+
+<div class="fortune-stick" id="prime-stick"></div>
+
+<div class="fortune-stick"></div>
+
+<div class="fortune-stick"></div>
+
+</div>
+
+<div class="fortune-cup" id="fortune-cup-element"></div>
+
+</div>
+
+
+<button class="btn btn-accent" id="draw-btn" style="background: var(--accent-color);">
+
+<i class="fa-solid fa-scroll"></i> 求取指引
+
+</button>
+
+</div>
+
+</section>
+
+
+<!-- 5. 富蘭克林決策 -->
+
+<section id="franklin-section" class="app-section">
+
+<div class="franklin-container">
+
+<input type="text" id="franklin-question" class="input-text" placeholder="輸入你想決定的大事... (例：要不要去參加夏令營 🏕️)" style="width: 100%; max-width: 420px; text-align: center; border-color: var(--purple-color);">
+
+
+<div class="franklin-columns">
+
+<!-- 是看板 -->
+
+<div class="franklin-column column-pros">
+
+<div class="franklin-column-header">🟢 是 / 優點 / 理由</div>
+
+<div class="add-reason-group">
+
+<input type="text" id="pro-input" class="input-text-sm" placeholder="輸入優點..." maxlength="15">
+
+<button class="add-btn-sm" id="add-pro-btn">+</button>
+
+</div>
+
+<div id="pro-list" class="reason-list">
+
+<!-- 動態優點理由 -->
+
+</div>
+
+</div>
+
+<!-- 否看板 -->
+
+<div class="franklin-column column-cons">
+
+<div class="franklin-column-header">🔴 否 / 缺點 / 理由</div>
+
+<div class="add-reason-group">
+
+<input type="text" id="con-input" class="input-text-sm" placeholder="輸入缺點..." maxlength="15">
+
+<button class="add-btn-sm" id="add-con-btn">+</button>
+
+</div>
+
+<div id="con-list" class="reason-list">
+
+<!-- 動態缺點理由 -->
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- 智慧分析決策按鈕與清空按鈕 -->
+
+<div style="display: flex; gap: 12px; width: 100%; max-width: 360px; margin-top: 10px; justify-content: center; flex-wrap: wrap;">
+
+<button class="btn btn-primary" id="decide-franklin-btn" style="background-color: var(--primary-color);">
+
+<i class="fa-solid fa-lightbulb"></i> 我決定了！
+
+</button>
+
+<button class="btn btn-primary" id="clear-franklin-btn" style="background-color: #bdc3c7; color: #fff; width: auto; padding: 14px 20px;">
+
+<i class="fa-solid fa-trash-can"></i> 清空
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+
+<!-- 結果彈出視窗 -->
+
+<div class="overlay" id="result-overlay">
+
+<div class="modal">
+
+<div class="modal-title" id="modal-subtitle">決定就是你了！</div>
+
+<div class="modal-result" id="modal-title-text">結果</div>
+
+<button class="btn btn-primary" onclick="closeModal()">好，就這樣！</button>
+
+</div>
+
+</div>
+
+
+<!-- 載入 Firebase 模組與核心邏輯 -->
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+
+import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+// ==========================================
+
+// 智慧環境偵測：確保在 GitHub 上不會崩潰且能流暢運行
+
+// ==========================================
+
+let db = null;
+
+let auth = null;
+
+let appId = 'default-app-id';
+
+let useFirebase = false;
+
+let user = null;
+
+
+// 偵測是否處於 Gemini Canvas 特殊雲端環境
+
+if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+
+try {
+
+const firebaseConfig = JSON.parse(__firebase_config);
+
+const app = initializeApp(firebaseConfig);
+
+auth = getAuth(app);
+
+db = getFirestore(app);
+
+appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+useFirebase = true;
+
+} catch (err) {
+
+console.warn("Firebase 初始化失敗，將無縫啟用瀏覽器本地存儲 (localStorage) 模式。");
+
+}
+
+}
+
+
+// 綁定基本全域變數以支援 HTML onclick 切換
+
+window.switchTab = switchTab;
+
+window.switchSubTab = switchSubTab;
+
+window.switchCardsSubTab = switchCardsSubTab;
+
+window.closeModal = closeModal;
+
+window.removeOption = removeOption;
+
+
+// === 頁籤切換邏輯 ===
+
+function switchTab(tabName) {
+
+document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+document.querySelectorAll('.app-section').forEach(sec => sec.classList.remove('active'));
+
+
+const event = window.event;
+
+if (event) {
+
+event.currentTarget.classList.add('active');
+
+} else {
+
+const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick').includes(tabName));
+
+if (targetBtn) targetBtn.classList.add('active');
+
+}
+
+
+document.getElementById(`${tabName}-section`).classList.add('active');
+
+
+if (tabName === 'wheel') {
+
+drawWheel();
+
+}
+
+}
+
+
+// === 數字分頁：子分頁切換 ===
+
+function switchSubTab(subName) {
+
+const event = window.event;
+
+if (event) {
+
+const parent = event.currentTarget.parentNode;
+
+parent.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+event.currentTarget.classList.add('active');
+
+}
+
+document.getElementById('number-section').querySelectorAll('.sub-content').forEach(content => content.classList.remove('active'));
+
+document.getElementById(`sub-${subName}`).classList.add('active');
+
+}
+
+
+// === 快速抉擇分頁：子分頁切換 ===
+
+function switchCardsSubTab(subName) {
+
+const event = window.event;
+
+if (event) {
+
+const parent = event.currentTarget.parentNode;
+
+parent.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+event.currentTarget.classList.add('active');
+
+}
+
+document.getElementById('cards-section').querySelectorAll('.sub-content').forEach(content => content.classList.remove('active'));
+
+document.getElementById(`sub-cards-${subName}`).classList.add('active');
+
+}
+
+
+// === 彈出視窗邏輯 ===
+
+const overlay = document.getElementById('result-overlay');
+
+const modalTitle = document.getElementById('modal-title-text');
+
+const modalSubtitle = document.getElementById('modal-subtitle');
+
+
+function showResult(title, subtitle = "決定就是你了！") {
+
+modalTitle.innerText = title;
+
+modalSubtitle.innerText = subtitle;
+
+overlay.classList.add('active');
+
+}
+
+
+function closeModal() {
+
+overlay.classList.remove('active');
+
+}
+
+
+overlay.addEventListener('click', (e) => {
+
+if (e.target === overlay) closeModal();
+
+});
+
+
+
+// ==========================================
+
+// 核心一：自訂主題轉盤功能
+
+// ==========================================
+
+const canvas = document.getElementById('wheel-canvas');
+
+const ctx = canvas.getContext('2d');
+
+const spinBtn = document.getElementById('spin-btn');
+
+const tagsBox = document.getElementById('tags-box');
+
+const foodInput = document.getElementById('food-input');
+
+const addBtn = document.getElementById('add-option-btn');
+
+const wheelTitleInput = document.getElementById('wheel-title-input');
+
+const wheelCurrentTitle = document.getElementById('wheel-current-title');
+
+
+const colors = ['#ff7e67', '#a0e7e5', '#ffeb99', '#bfa2db', '#ffb7b2', '#b5ead7', '#e2f0cb', '#ffdac1'];
+
+let options = ["拉麵", "便當", "義大利麵", "火鍋", "壽司", "滷肉飯", "沙拉", "麥當勞"];
+
+let wheelTitle = "今天吃什麼？";
+
+
+function initWheel() {
+
+renderTags();
+
+drawWheel();
+
+}
+
+
+function renderTags() {
+
+tagsBox.innerHTML = '';
+
+options.forEach((opt, index) => {
+
+const tag = document.createElement('div');
+
+tag.className = 'tag';
+
+tag.innerHTML = `<span>${opt}</span><i class="fa-solid fa-circle-xmark" onclick="removeOption(${index})"></i>`;
+
+tagsBox.appendChild(tag);
+
+});
+
+}
+
+
+function removeOption(index) {
+
+if (options.length <= 2) {
+
+showResult("最少要有兩個選項才能搖擺喔！", "提示");
+
+return;
+
+}
+
+options.splice(index, 1);
+
+renderTags();
+
+drawWheel();
+
+saveWheelData();
+
+}
+
+
+function addOption() {
+
+const val = foodInput.value.trim();
+
+if (val) {
+
+if (options.includes(val)) {
+
+showResult("這個選項已經在轉盤上囉！", "提示");
+
+return;
+
+}
+
+options.push(val);
+
+foodInput.value = '';
+
+renderTags();
+
+drawWheel();
+
+tagsBox.scrollTop = tagsBox.scrollHeight;
+
+saveWheelData();
+
+}
+
+}
+
+
+addBtn.addEventListener('click', addOption);
+
+foodInput.addEventListener('keypress', (e) => {
+
+if (e.key === 'Enter') addOption();
+
+});
+
+
+// 監聽轉盤主題輸入改變
+
+wheelTitleInput.addEventListener('input', () => {
+
+const val = wheelTitleInput.value.trim();
+
+wheelTitle = val ? val : "今天吃什麼？";
+
+wheelCurrentTitle.innerHTML = `<i class="fa-solid fa-bowl-food"></i> ${wheelTitle}`;
+
+saveWheelData();
+
+});
+
+
+function drawWheel() {
+
+const numOptions = options.length;
+
+const arcSize = (2 * Math.PI) / numOptions;
+
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+for (let i = 0; i < numOptions; i++) {
+
+const angle = i * arcSize;
+
+
+ctx.beginPath();
+
+ctx.fillStyle = colors[i % colors.length];
+
+ctx.moveTo(250, 250);
+
+ctx.arc(250, 250, 240, angle, angle + arcSize);
+
+ctx.lineTo(250, 250);
+
+ctx.fill();
+
+
+ctx.strokeStyle = '#ffffff';
+
+ctx.lineWidth = 3;
+
+ctx.stroke();
+
+
+ctx.save();
+
+ctx.translate(250, 250);
+
+ctx.rotate(angle + arcSize / 2);
+
+ctx.textAlign = "right";
+
+ctx.fillStyle = "#2c3e50";
+
+ctx.font = "bold 24px 'Noto Sans TC'";
+
+
+let text = options[i];
+
+if (text.length > 5) {
+
+text = text.substring(0, 5) + '...';
+
+}
+
+ctx.fillText(text, 210, 8);
+
+ctx.restore();
+
+}
+
+
+ctx.beginPath();
+
+ctx.arc(250, 250, 241, 0, 2 * Math.PI);
+
+ctx.strokeStyle = '#ffffff';
+
+ctx.lineWidth = 6;
+
+ctx.stroke();
+
+}
+
+
+let isSpinning = false;
+
+let currentRotation = 0;
+
+
+function spinWheel() {
+
+if (isSpinning) return;
+
+isSpinning = true;
+
+
+const numOptions = options.length;
+
+const extraDegrees = Math.floor(Math.random() * 360);
+
+const totalSpin = 1800 + extraDegrees;
+
+currentRotation += totalSpin;
+
+
+canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+
+setTimeout(() => {
+
+isSpinning = false;
+
+const actualDegrees = currentRotation % 360;
+
+const targetAngle = (360 - actualDegrees + 270) % 360;
+
+const arcLengthDegrees = 360 / numOptions;
+
+const winningIndex = Math.floor(targetAngle / arcLengthDegrees) % numOptions;
+
+
+showResult(options[winningIndex], `「${wheelTitle}」決定的結果是！`);
+
+}, 4000);
+
+}
+
+
+spinBtn.addEventListener('click', spinWheel);
+
+
+
+// ==========================================
+
+// 核心二：亂數分組功能
+
+// ==========================================
+
+const minInput = document.getElementById('min-num');
+
+const maxInput = document.getElementById('max-num');
+
+const numDisplay = document.getElementById('num-display');
+
+const pickNumBtn = document.getElementById('pick-num-btn');
+
+let isRolling = false;
+
+
+pickNumBtn.addEventListener('click', () => {
+
+if (isRolling) return;
+
+
+const min = parseInt(minInput.value);
+
+const max = parseInt(maxInput.value);
+
+
+if (isNaN(min) || !Number.isInteger(min) || isNaN(max) || !Number.isInteger(max)) {
+
+showResult("請輸入有效的整數！", "提示");
+
+return;
+
+}
+
+
+if (min >= max) {
+
+showResult("最小值必須小於最大值！", "提示");
+
+return;
+
+}
+
+
+isRolling = true;
+
+numDisplay.classList.add('rolling');
+
+
+let counter = 0;
+
+const duration = 20;
+
+const interval = setInterval(() => {
+
+const randomVal = Math.floor(Math.random() * (max - min + 1)) + min;
+
+numDisplay.innerText = randomVal;
+
+counter++;
+
+
+if (counter >= duration) {
+
+clearInterval(interval);
+
+numDisplay.classList.remove('rolling');
+
+const finalResult = Math.floor(Math.random() * (max - min + 1)) + min;
+
+numDisplay.innerText = finalResult;
+
+isRolling = false;
+
+
+setTimeout(() => {
+
+showResult(`幸運號碼：${finalResult}`, "你的數字出爐囉！");
+
+}, 200);
+
+}
+
+}, 70);
+
+});
+
+
+// 亂數分組邏輯
+
+const groupMin = document.getElementById('group-min');
+
+const groupMax = document.getElementById('group-max');
+
+const groupCountInput = document.getElementById('group-count');
+
+const groupSizeInput = document.getElementById('group-size');
+
+const startGroupBtn = document.getElementById('start-group-btn');
+
+const groupResultsContainer = document.getElementById('group-results');
+
+
+startGroupBtn.addEventListener('click', () => {
+
+const min = parseInt(groupMin.value);
+
+const max = parseInt(groupMax.value);
+
+const numGroups = parseInt(groupCountInput.value);
+
+const sizePerGroup = parseInt(groupSizeInput.value);
+
+
+if (isNaN(min) || isNaN(max) || isNaN(numGroups) || isNaN(sizePerGroup)) {
+
+showResult("所有分組欄位都必須填寫數字喔！", "提示");
+
+return;
+
+}
+
+if (min >= max) {
+
+showResult("名單起點必須小於名單終點！", "提示");
+
+return;
+
+}
+
+if (numGroups <= 0 || sizePerGroup <= 0) {
+
+showResult("組數與每組人數必須大於 0！", "提示");
+
+return;
+
+}
+
+
+let pool = [];
+
+for (let i = min; i <= max; i++) {
+
+pool.push(i);
+
+}
+
+
+// 洗牌隨機打亂 (Fisher-Yates)
+
+for (let i = pool.length - 1; i > 0; i--) {
+
+const j = Math.floor(Math.random() * (i + 1));
+
+[pool[i], pool[j]] = [pool[j], pool[i]];
+
+}
+
+
+groupResultsContainer.innerHTML = '';
+
+let groups = Array.from({ length: numGroups }, () => []);
+
+
+let poolIndex = 0;
+
+// 按組別輪流分配，最多填滿「每組人數」或分完「總人數」
+
+for (let step = 0; step < sizePerGroup; step++) {
+
+for (let g = 0; g < numGroups; g++) {
+
+if (poolIndex < pool.length) {
+
+groups[g].push(pool[poolIndex]);
+
+poolIndex++;
+
+} else {
+
+break;
+
+}
+
+}
+
+if (poolIndex >= pool.length) break;
+
+}
+
+
+// 顯示分組結果
+
+groups.forEach((members, index) => {
+
+if (members.length === 0) return;
+
+const card = document.createElement('div');
+
+card.className = 'group-card';
+
+card.style.borderLeftColor = colors[index % colors.length];
+
+
+card.innerHTML = `
+
+<div class="group-card-title" style="color: ${colors[index % colors.length]}">第 ${index + 1} 組</div>
+
+<div class="group-card-members">${members.sort((a,b)=>a-b).join(', ')}</div>
+
+`;
+
+groupResultsContainer.appendChild(card);
+
+});
+
+
+// 顯示剩餘未入組的名單
+
+if (poolIndex < pool.length) {
+
+const remainCount = pool.length - poolIndex;
+
+const remainNumbers = pool.slice(poolIndex).sort((a,b)=>a-b).join(', ');
+
+const remainCard = document.createElement('div');
+
+remainCard.className = 'group-card';
+
+remainCard.style.borderLeftColor = '#bdc3c7';
+
+remainCard.innerHTML = `
+
+<div class="group-card-title" style="color: #7f8c8d">未入組名單 (共 ${remainCount} 人)</div>
+
+<div class="group-card-members" style="color: #7f8c8d">${remainNumbers}</div>
+
+`;
+
+groupResultsContainer.appendChild(remainCard);
+
+}
+
+});
+
+
+
+// ==========================================
+
+// 核心三：快速抉擇 (是或否, 好或不好, 左或右, 先或後)
+
+// ==========================================
+
+
+// --- A. 是或否隨機 ---
+
+const ynDisplay = document.getElementById('yn-display');
+
+const optionsYN = ["是 👍", "否 👎"];
+
+let isPickingYN = false;
+
+
+document.getElementById('pick-yn-btn').addEventListener('click', () => {
+
+if (isPickingYN) return;
+
+isPickingYN = true;
+
+ynDisplay.classList.add('rolling');
+
+
+let counter = 0;
+
+const interval = setInterval(() => {
+
+ynDisplay.innerText = optionsYN[counter % 2].split(" ")[0];
+
+counter++;
+
+
+if (counter > 15) {
+
+clearInterval(interval);
+
+ynDisplay.classList.remove('rolling');
+
+const finalRes = optionsYN[Math.floor(Math.random() * 2)];
+
+ynDisplay.innerText = finalRes;
+
+isPickingYN = false;
+
+
+setTimeout(() => {
+
+showResult(`決定是：${finalRes}`, "是或否，不再糾結！");
+
+}, 300);
+
+}
+
+}, 80);
+
+});
+
+
+// --- B. 好或不好隨機 ---
+
+const gdDisplay = document.getElementById('gd-display');
+
+const optionsGD = ["好 👍", "不好 👎"];
+
+let isPickingGD = false;
+
+
+document.getElementById('pick-gd-btn').addEventListener('click', () => {
+
+if (isPickingGD) return;
+
+isPickingGD = true;
+
+gdDisplay.classList.add('rolling');
+
+
+let counter = 0;
+
+const interval = setInterval(() => {
+
+gdDisplay.innerText = optionsGD[counter % 2].split(" ")[0];
+
+counter++;
+
+
+if (counter > 15) {
+
+clearInterval(interval);
+
+gdDisplay.classList.remove('rolling');
+
+const finalRes = optionsGD[Math.floor(Math.random() * 2)];
+
+gdDisplay.innerText = finalRes;
+
+isPickingGD = false;
+
+
+setTimeout(() => {
+
+showResult(`決定是：${finalRes}`, "好或不好，直覺抉擇！");
+
+}, 300);
+
+}
+
+}, 80);
+
+});
+
+
+// --- C. 左或右隨機 ---
+
+const lrDisplay = document.getElementById('lr-display');
+
+const optionsLR = ["左 👈", "右 👉"];
+
+let isPickingLR = false;
+
+
+document.getElementById('pick-lr-btn').addEventListener('click', () => {
+
+if (isPickingLR) return;
+
+isPickingLR = true;
+
+lrDisplay.classList.add('rolling');
+
+
+let counter = 0;
+
+const interval = setInterval(() => {
+
+lrDisplay.innerText = optionsLR[counter % 2].split(" ")[0];
+
+counter++;
+
+
+if (counter > 15) {
+
+clearInterval(interval);
+
+lrDisplay.classList.remove('rolling');
+
+const finalRes = optionsLR[Math.floor(Math.random() * 2)];
+
+lrDisplay.innerText = finalRes;
+
+isPickingLR = false;
+
+
+setTimeout(() => {
+
+showResult(`決定是：${finalRes}`, "左與右，指明方向！");
+
+}, 300);
+
+}
+
+}, 80);
+
+});
+
+
+// --- D. 先或後隨機 ---
+
+const fbDisplay = document.getElementById('fb-display');
+
+const optionsFB = ["先 🏃‍♂️", "後 ⏱️"];
+
+let isPickingFB = false;
+
+
+document.getElementById('pick-fb-btn').addEventListener('click', () => {
+
+if (isPickingFB) return;
+
+isPickingFB = true;
+
+fbDisplay.classList.add('rolling');
+
+
+let counter = 0;
+
+const interval = setInterval(() => {
+
+fbDisplay.innerText = optionsFB[counter % 2].split(" ")[0];
+
+counter++;
+
+
+if (counter > 15) {
+
+clearInterval(interval);
+
+fbDisplay.classList.remove('rolling');
+
+const finalRes = optionsFB[Math.floor(Math.random() * 2)];
+
+fbDisplay.innerText = finalRes;
+
+isPickingFB = false;
+
+
+setTimeout(() => {
+
+showResult(`決定是：${finalRes}`, "順序決定，即刻出發！");
+
+}, 300);
+
+}
+
+}, 80);
+
+});
+
+
+
+// ==========================================
+
+// 核心四：抽籤問事
+
+// ==========================================
+
+const drawInput = document.getElementById('draw-input');
+
+const drawBtn = document.getElementById('draw-btn');
+
+const cupElement = document.getElementById('fortune-cup-element');
+
+const primeStick = document.getElementById('prime-stick');
+
+
+const fortunes = [
+
+{ level: "上上指引 🌟", text: "建議你放手去做，成功概率非常高！" },
+
+{ level: "潛力指引 ✨", text: "這件事有實現的潛力，值得你大膽嘗試。" },
+
+{ level: "時機指引 ⏱️", text: "現在時機正好，別再猶豫了，衝吧！" },
+
+{ level: "深思指引 💡", text: "建議多加思考，先緩緩，或許還有更好的做法。" },
+
+{ level: "守候指引 ⏳", text: "也許能再等一等更好的時機，不要急躁。" },
+
+{ level: "放膽指引 🚀", text: "放膽一試吧！前方會看見意想不到的驚喜。" },
+
+{ level: "轉向指引 🔄", text: "換個方向思考，問題的答案會更加明朗。" },
+
+{ level: "直覺指引 🧭", text: "聽從心靈深處最直覺的那個聲音，那就是答案。" },
+
+{ level: "探索指引 🔎", text: "多蒐集一些資料、多問問意見，再做決定更穩妥。" },
+
+{ level: "順遂指引 🍃", text: "別給自己太大壓力，順其自然就能迎刃而解。" }
+
+];
+
+
+let isDrawing = false;
+
+
+drawBtn.addEventListener('click', () => {
+
+if (isDrawing) return;
+
+
+const question = drawInput.value.trim();
+
+if (!question) {
+
+showResult("請先在上方輸入你想求問的事情喔！", "提示");
+
+return;
+
+}
+
+
+isDrawing = true;
+
+cupElement.classList.add('cup-shake');
+
+
+setTimeout(() => {
+
+primeStick.classList.add('active-out');
+
+}, 400);
+
+
+setTimeout(() => {
+
+const luckyFortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+
+showResult(`【${luckyFortune.level}】\n${luckyFortune.text}`, `關於求問「${question}」：`);
+
+
+cupElement.classList.remove('cup-shake');
+
+primeStick.classList.remove('active-out');
+
+isDrawing = false;
+
+drawInput.value = '';
+
+}, 1800);
+
+});
+
+
+
+// ==========================================
+
+// 核心五：富蘭克林決策 & 智慧決定按鈕
+
+// ==========================================
+
+let franklinData = {
+
+question: "",
+
+pros: [], // Array of { id, text, crossed }
+
+cons: []  // Array of { id, text, crossed }
+
+};
+
+
+const questionInput = document.getElementById('franklin-question');
+
+const proInput = document.getElementById('pro-input');
+
+const conInput = document.getElementById('con-input');
+
+const proList = document.getElementById('pro-list');
+
+const conList = document.getElementById('con-list');
+
+const addProBtn = document.getElementById('add-pro-btn');
+
+const addConBtn = document.getElementById('add-con-btn');
+
+const decideFranklinBtn = document.getElementById('decide-franklin-btn');
+
+const clearFranklinBtn = document.getElementById('clear-franklin-btn');
+
+
+function renderFranklin() {
+
+questionInput.value = franklinData.question;
+
+
+// 渲染是/優點列表
+
+proList.innerHTML = '';
+
+franklinData.pros.forEach((item) => {
+
+const div = document.createElement('div');
+
+div.className = `reason-item ${item.crossed ? 'crossed' : ''}`;
+
+div.innerHTML = `
+
+<span>${item.text}</span>
+
+<i class="fa-solid fa-circle-xmark delete-reason-btn" data-id="${item.id}" data-type="pro"></i>
+
+`;
+
+div.addEventListener('click', (e) => {
+
+if (e.target.classList.contains('delete-reason-btn')) return;
+
+toggleReasonCrossed(item.id, 'pro');
+
+});
+
+proList.appendChild(div);
+
+});
+
+
+// 渲染否/缺點列表
+
+conList.innerHTML = '';
+
+franklinData.cons.forEach((item) => {
+
+const div = document.createElement('div');
+
+div.className = `reason-item ${item.crossed ? 'crossed' : ''}`;
+
+div.innerHTML = `
+
+<span>${item.text}</span>
+
+<i class="fa-solid fa-circle-xmark delete-reason-btn" data-id="${item.id}" data-type="con"></i>
+
+`;
+
+div.addEventListener('click', (e) => {
+
+if (e.target.classList.contains('delete-reason-btn')) return;
+
+toggleReasonCrossed(item.id, 'con');
+
+});
+
+conList.appendChild(div);
+
+});
+
+
+// 綁定刪除事件
+
+document.querySelectorAll('.delete-reason-btn').forEach(btn => {
+
+btn.addEventListener('click', (e) => {
+
+e.stopPropagation();
+
+const id = e.target.getAttribute('data-id');
+
+const type = e.target.getAttribute('data-type');
+
+deleteReason(id, type);
+
+});
+
+});
+
+}
+
+
+function addReason(type) {
+
+if (type === 'pro') {
+
+const val = proInput.value.trim();
+
+if (!val) return;
+
+franklinData.pros.push({ id: crypto.randomUUID(), text: val, crossed: false });
+
+proInput.value = '';
+
+} else {
+
+const val = conInput.value.trim();
+
+if (!val) return;
+
+franklinData.cons.push({ id: crypto.randomUUID(), text: val, crossed: false });
+
+conInput.value = '';
+
+}
+
+renderFranklin();
+
+saveFranklinData();
+
+}
+
+
+addProBtn.addEventListener('click', () => addReason('pro'));
+
+addConBtn.addEventListener('click', () => addReason('con'));
+
+
+proInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addReason('pro'); });
+
+conInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addReason('con'); });
+
+
+function deleteReason(id, type) {
+
+if (type === 'pro') {
+
+franklinData.pros = franklinData.pros.filter(item => item.id !== id);
+
+} else {
+
+franklinData.cons = franklinData.cons.filter(item => item.id !== id);
+
+}
+
+renderFranklin();
+
+saveFranklinData();
+
+}
+
+
+function toggleReasonCrossed(id, type) {
+
+if (type === 'pro') {
+
+const item = franklinData.pros.find(item => item.id === id);
+
+if (item) item.crossed = !item.crossed;
+
+} else {
+
+const item = franklinData.cons.find(item => item.id === id);
+
+if (item) item.crossed = !item.crossed;
+
+}
+
+renderFranklin();
+
+saveFranklinData();
+
+}
+
+
+questionInput.addEventListener('input', () => {
+
+franklinData.question = questionInput.value;
+
+saveFranklinData();
+
+});
+
+
+// 「我決定了！」智慧推薦決策邏輯
+
+decideFranklinBtn.addEventListener('click', () => {
+
+const activePros = franklinData.pros.filter(item => !item.crossed).length;
+
+const activeCons = franklinData.cons.filter(item => !item.crossed).length;
+
+const questionText = franklinData.question.trim() || "這件大事";
+
+
+if (franklinData.pros.length === 0 && franklinData.cons.length === 0) {
+
+showResult("請先在是與否兩欄中新增一些理由，再讓我幫你分析喔！", "提示");
+
+return;
+
+}
+
+
+let adviceTitle = "";
+
+let adviceDetail = `有效優點（是）共 ${activePros} 項，有效缺點（否）共 ${activeCons} 項。`;
+
+
+if (activePros > activeCons) {
+
+adviceTitle = "🟢 建議「去做 / 是」！";
+
+adviceDetail += `\n支持「是」的理由比較多。如果這是你想追求的目標，就放手去嘗試吧！`;
+
+} else if (activeCons > activePros) {
+
+adviceTitle = "🔴 建議「不做 / 否」！";
+
+adviceDetail += `\n反對的理由或風險點比較多。建議先緩緩或尋找更周全的方案。`;
+
+} else {
+
+adviceTitle = "⚖️ 目前旗鼓相當！";
+
+adviceDetail += `\n優缺點的數量剛好打平。也許可以試著放鬆心情，聽聽內心最直覺的想法，或嘗試用抽籤/轉盤來獲得靈感！`;
+
+}
+
+
+showResult(adviceTitle, `關於「${questionText}」：\n${adviceDetail}`);
+
+});
+
+
+clearFranklinBtn.addEventListener('click', () => {
+
+franklinData = { question: "", pros: [], cons: [] };
+
+renderFranklin();
+
+saveFranklinData();
+
+});
+
+
+
+// ==========================================
+
+// 智慧型資料儲存與載入邏輯（支援雲端 + 瀏覽器本機 localStorage）
+
+// ==========================================
+
+
+// 1. 儲存轉盤設定
+
+async function saveWheelData() {
+
+if (useFirebase && user) {
+
+try {
+
+const wheelDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'wheel', 'data');
+
+await setDoc(wheelDocRef, { options, title: wheelTitle });
+
+} catch (err) {}
+
+} else {
+
+localStorage.setItem('wheel_options', JSON.stringify(options));
+
+localStorage.setItem('wheel_title', wheelTitle);
+
+}
+
+}
+
+
+// 2. 儲存富蘭克林決策資料
+
+async function saveFranklinData() {
+
+if (useFirebase && user) {
+
+try {
+
+const franklinDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'franklin', 'data');
+
+await setDoc(franklinDocRef, franklinData);
+
+} catch (err) {}
+
+} else {
+
+localStorage.setItem('franklin_data', JSON.stringify(franklinData));
+
+}
+
+}
+
+
+// 3. 載入轉盤設定
+
+async function loadWheelOptions() {
+
+if (useFirebase && user) {
+
+try {
+
+const wheelDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'wheel', 'data');
+
+const docSnap = await getDoc(wheelDocRef);
+
+if (docSnap.exists()) {
+
+const data = docSnap.data();
+
+if (data.options) options = data.options;
+
+if (data.title) {
+
+wheelTitle = data.title;
+
+wheelTitleInput.value = wheelTitle;
+
+wheelCurrentTitle.innerHTML = `<i class="fa-solid fa-bowl-food"></i> ${wheelTitle}`;
+
+}
+
+initWheel();
+
+return;
+
+}
+
+} catch (err) {}
+
+}
+
+
+// 本地 fallback 載入
+
+const localOptions = localStorage.getItem('wheel_options');
+
+const localTitle = localStorage.getItem('wheel_title');
+
+if (localOptions) options = JSON.parse(localOptions);
+
+if (localTitle) {
+
+wheelTitle = localTitle;
+
+wheelTitleInput.value = wheelTitle;
+
+wheelCurrentTitle.innerHTML = `<i class="fa-solid fa-bowl-food"></i> ${wheelTitle}`;
+
+}
+
+initWheel();
+
+}
+
+
+// 4. 載入富蘭克林決策資料
+
+async function loadFranklinMatrix() {
+
+if (useFirebase && user) {
+
+try {
+
+const franklinDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'franklin', 'data');
+
+const docSnap = await getDoc(franklinDocRef);
+
+if (docSnap.exists()) {
+
+const data = docSnap.data();
+
+franklinData.question = data.question || "";
+
+franklinData.pros = data.pros || [];
+
+franklinData.cons = data.cons || [];
+
+renderFranklin();
+
+return;
+
+}
+
+} catch (err) {}
+
+}
+
+
+// 本地 fallback 載入
+
+const localFranklin = localStorage.getItem('franklin_data');
+
+if (localFranklin) {
+
+const data = JSON.parse(localFranklin);
+
+franklinData.question = data.question || "";
+
+franklinData.pros = data.pros || [];
+
+franklinData.cons = data.cons || [];
+
+}
+
+renderFranklin();
+
+}
+
+
+// ==========================================
+
+// 初始化載入與身份認證 (遵守 RULE 3)
+
+// ==========================================
+
+if (useFirebase) {
+
+onAuthStateChanged(auth, (u) => {
+
+user = u;
+
+if (user) {
+
+loadWheelOptions();
+
+loadFranklinMatrix();
+
+}
+
+});
+
+
+const initAuth = async () => {
+
+try {
+
+if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+
+await signInWithCustomToken(auth, __initial_auth_token);
+
+} else {
+
+await signInAnonymously(auth);
+
+}
+
+} catch (err) {
+
+useFirebase = false; // 登入出錯則降級為本地 localStorage
+
+loadWheelOptions();
+
+loadFranklinMatrix();
+
+}
+
+};
+
+initAuth();
+
+} else {
+
+// 在 GitHub Pages/本機環境中，不登入 Firebase，直接讀取 localStorage 資料
+
+loadWheelOptions();
+
+loadFranklinMatrix();
+
+}
+
+
+window.onload = () => {
+
+if (!useFirebase) {
+
+initWheel();
+
+renderFranklin();
+
+}
+
+};
+
+</script>
+
+</body>
+
+</html>

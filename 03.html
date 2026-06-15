@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>萌芽記帳 Sprout Budget - 智慧理財與趣味動畫</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f7f9f6;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12 text-slate-800">
+
+    <!-- 頂部導航欄 -->
+    <header class="bg-white border-b border-emerald-100 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-md shadow-emerald-200">
+                    <i data-lucide="sprout" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl text-emerald-800 tracking-wide">萌芽記帳</h1>
+                    <p class="text-xs text-slate-400">一筆一劃，灌溉你的財富森林</p>
+                </div>
+            </div>
+            <div class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full font-medium flex items-center gap-1">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                <span id="current-month-display">2026 年 6 月</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- 儀表板：核心數據 -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- 剩餘資金卡片 -->
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 text-white shadow-xl shadow-emerald-100 relative overflow-hidden group">
+                <div class="absolute -right-6 -bottom-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                    <i data-lucide="wallet" class="w-32 h-32"></i>
+                </div>
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-emerald-100 font-medium text-sm flex items-center gap-1">
+                        <i data-lucide="wallet" class="w-4 h-4"></i> 還剩多少錢
+                    </span>
+                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">當月餘額</span>
+                </div>
+                <div class="text-3xl font-black tracking-tight mb-1" id="balance-display">$0</div>
+                <div class="text-xs text-emerald-100 flex items-center gap-1">
+                    <span>總收入 </span><span id="total-income-sub">$0</span>
+                    <span> | 總支出 </span><span id="total-expense-sub">$0</span>
+                </div>
+            </div>
+
+            <!-- 每日可用資金卡片 -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
+                <div class="absolute -right-6 -bottom-6 text-amber-50 opacity-40 group-hover:scale-110 transition-transform duration-500">
+                    <i data-lucide="coins" class="w-32 h-32"></i>
+                </div>
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-slate-400 font-medium text-sm flex items-center gap-1">
+                        <i data-lucide="calculator" class="w-4 h-4 text-amber-500"></i> 每天可用多少錢
+                    </span>
+                    <button onclick="openTipsModal()" class="text-slate-300 hover:text-slate-500 transition">
+                        <i data-lucide="help-circle" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div class="text-3xl font-black text-slate-800 tracking-tight mb-1" id="daily-available-display">$0</div>
+                <div class="text-xs text-slate-400 flex items-center gap-1">
+                    <span>本月剩餘：</span><span class="text-amber-600 font-medium" id="remaining-days-display">0 天</span>
+                </div>
+            </div>
+
+            <!-- 計畫儲蓄設定卡片 -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-slate-400 font-medium text-sm flex items-center gap-1">
+                            <i data-lucide="piggy-bank" class="w-4 h-4 text-pink-500"></i> 本月計畫儲蓄
+                        </span>
+                        <button onclick="openSavingSettingModal()" class="text-emerald-600 hover:text-emerald-700 font-semibold text-xs flex items-center gap-0.5">
+                            <i data-lucide="edit" class="w-3 h-3"></i> 設定
+                        </button>
+                    </div>
+                    <div class="text-2xl font-black text-slate-800 mb-2" id="target-saving-display">$0</div>
+                </div>
+                
+                <!-- 儲蓄進度條 -->
+                <div class="space-y-1.5 mt-2">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span class="text-slate-400">目前已儲蓄: <span class="text-pink-600" id="current-saving-display">$0</span></span>
+                        <span class="text-emerald-600" id="saving-progress-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                        <div id="saving-progress-bar" class="bg-gradient-to-r from-pink-400 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 主要控制面板：收入與支出按鈕 -->
+        <section class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <!-- 頁籤切換 -->
+            <div class="flex border-b border-slate-100 p-2 bg-slate-50/50">
+                <button id="tab-expense-btn" onclick="switchTab('expense')" class="flex-1 py-3 text-center font-bold text-sm rounded-2xl transition duration-200 flex items-center justify-center gap-2 bg-white text-emerald-700 shadow-sm">
+                    <i data-lucide="trending-down" class="w-4 h-4 text-rose-500"></i> 支出明細
+                </button>
+                <button id="tab-income-btn" onclick="switchTab('income')" class="flex-1 py-3 text-center font-bold text-sm rounded-2xl transition duration-200 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i> 收入明細
+                </button>
+            </div>
+
+            <!-- 面板內容 -->
+            <div class="p-6">
+                <!-- 1. 支出面板 -->
+                <div id="panel-expense" class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-slate-700 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 bg-rose-500 rounded-full"></span>本月支出清單
+                        </h3>
+                        <button onclick="openAddModal('expense')" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-4 py-2.5 rounded-2xl shadow-lg shadow-rose-100 hover:shadow-rose-200 transition duration-150 flex items-center gap-1 text-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> 新增支出
+                        </button>
+                    </div>
+
+                    <!-- 支出列表 -->
+                    <div class="overflow-y-auto max-h-[350px] custom-scrollbar pr-1" id="expense-list-container">
+                        <!-- 動態插入 -->
+                    </div>
+                </div>
+
+                <!-- 2. 收入面板 (預設隱藏) -->
+                <div id="panel-income" class="space-y-4 hidden">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-slate-700 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>本月收入清單
+                        </h3>
+                        <button onclick="openAddModal('income')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-2xl shadow-lg shadow-emerald-100 hover:shadow-emerald-200 transition duration-150 flex items-center gap-1 text-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> 新增收入
+                        </button>
+                    </div>
+
+                    <!-- 收入列表 -->
+                    <div class="overflow-y-auto max-h-[350px] custom-scrollbar pr-1" id="income-list-container">
+                        <!-- 動態插入 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== 彈出視窗：新增/編輯資料 (Modal) ==================== -->
+    <div id="form-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
+            <!-- 視窗標題 -->
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center" id="modal-header-bg">
+                <h3 class="font-extrabold text-lg text-slate-800 flex items-center gap-2" id="modal-title">
+                    新增紀錄
+                </h3>
+                <button onclick="closeModal('form-modal')" class="text-slate-400 hover:text-slate-600 transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- 表單內容 -->
+            <form id="record-form" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="form-type" value="expense"> <!-- expense 或 income -->
+
+                <!-- 金額 -->
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block">金額 (元)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span class="text-slate-400 font-bold">$</span>
+                        </div>
+                        <input type="number" id="form-amount" required min="1" step="1" placeholder="輸入金額" class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-lg font-bold">
+                    </div>
+                </div>
+
+                <!-- 日期 -->
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block">日期</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="calendar" class="text-slate-400 w-4 h-4"></i>
+                        </div>
+                        <input type="date" id="form-date" required class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition font-medium">
+                    </div>
+                </div>
+
+                <!-- 類別 / 原因 -->
+                <div class="space-y-1" id="form-category-container">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block">原因 / 備註</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="tag" class="text-slate-400 w-4 h-4"></i>
+                        </div>
+                        <input type="text" id="form-category" placeholder="例如：午餐、捷運、儲蓄" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition font-medium">
+                    </div>
+                    <!-- 快速選擇儲蓄按鈕 -->
+                    <div class="pt-2 flex flex-wrap gap-2" id="quick-categories">
+                        <button type="button" onclick="setQuickCategory('儲蓄')" class="px-3 py-1 bg-pink-50 hover:bg-pink-100 text-pink-600 border border-pink-200 text-xs font-bold rounded-full transition flex items-center gap-1 shadow-sm">
+                            <i data-lucide="piggy-bank" class="w-3.5 h-3.5"></i> 快速選擇：儲蓄
+                        </button>
+                        <button type="button" onclick="setQuickCategory('餐飲')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium rounded-full transition">餐飲</button>
+                        <button type="button" onclick="setQuickCategory('交通')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium rounded-full transition">交通</button>
+                        <button type="button" onclick="setQuickCategory('娛樂')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium rounded-full transition">娛樂</button>
+                    </div>
+                </div>
+
+                <!-- 按鈕 -->
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('form-modal')" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl border border-slate-100 transition">
+                        取消
+                    </button>
+                    <button type="submit" id="submit-btn" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-100 hover:shadow-emerald-200 transition">
+                        確認新增
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== 彈出視窗：設定目標儲蓄 ==================== -->
+    <div id="saving-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-extrabold text-lg text-slate-800 flex items-center gap-2">
+                    <i data-lucide="piggy-bank" class="text-pink-500 w-5 h-5"></i> 設定本月計畫儲蓄
+                </h3>
+                <button onclick="closeModal('saving-modal')" class="text-slate-400 hover:text-slate-600 transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSavingSubmit(event)" class="p-6 space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block">本月儲蓄目標金額 (元)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span class="text-slate-400 font-bold">$</span>
+                        </div>
+                        <input type="number" id="saving-target-input" required min="0" step="100" placeholder="例如：10000" class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition text-lg font-bold">
+                    </div>
+                    <p class="text-[11px] text-slate-400">當你新增支出原因為「儲蓄」的項目，金額就會累計至儲蓄進度中！</p>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('saving-modal')" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl border border-slate-100 transition">
+                        取消
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-2xl shadow-lg shadow-pink-100 hover:shadow-pink-200 transition">
+                        儲存目標
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== 彈出視窗：恭喜儲蓄達標 (Celebration Modal) ==================== -->
+    <div id="congrats-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-gradient-to-b from-amber-50 to-white rounded-3xl w-full max-w-md shadow-2xl p-8 text-center relative overflow-hidden transform scale-95 transition-transform duration-300 border-2 border-amber-300">
+            <!-- 閃亮背景飾品 -->
+            <div class="absolute -top-12 -left-12 w-32 h-32 bg-amber-200/30 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-emerald-200/30 rounded-full blur-2xl"></div>
+
+            <div class="w-24 h-24 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-amber-200 animate-bounce">
+                <i data-lucide="party-popper" class="w-12 h-12 text-white"></i>
+            </div>
+
+            <h3 class="text-2xl font-black text-amber-800 mb-2">🎉 恭喜儲蓄達標！</h3>
+            <p class="text-slate-600 text-sm mb-6 leading-relaxed">
+                你真是理財小天才！本月所預設的計畫儲蓄目標已經成功實現，看著金幣不斷累積，離夢想更近了一步！
+            </p>
+
+            <div class="bg-amber-50 rounded-2xl p-4 mb-6 border border-amber-100">
+                <div class="text-xs text-amber-700 font-semibold uppercase tracking-wider mb-1">本月儲蓄成果</div>
+                <div class="text-3xl font-black text-amber-900" id="congrats-amount-display">$0</div>
+            </div>
+
+            <button onclick="closeModal('congrats-modal')" class="w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-extrabold rounded-2xl shadow-lg shadow-amber-200 hover:shadow-amber-300 transition duration-150">
+                太棒了！繼續加油
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ==================== 彈出視窗：吃土超支警告 (Overspend Warning Modal) ==================== -->
+    <div id="overspend-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl p-8 text-center transform scale-95 transition-transform duration-300 border-2 border-red-200 relative">
+            
+            <!-- 大警告標誌代替原先的圖片 -->
+            <div class="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 text-rose-500 shadow-inner">
+                <i data-lucide="alert-triangle" class="w-10 h-10"></i>
+            </div>
+
+            <!-- 主標題設定 -->
+            <h3 class="text-2xl font-black text-rose-600 mb-2">🚨 你要吃土囉！</h3>
+            <p class="text-slate-600 text-sm mb-6 leading-relaxed">
+                嗶嗶！剛才新增的這筆支出金額（<span class="text-rose-600 font-bold" id="overspend-amount-display">$0</span>）
+                已經<strong>大於今天可用金額</strong>了！<br>
+                再這樣隨性刷下去，接下來的日子真的只能去公園吃乾淨的土囉 🌱
+            </p>
+
+            <div class="bg-rose-50 rounded-2xl p-4 mb-6 border border-rose-100 text-left space-y-1">
+                <div class="flex justify-between text-xs text-rose-800">
+                    <span>當時每日可用金額：</span>
+                    <span class="font-bold" id="overspend-daily-limit">$0</span>
+                </div>
+                <div class="flex justify-between text-xs text-rose-800">
+                    <span>此筆消費金額：</span>
+                    <span class="font-bold" id="overspend-current-cost">$0</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="confirmOverspend()" class="flex-1 py-3.5 bg-rose-500 hover:bg-rose-600 text-white font-extrabold rounded-2xl shadow-lg shadow-rose-100 hover:shadow-rose-200 transition">
+                    我知道了 (忍痛記下)
+                </button>
+                <button onclick="cancelOverspend()" class="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl transition">
+                    反悔不買了
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 彈出視窗：計算說明 ==================== -->
+    <div id="tips-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-slate-700">
+            <h3 class="font-extrabold text-lg text-emerald-800 flex items-center gap-2 mb-4">
+                <i data-lucide="help-circle" class="w-5 h-5"></i> 每天可用金額如何計算？
+            </h3>
+            <div class="space-y-3 text-sm leading-relaxed text-slate-600">
+                <p>為了確保你在不透支、不挪用「預計儲蓄」的前提下安心消費，公式設計如下：</p>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 font-mono text-xs text-slate-700">
+                    每日可用金額 = ( 當月總收入 - 本月計畫儲蓄 - 當月非儲蓄支出 ) / 當月剩餘天數
+                </div>
+                <p>💡 <span class="font-bold text-emerald-600">秘訣：</span>把預備儲蓄扣除後平分到剩餘的天數，這樣只要每天不花超過這個額度，月底就絕對能順利存下目標金額！</p>
+            </div>
+            <button onclick="closeModal('tips-modal')" class="w-full mt-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition">
+                了解！
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        // ==================== 全局變數 & 初始化資料 ====================
+        let incomes = [];
+        let expenses = [];
+        let targetSaving = 0; // 預設儲蓄計畫調整為 0 元起步，交由使用者設定
+        let overspendPendingRecord = null; // 當觸發吃土警報時，暫時保存的記錄
+
+        // 預設示範資料設為空，確保一開始是完全乾淨的 0 金額
+        const defaultIncomes = [];
+        const defaultExpenses = [];
+
+        // ==================== 初始化網頁 ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            // 初始化 Lucide 圖標
+            lucide.createIcons();
+
+            // 從 localStorage 讀取資料
+            const storedIncomes = localStorage.getItem('sprout_incomes');
+            const storedExpenses = localStorage.getItem('sprout_expenses');
+            const storedSaving = localStorage.getItem('sprout_target_saving');
+
+            // 讀取或初始化空資料
+            if (storedIncomes) {
+                incomes = JSON.parse(storedIncomes);
+            } else {
+                incomes = defaultIncomes;
+                localStorage.setItem('sprout_incomes', JSON.stringify(incomes));
+            }
+
+            if (storedExpenses) {
+                expenses = JSON.parse(storedExpenses);
+            } else {
+                expenses = defaultExpenses;
+                localStorage.setItem('sprout_expenses', JSON.stringify(expenses));
+            }
+
+            if (storedSaving) {
+                targetSaving = parseInt(storedSaving, 10);
+            } else {
+                localStorage.setItem('sprout_target_saving', targetSaving.toString());
+            }
+
+            // 設定預設日期為今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('form-date').value = today;
+
+            // 更新畫面資料
+            updateUI();
+        });
+
+        // ==================== 核心計算與 UI 更新邏輯 ====================
+        function updateUI() {
+            // 1. 計算收入總額
+            const totalIncome = incomes.reduce((acc, curr) => acc + curr.amount, 0);
+
+            // 2. 計算支出總和與儲蓄類別總和
+            const totalExpense = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+            const currentSaving = expenses
+                .filter(exp => exp.category === '儲蓄')
+                .reduce((acc, curr) => acc + curr.amount, 0);
+
+            // 3. 計算剩餘多少錢 (當月餘額)
+            const remainingBalance = totalIncome - totalExpense;
+
+            // 4. 計算每日可用金額
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth(); // 0-11
+            const lastDayOfMonth = new Date(year, month + 1, 0).getDate(); // 當月最後一天
+            const todayDate = now.getDate();
+            const remainingDays = Math.max(1, lastDayOfMonth - todayDate + 1); // 剩餘天數，至少為 1
+
+            // 扣除「儲蓄目標」與「已支出的非儲蓄項目」後，除以剩餘天數
+            const nonSavingExpenses = expenses
+                .filter(exp => exp.category !== '儲蓄')
+                .reduce((acc, curr) => acc + curr.amount, 0);
+            
+            const budgetToDistribute = totalIncome - targetSaving - nonSavingExpenses;
+            const dailyAvailable = Math.max(0, Math.round(budgetToDistribute / remainingDays));
+
+            // 更新卡片內容
+            document.getElementById('balance-display').innerText = `$${remainingBalance.toLocaleString()}`;
+            document.getElementById('total-income-sub').innerText = `$${totalIncome.toLocaleString()}`;
+            document.getElementById('total-expense-sub').innerText = `$${totalExpense.toLocaleString()}`;
+            document.getElementById('daily-available-display').innerText = `$${dailyAvailable.toLocaleString()}`;
+            document.getElementById('remaining-days-display').innerText = `${remainingDays} 天 (本月剩餘)`;
+            document.getElementById('target-saving-display').innerText = `$${targetSaving.toLocaleString()}`;
+            document.getElementById('current-saving-display').innerText = `$${currentSaving.toLocaleString()}`;
+
+            // 計算儲蓄進度百分比
+            const progressPercent = targetSaving > 0 ? Math.min(100, Math.round((currentSaving / targetSaving) * 100)) : 0;
+            document.getElementById('saving-progress-percent').innerText = `${progressPercent}%`;
+            document.getElementById('saving-progress-bar').style.width = `${progressPercent}%`;
+
+            // 動態更新系統月份顯示 (本地時間)
+            const options = { year: 'numeric', month: 'long' };
+            document.getElementById('current-month-display').innerText = now.toLocaleDateString('zh-TW', options);
+
+            // 渲染列表
+            renderList('expense', expenses);
+            renderList('income', incomes);
+
+            // 動態重新生成 icons
+            lucide.createIcons();
+        }
+
+        // ==================== 渲染紀錄列表 ====================
+        function renderList(type, data) {
+            const container = document.getElementById(`${type}-list-container`);
+            container.innerHTML = '';
+
+            // 按日期由新到舊排序
+            const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (sortedData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-300">
+                        <i data-lucide="receipt" class="w-12 h-12 mx-auto mb-2 opacity-60"></i>
+                        <p class="text-sm font-medium">尚無任何${type === 'expense' ? '支出' : '收入'}明細</p>
+                    </div>
+                `;
+                return;
+            }
+
+            sortedData.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = "flex items-center justify-between p-4 mb-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 transition group";
+
+                const isSaving = type === 'expense' && item.category === '儲蓄';
+                
+                // 決定左側 Icon 與配色
+                let iconName = type === 'expense' ? 'arrow-down-right' : 'arrow-up-right';
+                let iconClass = type === 'expense' ? 'text-rose-500 bg-rose-50' : 'text-emerald-500 bg-emerald-50';
+
+                if (isSaving) {
+                    iconName = 'piggy-bank';
+                    iconClass = 'text-pink-500 bg-pink-50';
+                }
+
+                itemEl.innerHTML = `
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-10 h-10 ${iconClass} rounded-xl flex items-center justify-center font-bold">
+                            <i data-lucide="${iconName}" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-slate-700">${item.category || (type === 'expense' ? '未分類支出' : '未分類收入')}</div>
+                            <div class="text-[11px] text-slate-400 font-medium">${formatDate(item.date)}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="font-extrabold text-base ${type === 'expense' ? 'text-slate-800' : 'text-emerald-600'}">
+                            ${type === 'expense' ? '-' : '+'}$${item.amount.toLocaleString()}
+                        </span>
+                        <button onclick="deleteRecord('${type}', '${item.id}')" class="text-slate-300 hover:text-rose-500 p-1 rounded-lg hover:bg-rose-50 transition opacity-0 group-hover:opacity-100">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(itemEl);
+            });
+        }
+
+        // 格式化日期：顯示為 06.09 (二)
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
+            const day = dayNames[date.getDay()];
+            return `${mm}.${dd} (${day})`;
+        }
+
+        // ==================== 頁籤切換 ====================
+        function switchTab(tab) {
+            const expenseBtn = document.getElementById('tab-expense-btn');
+            const incomeBtn = document.getElementById('tab-income-btn');
+            const expensePanel = document.getElementById('panel-expense');
+            const incomePanel = document.getElementById('panel-income');
+
+            if (tab === 'expense') {
+                expenseBtn.className = "flex-1 py-3 text-center font-bold text-sm rounded-2xl transition duration-200 flex items-center justify-center gap-2 bg-white text-emerald-700 shadow-sm";
+                incomeBtn.className = "flex-1 py-3 text-center font-bold text-sm rounded-2xl transition duration-200 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700";
+                expensePanel.classList.remove('hidden');
+                incomePanel.classList.add('hidden');
+            } else {
+                incomeBtn.className = "flex-1 py-3 text-center font-bold text-sm rounded-2xl transition duration-200 flex items-center justify-center gap-2 bg-white text-emerald-700 shadow-sm";
+                expenseBtn.className = "flex-1 py-3 text-center font-bold text-sm rounded-2xl transition duration-200 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700";
+                incomePanel.classList.remove('hidden');
+                expensePanel.classList.add('hidden');
+            }
+        }
+
+        // ==================== 彈出視窗控制 ====================
+        function openAddModal(type) {
+            const modal = document.getElementById('form-modal');
+            const title = document.getElementById('modal-title');
+            const typeInput = document.getElementById('form-type');
+            const headerBg = document.getElementById('modal-header-bg');
+            const submitBtn = document.getElementById('submit-btn');
+            const quickCategories = document.getElementById('quick-categories');
+            const categoryContainer = document.getElementById('form-category-container');
+
+            typeInput.value = type;
+            // 清空舊輸入
+            document.getElementById('form-amount').value = '';
+            document.getElementById('form-category').value = '';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('form-date').value = today;
+
+            if (type === 'expense') {
+                title.innerHTML = `<i data-lucide="trending-down" class="text-rose-500 w-5 h-5"></i> 新增支出明細`;
+                headerBg.className = "px-6 py-5 border-b border-rose-50 flex justify-between items-center bg-rose-50/20";
+                submitBtn.className = "flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl shadow-lg shadow-rose-100 hover:shadow-rose-200 transition";
+                submitBtn.innerText = "確認新增支出";
+                quickCategories.classList.remove('hidden');
+                categoryContainer.classList.remove('hidden');
+            } else {
+                title.innerHTML = `<i data-lucide="trending-up" class="text-emerald-500 w-5 h-5"></i> 新增收入明細`;
+                headerBg.className = "px-6 py-5 border-b border-emerald-50 flex justify-between items-center bg-emerald-50/20";
+                submitBtn.className = "flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-100 hover:shadow-emerald-200 transition";
+                submitBtn.innerText = "確認新增收入";
+                quickCategories.classList.add('hidden');
+                document.getElementById('form-category').placeholder = "例如：薪水、年終、獎金";
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+            
+            lucide.createIcons();
+        }
+
+        // 目標設定彈窗
+        function openSavingSettingModal() {
+            const modal = document.getElementById('saving-modal');
+            document.getElementById('saving-target-input').value = targetSaving;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        // 說明視窗
+        function openTipsModal() {
+            const modal = document.getElementById('tips-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function setQuickCategory(name) {
+            document.getElementById('form-category').value = name;
+        }
+
+        // ==================== 表單提交與運算邏輯 ====================
+
+        // 儲蓄目標變更
+        function handleSavingSubmit(e) {
+            e.preventDefault();
+            const val = parseInt(document.getElementById('saving-target-input').value, 10);
+            if (isNaN(val) || val < 0) return;
+
+            targetSaving = val;
+            localStorage.setItem('sprout_target_saving', targetSaving.toString());
+            closeModal('saving-modal');
+            
+            // 重新計算，看是否有因為調整目標而達到儲蓄目標
+            checkSavingAchievement();
+            updateUI();
+        }
+
+        // 新增 支出/收入 表單
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const type = document.getElementById('form-type').value;
+            const amount = parseInt(document.getElementById('form-amount').value, 10);
+            const date = document.getElementById('form-date').value;
+            const category = document.getElementById('form-category').value.trim() || (type === 'expense' ? '一般支出' : '一般收入');
+
+            if (isNaN(amount) || amount <= 0) return;
+
+            const newRecord = {
+                id: `${type}-${Date.now()}`,
+                amount,
+                date,
+                category
+            };
+
+            // ⚠️ 如果是支出，需檢核是否超過「每日可用金額」的吃土預警！
+            if (type === 'expense') {
+                // 先試算當下每日可用金額
+                const tempDailyAvailable = calculateCurrentDailyAvailable();
+                
+                // 如果每日可用金額算出來還有，且此次消費金額大於此額度，則警告。
+                if (amount > tempDailyAvailable) {
+                    triggerOverspendWarning(newRecord, tempDailyAvailable);
+                    return; // 暫緩新增，等使用者在警告彈窗確認
+                }
+            }
+
+            // 若沒觸發警報或非支出，直接寫入
+            saveRecord(type, newRecord);
+        }
+
+        // 儲存記錄主程序
+        function saveRecord(type, record) {
+            if (type === 'expense') {
+                expenses.push(record);
+                localStorage.setItem('sprout_expenses', JSON.stringify(expenses));
+            } else {
+                incomes.push(record);
+                localStorage.setItem('sprout_incomes', JSON.stringify(incomes));
+            }
+
+            closeModal('form-modal');
+            updateUI();
+
+            // 如果是新增儲蓄類別，檢查是否觸發「恭喜儲蓄達標」
+            if (type === 'expense' && record.category === '儲蓄') {
+                checkSavingAchievement(true); // 帶入 true 表示是由新增行為觸發，才播放彩帶
+            }
+        }
+
+        // 動態計算當下的每日可用金額 (表單送出檢測用)
+        function calculateCurrentDailyAvailable() {
+            const totalIncome = incomes.reduce((acc, curr) => acc + curr.amount, 0);
+            const nonSavingExpenses = expenses
+                .filter(exp => exp.category !== '儲蓄')
+                .reduce((acc, curr) => acc + curr.amount, 0);
+            
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+            const todayDate = now.getDate();
+            const remainingDays = Math.max(1, lastDayOfMonth - todayDate + 1);
+
+            const budgetToDistribute = totalIncome - targetSaving - nonSavingExpenses;
+            return Math.max(0, Math.round(budgetToDistribute / remainingDays));
+        }
+
+        // ==================== 刪除紀錄 ====================
+        function deleteRecord(type, id) {
+            if (type === 'expense') {
+                expenses = expenses.filter(item => item.id !== id);
+                localStorage.setItem('sprout_expenses', JSON.stringify(expenses));
+            } else {
+                incomes = incomes.filter(item => item.id !== id);
+                localStorage.setItem('sprout_incomes', JSON.stringify(incomes));
+            }
+            updateUI();
+        }
+
+        // ==================== 特效與警報觸發 ====================
+
+        // 1. 儲蓄達標檢查
+        function checkSavingAchievement(shouldTriggerConfetti = false) {
+            const currentSaving = expenses
+                .filter(exp => exp.category === '儲蓄')
+                .reduce((acc, curr) => acc + curr.amount, 0);
+
+            // 如果已經達標且具備觸發條件
+            if (currentSaving >= targetSaving && targetSaving > 0) {
+                // 如果是新記一筆引發的，才主動跳出恭喜畫面並灑彩帶
+                if (shouldTriggerConfetti) {
+                    document.getElementById('congrats-amount-display').innerText = `$${currentSaving.toLocaleString()}`;
+                    
+                    // 顯示恭喜彈窗
+                    const modal = document.getElementById('congrats-modal');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modal.classList.remove('opacity-0');
+                        modal.querySelector('div').classList.remove('scale-95');
+                    }, 10);
+
+                    // 灑金幣彩帶特效
+                    triggerConfettiCelebration();
+                }
+            }
+        }
+
+        // 灑彩帶金幣動畫 (Canvas-confetti)
+        function triggerConfettiCelebration() {
+            const duration = 3 * 1000;
+            const end = Date.now() + duration;
+
+            (function frame() {
+                // 左側噴射
+                confetti({
+                    particleCount: 4,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.8 },
+                    colors: ['#fbbf24', '#f59e0b', '#34d399', '#10b981']
+                });
+                // 右側噴射
+                confetti({
+                    particleCount: 4,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.8 },
+                    colors: ['#fbbf24', '#f59e0b', '#34d399', '#10b981']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+
+        // 2. 吃土超支警報
+        function triggerOverspendWarning(record, dailyLimit) {
+            overspendPendingRecord = record; // 先把這筆記錄保管起來
+
+            document.getElementById('overspend-amount-display').innerText = `$${record.amount.toLocaleString()}`;
+            document.getElementById('overspend-daily-limit').innerText = `$${dailyLimit.toLocaleString()}`;
+            document.getElementById('overspend-current-cost').innerText = `$${record.amount.toLocaleString()}`;
+
+            // 關閉新增視窗，打開吃土警告
+            closeModal('form-modal');
+            
+            const warningModal = document.getElementById('overspend-modal');
+            warningModal.classList.remove('hidden');
+            setTimeout(() => {
+                warningModal.classList.remove('opacity-0');
+                warningModal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        // 警報：忍痛記下
+        function confirmOverspend() {
+            if (overspendPendingRecord) {
+                saveRecord('expense', overspendPendingRecord);
+                overspendPendingRecord = null;
+            }
+            closeModal('overspend-modal');
+        }
+
+        // 警報：反悔不買
+        function cancelOverspend() {
+            overspendPendingRecord = null;
+            closeModal('overspend-modal');
+        }
+    </script>
+</body>
+</html>

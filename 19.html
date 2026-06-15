@@ -1,0 +1,2433 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉娃娃存錢記 - 個人/多人協作雙效記帳</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#10b981', // Emerald Primary
+                            600: '#059669',
+                            700: '#047857'
+                        },
+                        expense: {
+                            500: '#f43f5e', // Rose Expense
+                            600: '#e11d48'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* 自訂捲軸 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <!-- 全域載入畫面 (等待 Firebase 驗證) -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center text-white">
+        <div class="relative w-24 h-24 mb-6 flex items-center justify-center bg-brand-500 rounded-3xl animate-bounce shadow-2xl">
+            <i class="fa-solid fa-dog text-5xl"></i>
+        </div>
+        <h2 class="text-xl font-bold tracking-wider">吉娃娃雲端連結中...</h2>
+        <p class="text-xs text-slate-400 mt-2">正在與狗狗資料庫同步...</p>
+    </div>
+
+    <!-- 刪除確認 Modal (取代原生 confirm) -->
+    <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" id="closeConfirmOverlay"></div>
+        <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative z-10 mx-4 text-center">
+            <div class="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">確定要刪除這筆交易嗎？</h3>
+            <p id="confirmModalDesc" class="text-xs text-slate-400 mb-6">若是群組模式，其他成員也將同步無法看到此紀錄。</p>
+            <div class="flex gap-3">
+                <button id="btnConfirmCancel" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl transition-all">取消</button>
+                <button id="btnConfirmDelete" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl shadow-md transition-all">確定刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 吉娃娃群組大廳 Lobby (未加入群組且未選擇個人模式時顯示) -->
+    <div id="lobbyScreen" class="flex-grow flex items-center justify-center p-4 py-12 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-xl p-8 shadow-xl border border-slate-100 space-y-8">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-md">
+                    <i class="fa-solid fa-dog"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-900">歡迎來到吉娃娃存錢記</h2>
+                <p class="text-xs text-slate-400">選擇最適合您的記帳方式，開始建立您的專屬財務計畫！</p>
+            </div>
+
+            <!-- 使用者暱稱 -->
+            <div>
+                <label for="lobbyNickname" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">您的暱稱 (記帳時會顯示是誰寫的)</label>
+                <div class="relative rounded-xl shadow-sm">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                        <i class="fa-solid fa-signature"></i>
+                    </div>
+                    <input type="text" id="lobbyNickname" placeholder="例如：吉娃娃、小明、莉莉" 
+                        class="block w-full rounded-xl border border-slate-200 pl-11 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="border-t border-slate-100 pt-6">
+                <!-- 三切分頁 (個人帳本、創建群組、輸入邀請碼) -->
+                <div class="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-100 rounded-xl mb-6">
+                    <button id="tabPersonal" class="py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all bg-white text-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-center gap-1">
+                        <i class="fa-solid fa-lock text-emerald-500"></i> 個人私密
+                    </button>
+                    <button id="tabCreateGroup" class="py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1">
+                        <i class="fa-solid fa-house-medical text-brand-600"></i> 創建群組
+                    </button>
+                    <button id="tabJoinGroup" class="py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1">
+                        <i class="fa-solid fa-user-plus text-indigo-500"></i> 加入群組
+                    </button>
+                </div>
+
+                <!-- A. 個人私密模式面板 -->
+                <div id="panelPersonal" class="space-y-4 text-center py-2">
+                    <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-left">
+                        <p class="text-xs text-emerald-800 leading-relaxed font-medium">
+                            <i class="fa-solid fa-shield-halved text-emerald-600 mr-1.5"></i>
+                            <strong>個人模式說明：</strong> 資料直接保存在您的專屬加密雲端空間，外人無從得知。適合想自己掌握生活開銷與個人借墊明細的吉娃娃。
+                        </p>
+                    </div>
+                    <button id="btnStartPersonalSubmit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-lock-open"></i> 開啟個人私密記帳
+                    </button>
+                </div>
+
+                <!-- B. 創建群組面板 -->
+                <div id="panelCreateGroup" class="space-y-4 hidden">
+                    <div>
+                        <label for="newGroupName" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">共同群組名稱</label>
+                        <input type="text" id="newGroupName" placeholder="例如：205房室友帳本、吉娃娃存錢團" 
+                            class="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-all">
+                    </div>
+                    <button id="btnCreateGroupSubmit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> 創建群組並生成邀請碼
+                    </button>
+                </div>
+
+                <!-- C. 加入群組面板 -->
+                <div id="panelJoinGroup" class="space-y-4 hidden">
+                    <div>
+                        <label for="inviteCodeInput" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">邀請碼 (由好友創立後分享)</label>
+                        <input type="text" id="inviteCodeInput" placeholder="請輸入 CHI-XXXXXX 格式邀請碼" 
+                            class="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-all uppercase">
+                    </div>
+                    <button id="btnJoinGroupSubmit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-door-open"></i> 加入共同群組帳本
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主功能 UI (加入模式後顯示) -->
+    <div id="mainDashboard" class="hidden flex-grow flex flex-col">
+        <!-- 頂部導覽列 -->
+        <header class="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-brand-100 border border-slate-100 flex items-center justify-center bg-brand-100 flex-shrink-0 relative">
+                        <img src="image_8f2e61.jpg" alt="吉娃娃存錢記" class="w-full h-full object-cover z-10 relative" 
+                             onload="if(this.nextElementSibling) this.nextElementSibling.style.display='none';" 
+                             onerror="this.style.display='none';">
+                        <div class="absolute inset-0 flex items-center justify-center text-brand-600 bg-brand-50 text-xl z-0">
+                            <i class="fa-solid fa-dog"></i>
+                        </div>
+                    </div>
+                    <div class="min-w-0">
+                        <h1 class="text-base sm:text-lg font-black text-slate-900 truncate flex items-center gap-1.5" id="topGroupName">
+                            吉娃娃存錢記
+                        </h1>
+                        <!-- 顯示群組邀請碼及成員數 -->
+                        <div class="flex items-center space-x-2 text-[11px] sm:text-xs text-slate-400" id="topMetaContainer">
+                            <span class="font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-indigo-100" id="topInviteCode" onclick="copyInviteCode()">CHI-XXXXXX <i class="fa-solid fa-copy ml-1"></i></span>
+                            <span>•</span>
+                            <span id="topMemberCount">0 位成員</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <div class="text-right hidden md:block">
+                        <p class="text-xs text-slate-400">目前使用者</p>
+                        <p class="text-xs font-bold text-slate-700" id="topUserNickname">吉娃娃</p>
+                    </div>
+                    <button id="btnLeaveGroup" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> 切換帳本模式
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要內容區 -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            
+            <!-- 月份切換導覽列 -->
+            <div class="bg-white rounded-2xl p-4 mb-6 shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-2">
+                    <span class="w-2 h-6 bg-brand-500 rounded-full"></span>
+                    <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">目前檢視區間</span>
+                </div>
+                
+                <div class="flex items-center justify-center space-x-2 w-full sm:w-auto">
+                    <button id="btnPrevMonth" class="w-10 h-10 rounded-xl border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all text-slate-600 flex items-center justify-center">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+                    
+                    <div class="relative min-w-[160px]">
+                        <select id="monthSelector" class="w-full text-center font-bold text-lg text-slate-800 bg-slate-100 hover:bg-slate-200/80 px-4 py-2 rounded-xl border-none focus:outline-none appearance-none cursor-pointer">
+                            <!-- 動態生成月份清單 -->
+                        </select>
+                        <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-caret-down text-xs"></i>
+                        </div>
+                    </div>
+
+                    <button id="btnNextMonth" class="w-10 h-10 rounded-xl border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all text-slate-600 flex items-center justify-center">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="text-xs text-slate-400 font-medium">
+                    已自動過濾並即時同步該月份雲端數據
+                </div>
+            </div>
+
+            <!-- 頂部資產看板 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- 淨資產 -->
+                <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[160px]">
+                    <div class="absolute -right-6 -bottom-6 text-white/5 text-9xl pointer-events-none">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm text-slate-300 font-medium" id="lblNetBalance">本月結餘</span>
+                            <span class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs"><i class="fa-solid fa-coins text-amber-400"></i></span>
+                        </div>
+                        <div class="text-3xl font-black tracking-tight" id="valNetBalance">NT$ 0</div>
+                    </div>
+                    <div class="mt-4 flex items-center text-xs text-slate-400 gap-1">
+                        <span id="netStatusPercent" class="text-brand-500 font-bold"><i class="fa-solid fa-arrow-trend-up"></i> 盈餘</span>
+                        <span id="netStatusDesc">該月財務狀況</span>
+                    </div>
+                </div>
+
+                <!-- 總收入 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative overflow-hidden transition hover:shadow-md flex flex-col justify-between min-h-[160px]">
+                    <div class="absolute -right-6 -bottom-6 text-brand-500/5 text-9xl pointer-events-none">
+                        <i class="fa-solid fa-money-bill-trend-up"></i>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm text-slate-400 font-medium" id="lblTotalIncome">本月總收入</span>
+                            <span class="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 text-sm"><i class="fa-solid fa-arrow-down-long"></i></span>
+                        </div>
+                        <div class="text-3xl font-bold tracking-tight text-brand-600" id="valTotalIncome">NT$ 0</div>
+                    </div>
+                    <div class="mt-4 text-xs text-slate-400 flex items-center gap-1">
+                        <span id="incomeCount" class="font-bold text-slate-600">0</span> 筆收入來源
+                    </div>
+                </div>
+
+                <!-- 總支出 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 relative overflow-hidden transition hover:shadow-md flex flex-col justify-between min-h-[160px]">
+                    <div class="absolute -right-6 -bottom-6 text-expense-500/5 text-9xl pointer-events-none">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm text-slate-400 font-medium" id="lblTotalExpense">本月總支出</span>
+                            <span class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-expense-500 text-sm"><i class="fa-solid fa-arrow-up-long"></i></span>
+                        </div>
+                        <div class="text-3xl font-bold tracking-tight text-expense-500" id="valTotalExpense">NT$ 0</div>
+                    </div>
+                    
+                    <!-- 總預算實時進度條 -->
+                    <div class="mt-3 w-full">
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span id="lblBudgetBarInfo">預算進度：未設定</span>
+                            <span id="lblBudgetPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div id="barTotalBudget" class="bg-brand-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 借貸代墊快速看板 -->
+            <div id="loanSummaryBar" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg"><i class="fa-solid fa-hand-holding-dollar"></i></span>
+                        <div>
+                            <p class="text-xs font-bold text-emerald-600 tracking-wider">他人應還我 (代墊未收回)</p>
+                            <p class="text-lg font-black text-emerald-800" id="valTotalToCollect">NT$ 0</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-700 bg-emerald-100/60 px-3 py-1 rounded-full" id="lblToCollectCount">0 筆未收</span>
+                </div>
+                <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-lg"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                        <div>
+                            <p class="text-xs font-bold text-rose-600 tracking-wider">我應還他人 (借款未清償)</p>
+                            <p class="text-lg font-black text-rose-800" id="valTotalToRepay">NT$ 0</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-rose-700 bg-rose-100/60 px-3 py-1 rounded-full" id="lblToRepayCount">0 筆未還</span>
+                </div>
+            </div>
+
+            <!-- 借貸對象總覽卡片 (吉娃娃債務通訊錄) -->
+            <div id="loanPersonOverviewCard" class="bg-white rounded-2xl p-5 mb-8 shadow-sm border border-slate-100">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                    <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-address-book text-indigo-500"></i>
+                        吉娃娃債務通訊錄 <span class="text-[10px] font-normal text-slate-400">(點擊人名可快速篩選相關借貸)</span>
+                    </h3>
+                    <span class="text-xs text-slate-500 font-bold bg-slate-100 px-2.5 py-1 rounded-full self-start sm:self-auto" id="lblDebtorCount">共 0 位有未結清款項</span>
+                </div>
+                <div id="loanPeopleContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    <!-- 動態渲染各交易對象與欠款 -->
+                </div>
+            </div>
+
+            <!-- 核心操作與圖表區 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+                
+                <!-- 左側：記帳表單與分類統計 (佔 5 格) -->
+                <div class="lg:col-span-5 space-y-8">
+                    <!-- 新增收支表單 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+                            <span class="w-2.5 h-5 bg-brand-500 rounded-full inline-block"></span>
+                            新增收支與借貸
+                        </h2>
+                        
+                        <form id="ledgerForm" class="space-y-4">
+                            <!-- 收支類別切換 -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">交易類型</label>
+                                <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl">
+                                    <button type="button" id="typeExpense" class="type-btn py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-expense-500 shadow-sm">
+                                        <i class="fa-solid fa-minus-circle"></i> 支出
+                                    </button>
+                                    <button type="button" id="typeIncome" class="type-btn py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800">
+                                        <i class="fa-solid fa-plus-circle"></i> 收入
+                                    </button>
+                                    <button type="button" id="typeLoan" class="type-btn py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800">
+                                        <i class="fa-solid fa-handshake"></i> 借貸代墊
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 交易金額 -->
+                            <div>
+                                <label for="amount" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">金額 (TWD)</label>
+                                <div class="relative rounded-xl shadow-sm">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                        <span class="text-slate-400 font-bold">$</span>
+                                    </div>
+                                    <input type="number" name="amount" id="amount" required min="1" placeholder="輸入金額" 
+                                        class="block w-full rounded-xl border border-slate-200 pl-8 pr-4 py-3 text-lg font-bold text-slate-800 placeholder-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-all">
+                                </div>
+                            </div>
+
+                            <!-- 借貸代墊專用附加欄位 (隱藏) -->
+                            <div id="loanFields" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="loanSubtype" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">借貸類型</label>
+                                        <select id="loanSubtype" class="block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:border-indigo-500 transition-all cursor-pointer">
+                                            <option value="lend">我借出 / 幫人代墊</option>
+                                            <option value="borrow">我借入 / 向人借錢</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="loanPerson" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">交易對象 (誰)</label>
+                                        <input type="text" id="loanPerson" placeholder="例如：小明、莉莉" 
+                                            class="block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-all">
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="loanStatus" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                                    <label for="loanStatus" class="ml-2 text-xs font-bold text-slate-600 select-none cursor-pointer">此筆交易「已還清/已結清」</label>
+                                </div>
+                            </div>
+
+                            <!-- 類別選擇 -->
+                            <div id="categoryFieldContainer">
+                                <label for="category" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">分類項目</label>
+                                <div class="relative">
+                                    <select id="category" name="category" required
+                                        class="block w-full rounded-xl border border-slate-200 px-4 py-3 bg-white text-slate-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-all appearance-none cursor-pointer">
+                                        <!-- 動態渲染分類 -->
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 交易日期與備註 -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="date" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">交易日期</label>
+                                    <input type="date" id="date" name="date" required
+                                        class="block w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-all">
+                                </div>
+                                <div>
+                                    <label for="note" id="lblNote" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">備註說明 (選填)</label>
+                                    <input type="text" id="note" name="note" placeholder="例如：早餐、通勤車資"
+                                        class="block w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 text-sm placeholder-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-all">
+                                </div>
+                            </div>
+
+                            <!-- 提交按鈕 -->
+                            <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check"></i> 儲存交易紀錄
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 圓餅圖與預算進度 -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <!-- 分頁標籤 -->
+                        <div class="flex border-b border-slate-100 bg-slate-50/50 p-1.5">
+                            <button id="tabPie" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-800 bg-white shadow-sm flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-chart-pie text-indigo-500"></i> 支出比例
+                            </button>
+                            <button id="tabBudget" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-bullseye text-brand-500"></i> 預算規劃與進度
+                            </button>
+                        </div>
+
+                        <!-- 內容區 1: 圓餅圖 -->
+                        <div id="contentPie" class="p-6">
+                            <div class="relative flex items-center justify-center min-h-[220px]">
+                                <canvas id="expensePieChart" class="max-h-[220px]"></canvas>
+                                <div id="noChartData" class="absolute inset-0 bg-white/95 flex flex-col items-center justify-center text-center p-4 hidden">
+                                    <div class="w-16 h-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center text-2xl mb-2">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                    </div>
+                                    <p class="text-sm font-medium text-slate-400">目前月份尚無支出數據</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 內容區 2: 預算進度條清單 -->
+                        <div id="contentBudget" class="p-6 hidden space-y-4">
+                            <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400" id="lblBudgetPlannerTitle">當月預算規劃額度</p>
+                                    <p class="text-sm font-black text-slate-800" id="valBudgetOverview">$0 / $0</p>
+                                </div>
+                                <button id="btnOpenBudgetModal" class="text-xs font-semibold bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                                    <i class="fa-solid fa-sliders"></i> 設定預算
+                                </button>
+                            </div>
+                            
+                            <!-- 動態渲染各分類預算條 -->
+                            <div id="budgetProgressList" class="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                                <!-- JS 動態插入項目 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右側：歷史交易明細與數據統計 (佔 7 格) -->
+                <div class="lg:col-span-7 space-y-8">
+                    
+                    <!-- 收支歷史明細卡片 -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full overflow-hidden">
+                        
+                        <!-- 歷史明細頂部篩選器 -->
+                        <div class="p-6 border-b border-slate-100 space-y-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                    <span class="w-2.5 h-5 bg-amber-500 rounded-full inline-block"></span>
+                                    交易明細
+                                </h2>
+                                <!-- 快篩按鈕 -->
+                                <div class="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-lg text-xs font-semibold">
+                                    <button type="button" class="filter-type-btn px-2.5 py-1.5 rounded-md transition-all bg-white text-slate-800 shadow-sm" data-filter="all">全部</button>
+                                    <button type="button" class="filter-type-btn px-2.5 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition-all" data-filter="expense">僅支出</button>
+                                    <button type="button" class="filter-type-btn px-2.5 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition-all" data-filter="income">僅收入</button>
+                                    <button type="button" class="filter-type-btn px-2.5 py-1.5 rounded-md text-slate-500 hover:text-slate-800 transition-all" data-filter="loan">借貸代墊</button>
+                                </div>
+                            </div>
+
+                            <!-- 搜尋、篩選分類與清除 -->
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                <div class="sm:col-span-6 relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                                    </div>
+                                    <input type="text" id="searchBar" placeholder="搜尋備註、代墊項目或交易人..."
+                                        class="block w-full rounded-xl border border-slate-200 pl-9 pr-4 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all">
+                                </div>
+                                <div class="sm:col-span-4 relative">
+                                    <select id="filterCategory" 
+                                        class="block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 appearance-none cursor-pointer transition-all">
+                                        <option value="all">所有分類項目</option>
+                                        <option disabled>─ 支出項目 ─</option>
+                                        <option value="早餐">早餐</option>
+                                        <option value="午餐">午餐</option>
+                                        <option value="晚餐">晚餐</option>
+                                        <option value="點心">點心</option>
+                                        <option value="交通">交通</option>
+                                        <option value="日常購物">日常購物</option>
+                                        <option value="娛樂">娛樂</option>
+                                        <option value="其他支出">其他支出</option>
+                                        <option disabled>─ 收入項目 ─</option>
+                                        <option value="薪資">薪資</option>
+                                        <option value="獎金">獎金</option>
+                                        <option value="副業與投資">副業與投資</option>
+                                        <option value="零用錢">零用錢</option>
+                                        <option value="其他收入">其他收入</option>
+                                        <option disabled>─ 借貸代墊 ─</option>
+                                        <option value="我借出/代墊">我借出 / 幫人代墊</option>
+                                        <option value="我借入">我借入 / 向人借錢</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                                <button type="button" id="btnClearFilters" class="sm:col-span-2 text-xs border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i> 重設
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 列表區塊 -->
+                        <div class="flex-grow overflow-y-auto max-h-[500px] p-6 space-y-4" id="transactionList">
+                            <!-- 動態插入日分群交易紀錄 -->
+                        </div>
+
+                        <!-- 無資料提示狀態 -->
+                        <div id="noTransactions" class="flex flex-col items-center justify-center text-center p-12 bg-white hidden">
+                            <div class="w-20 h-20 bg-slate-50 text-slate-300 rounded-3xl flex items-center justify-center text-3xl mb-4">
+                                <i class="fa-solid fa-dog"></i>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-800">該帳本尚無符合的交易紀錄</h3>
+                            <p class="text-xs text-slate-400 mt-1 max-w-xs">快開始填寫左側新增紀錄開始記帳！</p>
+                        </div>
+
+                        <!-- 底部備份與匯出區塊 -->
+                        <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex flex-wrap gap-3 items-center justify-between">
+                            <div class="flex items-center space-x-2 text-xs text-slate-400">
+                                <i class="fa-solid fa-dog"></i>
+                                <span id="syncStatusFooter">資料已與雲端完全同步</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="btnExportJSON" class="text-xs font-semibold bg-white border border-slate-200 hover:border-slate-300 text-slate-600 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-file-export text-slate-400"></i> 匯出 JSON
+                                </button>
+                                <button id="btnExportCSV" class="text-xs font-semibold bg-white border border-slate-200 hover:border-slate-300 text-slate-600 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-file-excel text-green-600"></i> 匯出 CSV 檔
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 趨勢圖表區塊 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8">
+                <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2" id="lblTrendTitle">
+                    <span class="w-2.5 h-5 bg-cyan-500 rounded-full inline-block"></span>
+                    當月每日支出趨勢
+                </h2>
+                <div class="relative w-full h-[260px] flex items-center justify-center">
+                    <canvas id="trendLineChart" class="w-full h-full"></canvas>
+                    <div id="noTrendData" class="absolute inset-0 bg-white/95 flex flex-col items-center justify-center text-center p-4 hidden">
+                        <p class="text-sm font-medium text-slate-400">目前尚無足夠數據產生趨勢圖</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 預算設定彈出視窗 (Modal) -->
+    <div id="budgetModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <!-- 半透明遮罩 -->
+        <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" id="closeModalOverlay"></div>
+        <!-- Modal 容器 -->
+        <div class="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl relative z-10 mx-4 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye text-brand-500"></i>
+                        <span id="modalTitleMonth">預算設定</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">編列「某個月份」預計在各項目上花多少錢</p>
+                </div>
+                <button id="btnCloseModal" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- 表單內容 -->
+            <form id="budgetForm" class="flex-grow overflow-y-auto my-4 pr-1 space-y-4">
+                <!-- 總預算設定 -->
+                <div>
+                    <label for="inputTotalBudget" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">本月總額度預算 (TWD)</label>
+                    <div class="relative rounded-xl shadow-sm">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                            <span class="text-slate-400 font-bold">$</span>
+                        </div>
+                        <input type="number" id="inputTotalBudget" required min="0" placeholder="輸入總額度" 
+                            class="block w-full rounded-xl border border-slate-200 pl-8 pr-4 py-2.5 font-bold text-slate-800 placeholder-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-all">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">各支出分類預算分配</span>
+                        <span id="txtAllocationStatus" class="text-xs font-semibold text-slate-400">已分配: $0</span>
+                    </div>
+                    
+                    <!-- 分類輸入格子 -->
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100" id="categoryBudgetInputs">
+                        <!-- 動態插入各項目的 Input -->
+                    </div>
+                </div>
+            </form>
+
+            <div class="pt-4 border-t border-slate-100 flex gap-3">
+                <button type="button" id="btnCancelBudget" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl transition-all">
+                    取消
+                </button>
+                <button type="button" id="btnSaveBudget" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl shadow-md transition-all">
+                    儲存設定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頁尾 -->
+    <footer class="bg-slate-900 text-slate-400 py-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+            <div class="flex items-center justify-center space-x-2 text-white">
+                <div class="w-6 h-6 rounded overflow-hidden flex items-center justify-center flex-shrink-0 relative">
+                    <img src="image_8f2e61.jpg" alt="吉娃娃存錢記" class="w-full h-full object-cover z-10 relative"
+                         onload="if(this.nextElementSibling) this.nextElementSibling.style.display='none';" 
+                         onerror="this.style.display='none';">
+                    <div class="absolute inset-0 flex items-center justify-center text-[10px] text-white bg-brand-600 z-0">
+                        <i class="fa-solid fa-dog"></i>
+                    </div>
+                </div>
+                <span class="font-bold tracking-wider">吉娃娃存錢記</span>
+            </div>
+            <p class="text-xs">雲端即時多人/個人記帳軟體．室友合租、好友出遊、獨享儲蓄必備神器</p>
+            <p class="text-[10px] text-slate-600">&copy; 2026 吉娃娃存錢記. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK 串接 & 全域邏輯 (ES Modules) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 1. 環境變數 & 初始化
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chihuahua-savings-group';
+        
+        const configRaw = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        let firebaseConfig = {};
+        try {
+            firebaseConfig = JSON.parse(configRaw);
+        } catch(e) {
+            console.error("Firebase config parsing error:", e);
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // 2. 分類設定
+        const categories = {
+            expense: {
+                "早餐": { icon: "fa-egg", bg: "bg-amber-100 text-amber-700", color: "#f59e0b" },
+                "午餐": { icon: "fa-bowl-rice", bg: "bg-emerald-100 text-emerald-700", color: "#10b981" },
+                "晚餐": { icon: "fa-utensils", bg: "bg-blue-100 text-blue-700", color: "#3b82f6" },
+                "點心": { icon: "fa-cookie-bite", bg: "bg-pink-100 text-pink-700", color: "#ec4899" },
+                "交通": { icon: "fa-bus-simple", bg: "bg-indigo-100 text-indigo-700", color: "#6366f1" },
+                "日常購物": { icon: "fa-bag-shopping", bg: "bg-purple-100 text-purple-700", color: "#a855f7" },
+                "娛樂": { icon: "fa-gamepad", bg: "bg-rose-100 text-rose-700", color: "#f43f5e" },
+                "其他支出": { icon: "fa-ellipsis", bg: "bg-slate-100 text-slate-700", color: "#64748b" }
+            },
+            income: {
+                "薪資": { icon: "fa-money-check-dollar", bg: "bg-green-100 text-green-700", color: "#22c55e" },
+                "獎金": { icon: "fa-gift", bg: "bg-yellow-100 text-yellow-700", color: "#eab308" },
+                "副業與投資": { icon: "fa-chart-line", bg: "bg-teal-100 text-teal-700", color: "#14b8a6" },
+                "零用錢": { icon: "fa-hand-holding-dollar", bg: "bg-sky-100 text-sky-700", color: "#0ea5e9" },
+                "其他收入": { icon: "fa-circle-plus", bg: "bg-slate-100 text-slate-700", color: "#64748b" }
+            }
+        };
+
+        // 3. 雲端即時同步全域變數
+        let userId = '';
+        let nickname = '神秘吉娃娃';
+        let currentGroupId = '';
+        let isPersonalMode = false; // 是否啟用個人私密模式 (true 為個人，false 為群組)
+        let currentGroupData = null;
+        let transactions = [];
+        let budgets = {}; // key: YYYY-MM
+        
+        let currentType = 'expense';
+        let currentFilterType = 'all';
+        let selectedMonth = '';
+        
+        let expenseChart = null;
+        let trendChart = null;
+        
+        let unsubscribeGroup = null;
+        let unsubscribeTransactions = null;
+        let unsubscribeBudgets = null;
+
+        // 刪除確認機制暫存 ID
+        let pendingDeleteId = null;
+
+        // 4. Firebase Authentication 登入
+        async function startAuthentication() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth initialization failed:", err);
+                await signInAnonymously(auth);
+            }
+        }
+
+        // 5. 監聽驗證狀態，確認後讀取個人 Profile
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                
+                const userProfileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'info');
+                try {
+                    const userSnap = await getDoc(userProfileRef);
+                    if (userSnap.exists()) {
+                        const data = userSnap.data();
+                        nickname = data.nickname || '神秘吉娃娃';
+                        currentGroupId = data.currentGroupId || '';
+                        isPersonalMode = data.isPersonalMode || false;
+                    }
+                } catch (e) {
+                    console.warn("Read user profile failed:", e);
+                }
+
+                // 根據先前的狀態，智慧跳轉
+                if (isPersonalMode || currentGroupId === 'personal') {
+                    await startPersonalSync();
+                } else if (currentGroupId) {
+                    await joinGroupSync(currentGroupId);
+                } else {
+                    showLobby();
+                }
+            } else {
+                showLoading(true);
+            }
+        });
+
+        // 6. 個人私密模式即時監聽 (完全符合私密路徑 /users/{userId}/{collection})
+        async function startPersonalSync() {
+            showLoading(true);
+            isPersonalMode = true;
+            currentGroupId = 'personal';
+
+            // 清除之前的監聽器防止資源浪費
+            if (unsubscribeGroup) unsubscribeGroup();
+            if (unsubscribeTransactions) unsubscribeTransactions();
+            if (unsubscribeBudgets) unsubscribeBudgets();
+
+            try {
+                // A. 建立個人交易即時監聽 (私有安全路徑)
+                const txQuery = query(
+                    collection(db, 'artifacts', appId, 'users', userId, 'transactions')
+                );
+                unsubscribeTransactions = onSnapshot(txQuery, (snap) => {
+                    transactions = [];
+                    snap.forEach(docSnap => {
+                        transactions.push(docSnap.data());
+                    });
+                    updateMonthSelectorOptions();
+                    updateApp();
+                    showLoading(false);
+                }, (error) => {
+                    console.error("Personal transactions sync error:", error);
+                    showLoading(false);
+                });
+
+                // B. 建立個人預算即時監聽 (私有安全路徑)
+                const budgetQuery = query(
+                    collection(db, 'artifacts', appId, 'users', userId, 'budgets')
+                );
+                unsubscribeBudgets = onSnapshot(budgetQuery, (snap) => {
+                    budgets = {};
+                    snap.forEach(docSnap => {
+                        const bData = docSnap.data();
+                        if (bData.month) {
+                            budgets[bData.month] = bData;
+                        }
+                    });
+                    renderBudgetProgress();
+                }, (error) => {
+                    console.error("Personal budgets sync error:", error);
+                });
+
+                // C. 更新個人雲端狀態紀錄
+                const userProfileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'info');
+                await setDoc(userProfileRef, {
+                    nickname: nickname,
+                    currentGroupId: 'personal',
+                    isPersonalMode: true
+                }, { merge: true });
+
+                updatePersonalHeaderUI();
+                showDashboard();
+
+            } catch (err) {
+                console.error("Start personal sync failed:", err);
+                showToast("開啟個人私密記帳失敗，請重試", "error");
+                showLobby();
+            }
+        }
+
+        // 7. 群組即時監聽 (共享公有路徑)
+        async function joinGroupSync(groupId) {
+            showLoading(true);
+            isPersonalMode = false;
+            
+            if (unsubscribeGroup) unsubscribeGroup();
+            if (unsubscribeTransactions) unsubscribeTransactions();
+            if (unsubscribeBudgets) unsubscribeBudgets();
+
+            try {
+                // A. 群組主檔監聽
+                const groupDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'groups', groupId);
+                unsubscribeGroup = onSnapshot(groupDocRef, (snap) => {
+                    if (snap.exists()) {
+                        currentGroupData = snap.data();
+                        updateGroupHeaderUI();
+                    } else {
+                        showToast("該共同群組已被刪除！", "error");
+                        leaveGroupLocal();
+                    }
+                }, (error) => {
+                    console.error("Group sync error:", error);
+                });
+
+                // B. 群組共同交易紀錄即時監聽 (無複雜OrderBy，單純Where)
+                const txQuery = query(
+                    collection(db, 'artifacts', appId, 'public', 'data', 'transactions'),
+                    where('groupId', '==', groupId)
+                );
+                unsubscribeTransactions = onSnapshot(txQuery, (snap) => {
+                    transactions = [];
+                    snap.forEach(docSnap => {
+                        transactions.push(docSnap.data());
+                    });
+                    updateMonthSelectorOptions();
+                    updateApp();
+                    showLoading(false);
+                }, (error) => {
+                    console.error("Group transactions sync error:", error);
+                    showLoading(false);
+                });
+
+                // C. 群組共同預算即時監聽
+                const budgetQuery = query(
+                    collection(db, 'artifacts', appId, 'public', 'data', 'budgets'),
+                    where('groupId', '==', groupId)
+                );
+                unsubscribeBudgets = onSnapshot(budgetQuery, (snap) => {
+                    budgets = {};
+                    snap.forEach(docSnap => {
+                        const bData = docSnap.data();
+                        if (bData.month) {
+                            budgets[bData.month] = bData;
+                        }
+                    });
+                    renderBudgetProgress();
+                }, (error) => {
+                    console.error("Group budgets sync error:", error);
+                });
+
+                // D. 更新個人 profile 記錄
+                const userProfileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'info');
+                await setDoc(userProfileRef, {
+                    nickname: nickname,
+                    currentGroupId: groupId,
+                    isPersonalMode: false
+                }, { merge: true });
+
+                showDashboard();
+
+            } catch (err) {
+                console.error("Join group sync error:", err);
+                showToast("加入共同群組失敗！", "error");
+                showLobby();
+            }
+        }
+
+        // 登出/切換模式回到 Lobby
+        async function leaveGroupLocal() {
+            showLoading(true);
+            currentGroupId = '';
+            currentGroupData = null;
+            isPersonalMode = false;
+            transactions = [];
+            budgets = {};
+
+            if (unsubscribeGroup) unsubscribeGroup();
+            if (unsubscribeTransactions) unsubscribeTransactions();
+            if (unsubscribeBudgets) unsubscribeBudgets();
+
+            try {
+                const userProfileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'info');
+                await setDoc(userProfileRef, {
+                    currentGroupId: '',
+                    isPersonalMode: false
+                }, { merge: true });
+            } catch (e) {
+                console.error("Update profile failed:", e);
+            }
+
+            showLobby();
+            showLoading(false);
+        }
+
+        // 8. 介面跳轉控制
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                if (show) overlay.classList.remove('hidden');
+                else overlay.classList.add('hidden');
+            }
+        }
+
+        function showLobby() {
+            document.getElementById('lobbyScreen').classList.remove('hidden');
+            document.getElementById('mainDashboard').classList.add('hidden');
+            showLoading(false);
+        }
+
+        function showDashboard() {
+            document.getElementById('lobbyScreen').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            showLoading(false);
+        }
+
+        // 更新頂部 Header (個人模式)
+        function updatePersonalHeaderUI() {
+            document.getElementById('topGroupName').innerHTML = `吉娃娃個人私密帳本 <i class="fa-solid fa-lock text-emerald-500 text-sm"></i>`;
+            document.getElementById('topMetaContainer').innerHTML = `
+                <span class="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-bold"><i class="fa-solid fa-shield-halved"></i> 個人私密模式</span>
+                <span>•</span>
+                <span>雲端獨立保存</span>
+            `;
+            document.getElementById('topUserNickname').textContent = nickname;
+            document.getElementById('syncStatusFooter').textContent = "個人私密資料已完全同步";
+            document.getElementById('confirmModalDesc').textContent = "刪除後資料將無法復原。";
+        }
+
+        // 更新頂部 Header (群組模式)
+        function updateGroupHeaderUI() {
+            if (!currentGroupData) return;
+            document.getElementById('topGroupName').innerHTML = `${currentGroupData.name || '未命名群組'} <i class="fa-solid fa-users text-indigo-500 text-sm"></i>`;
+            document.getElementById('topMetaContainer').innerHTML = `
+                <span class="font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-indigo-100" id="topInviteCode" onclick="copyInviteCode()">${currentGroupData.inviteCode || ''} <i class="fa-solid fa-copy ml-1"></i></span>
+                <span>•</span>
+                <span id="topMemberCount">${currentGroupData.members ? currentGroupData.members.length : 1} 位成員</span>
+            `;
+            document.getElementById('topUserNickname').textContent = nickname;
+            document.getElementById('syncStatusFooter').textContent = "群組共同資料已與雲端同步";
+            document.getElementById('confirmModalDesc').textContent = "群組中的其他成員也將同步無法看到此紀錄。";
+        }
+
+        // 9. 大廳操作 (Lobby Form Operations)
+        async function handleStartPersonal() {
+            const nickInput = document.getElementById('lobbyNickname');
+            const nick = nickInput.value.trim();
+            if (!nick) {
+                showToast("請填寫您的暱稱！", "error");
+                nickInput.focus();
+                return;
+            }
+            nickname = nick;
+            await startPersonalSync();
+            showToast("已成功開啟個人私密記帳！", "success");
+        }
+
+        async function createNewGroup() {
+            const nickInput = document.getElementById('lobbyNickname');
+            const groupNameInput = document.getElementById('newGroupName');
+            const nick = nickInput.value.trim();
+            const groupName = groupNameInput.value.trim();
+
+            if (!nick) {
+                showToast("請填寫您的暱稱！", "error");
+                nickInput.focus();
+                return;
+            }
+            if (!groupName) {
+                showToast("請填寫共同群組名稱！", "error");
+                groupNameInput.focus();
+                return;
+            }
+
+            showLoading(true);
+            nickname = nick;
+
+            const randCode = 'CHI-' + Math.floor(100000 + Math.random() * 900000);
+            const newGroupId = crypto.randomUUID();
+
+            const groupDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'groups', newGroupId);
+            const groupPayload = {
+                id: newGroupId,
+                name: groupName,
+                inviteCode: randCode,
+                createdAt: new Date().toISOString(),
+                members: [{ uid: userId, name: nickname }]
+            };
+
+            try {
+                await setDoc(groupDocRef, groupPayload);
+                currentGroupId = newGroupId;
+                await joinGroupSync(newGroupId);
+                showToast("共同群組創建成功！邀請碼已複製！", "success");
+                copyInviteCode();
+            } catch (e) {
+                console.error(e);
+                showToast("創建共同群組失敗，請檢查權限", "error");
+                showLoading(false);
+            }
+        }
+
+        async function joinGroupWithCode() {
+            const nickInput = document.getElementById('lobbyNickname');
+            const codeInput = document.getElementById('inviteCodeInput');
+            const nick = nickInput.value.trim();
+            const inviteCode = codeInput.value.trim().toUpperCase();
+
+            if (!nick) {
+                showToast("請填寫您的暱稱！", "error");
+                nickInput.focus();
+                return;
+            }
+            if (!inviteCode) {
+                showToast("請輸入邀請碼！", "error");
+                codeInput.focus();
+                return;
+            }
+
+            showLoading(true);
+            nickname = nick;
+
+            try {
+                const q = query(
+                    collection(db, 'artifacts', appId, 'public', 'data', 'groups'),
+                    where('inviteCode', '==', inviteCode)
+                );
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    showToast("找不到此邀請碼對應的群組！", "error");
+                    showLoading(false);
+                    return;
+                }
+
+                let matchedGroupId = '';
+                let matchedGroupData = null;
+                snap.forEach(docSnap => {
+                    matchedGroupId = docSnap.id;
+                    matchedGroupData = docSnap.data();
+                });
+
+                const groupDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'groups', matchedGroupId);
+                const members = matchedGroupData.members || [];
+                const exist = members.some(m => m.uid === userId);
+                
+                if (!exist) {
+                    members.push({ uid: userId, name: nickname });
+                    await updateDoc(groupDocRef, { members: members });
+                } else {
+                    members.forEach(m => {
+                        if (m.uid === userId) m.name = nickname;
+                    });
+                    await updateDoc(groupDocRef, { members: members });
+                }
+
+                currentGroupId = matchedGroupId;
+                await joinGroupSync(matchedGroupId);
+                showToast(`成功加入「${matchedGroupData.name}」群組帳本！`, "success");
+
+            } catch (err) {
+                console.error("Join group error:", err);
+                showToast("加入群組失敗，請確認邀請碼！", "error");
+                showLoading(false);
+            }
+        }
+
+        // 一鍵複製邀請碼
+        function copyInviteCode() {
+            if (isPersonalMode || !currentGroupData) return;
+            const text = currentGroupData.inviteCode || '';
+            const tempInput = document.createElement("input");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            showToast(`共同邀請碼 ${text} 已成功複製到剪貼簿！`, "success");
+        }
+        window.copyInviteCode = copyInviteCode;
+
+        // 10. 群組記帳交易儲存
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            if (!currentGroupId) return;
+
+            const amountEl = document.getElementById('amount');
+            const categoryEl = document.getElementById('category');
+            const dateEl = document.getElementById('date');
+            const noteEl = document.getElementById('note');
+
+            if (!amountEl || !dateEl || !noteEl) return;
+
+            const amount = parseFloat(amountEl.value);
+            if (isNaN(amount) || amount <= 0) {
+                showToast("請輸入正確的金額", "error");
+                return;
+            }
+
+            const targetDate = dateEl.value;
+            const txMonth = targetDate.substring(0, 7);
+
+            let loanSubtype = '';
+            let loanPerson = '';
+            let loanStatus = 'unpaid';
+
+            if (currentType === 'loan') {
+                loanSubtype = document.getElementById('loanSubtype').value;
+                loanPerson = document.getElementById('loanPerson').value.trim();
+                loanStatus = document.getElementById('loanStatus').checked ? 'paid' : 'unpaid';
+
+                if (!loanPerson) {
+                    showToast("請輸入借貸代墊交易人！", "error");
+                    return;
+                }
+            }
+
+            showLoading(true);
+            const newTxId = crypto.randomUUID();
+            const txPayload = {
+                id: newTxId,
+                groupId: currentGroupId,
+                type: currentType,
+                amount: amount,
+                category: currentType === 'loan' ? (loanSubtype === 'lend' ? '我借出/代墊' : '我借入') : categoryEl.value,
+                date: targetDate,
+                note: noteEl.value.trim(),
+                loanSubtype: loanSubtype,
+                loanPerson: loanPerson,
+                loanStatus: loanStatus,
+                creatorId: userId,
+                creatorName: nickname,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                // 依據是否為個人模式，切換不同儲存路徑
+                let txRef;
+                if (isPersonalMode) {
+                    txRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', newTxId);
+                } else {
+                    txRef = doc(db, 'artifacts', appId, 'public', 'data', 'transactions', newTxId);
+                }
+
+                await setDoc(txRef, txPayload);
+                
+                amountEl.value = '';
+                noteEl.value = '';
+                const loanPersonInput = document.getElementById('loanPerson');
+                if (loanPersonInput) loanPersonInput.value = '';
+                const loanStatusCheck = document.getElementById('loanStatus');
+                if (loanStatusCheck) loanStatusCheck.checked = false;
+
+                dateEl.value = getFormattedDate(0);
+                selectedMonth = txMonth;
+
+                showToast(`已成功儲存一筆雲端交易紀錄！`, "success");
+            } catch (err) {
+                console.error("Save transaction error:", err);
+                showToast("寫入資料庫失敗，請確認連線！", "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 開啟自訂刪除彈出視窗
+        function deleteTransaction(id) {
+            pendingDeleteId = id;
+            const modal = document.getElementById('confirmModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+        window.deleteTransaction = deleteTransaction;
+
+        // 執行雲端刪除
+        async function executeCloudDelete() {
+            if (!pendingDeleteId) return;
+            showLoading(true);
+            try {
+                let docRef;
+                if (isPersonalMode) {
+                    docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', pendingDeleteId);
+                } else {
+                    docRef = doc(db, 'artifacts', appId, 'public', 'data', 'transactions', pendingDeleteId);
+                }
+                await deleteDoc(docRef);
+                showToast("交易紀錄已自雲端移除！", "info");
+            } catch (err) {
+                console.error(err);
+                showToast("刪除失敗，請再試一次", "error");
+            } finally {
+                pendingDeleteId = null;
+                const modal = document.getElementById('confirmModal');
+                if (modal) modal.classList.add('hidden');
+                showLoading(false);
+            }
+        }
+
+        // 一鍵結清/變更狀態
+        async function toggleLoanStatus(id) {
+            const tx = transactions.find(t => t.id === id);
+            if (tx && tx.type === 'loan') {
+                const newStatus = tx.loanStatus === 'paid' ? 'unpaid' : 'paid';
+                showLoading(true);
+                try {
+                    let docRef;
+                    if (isPersonalMode) {
+                        docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', id);
+                    } else {
+                        docRef = doc(db, 'artifacts', appId, 'public', 'data', 'transactions', id);
+                    }
+                    await updateDoc(docRef, { loanStatus: newStatus });
+                    showToast(`狀態已更新為「${newStatus === 'paid' ? '已結清' : '未結清'}」！`, "success");
+                } catch (e) {
+                    console.error(e);
+                    showToast("變更借貸狀態失敗", "error");
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+        window.toggleLoanStatus = toggleLoanStatus;
+
+        // 預算規劃設定雲端保存
+        async function saveBudgetSettings() {
+            if (!currentGroupId) return;
+            const inputTotalBudget = document.getElementById('inputTotalBudget');
+            const totalVal = inputTotalBudget ? (parseFloat(inputTotalBudget.value) || 0) : 0;
+            
+            showLoading(true);
+
+            const catBudgets = {};
+            const inputs = document.querySelectorAll('.budget-cat-input');
+            inputs.forEach(input => {
+                const cat = input.dataset.cat;
+                catBudgets[cat] = parseFloat(input.value) || 0;
+            });
+
+            const budgetId = isPersonalMode ? `personal_${selectedMonth}` : `${currentGroupId}_${selectedMonth}`;
+            const budgetPayload = {
+                id: budgetId,
+                groupId: currentGroupId,
+                month: selectedMonth,
+                total: totalVal,
+                categories: catBudgets,
+                updatedBy: nickname,
+                updatedAt: new Date().toISOString()
+            };
+
+            try {
+                let docRef;
+                if (isPersonalMode) {
+                    docRef = doc(db, 'artifacts', appId, 'users', userId, 'budgets', budgetId);
+                } else {
+                    docRef = doc(db, 'artifacts', appId, 'public', 'data', 'budgets', budgetId);
+                }
+                await setDoc(docRef, budgetPayload);
+                closeBudgetModal();
+                showToast("財務預算規劃儲存成功！", "success");
+            } catch (err) {
+                console.error(err);
+                showToast("設定預算失敗", "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 11. 日期輔助
+        function getFormattedDate(offsetDays = 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${d.getFullYear()}-${month}-${day}`;
+        }
+
+        function getChineseWeekday(dateStr) {
+            const days = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+            const d = new Date(dateStr);
+            return days[d.getDay()] || '';
+        }
+
+        // 切換月份
+        function shiftMonth(offset) {
+            const select = document.getElementById('monthSelector');
+            if (!select) return;
+            const currentIndex = select.selectedIndex;
+            const targetIndex = currentIndex - offset;
+            
+            if (targetIndex >= 0 && targetIndex < select.options.length) {
+                select.selectedIndex = targetIndex;
+                selectedMonth = select.value;
+                updateApp();
+            } else {
+                showToast("已無更多月份資料", "info");
+            }
+        }
+
+        // 月份選單動態生成
+        function updateMonthSelectorOptions() {
+            const select = document.getElementById('monthSelector');
+            if (!select) return;
+            const monthsSet = new Set();
+            
+            monthsSet.add(getFormattedDate(0).substring(0, 7));
+            Object.keys(budgets).forEach(m => monthsSet.add(m));
+
+            transactions.forEach(t => {
+                if (t.date && t.date.length >= 7) {
+                    monthsSet.add(t.date.substring(0, 7));
+                }
+            });
+
+            const sortedMonths = Array.from(monthsSet).sort().reverse();
+            
+            select.innerHTML = '';
+            sortedMonths.forEach(m => {
+                const parts = m.split('-');
+                const option = document.createElement('option');
+                option.value = m;
+                option.textContent = `${parts[0]}年 ${parts[1]}月`;
+                select.appendChild(option);
+            });
+
+            if (sortedMonths.includes(selectedMonth)) {
+                select.value = selectedMonth;
+            } else {
+                selectedMonth = select.value;
+            }
+        }
+
+        // 切換主記帳類別 (解除 required 標準規範限制)
+        function setTransactionType(type) {
+            currentType = type;
+            const btnExpense = document.getElementById('typeExpense');
+            const btnIncome = document.getElementById('typeIncome');
+            const btnLoan = document.getElementById('typeLoan');
+            const categoryFieldContainer = document.getElementById('categoryFieldContainer');
+            const categoryEl = document.getElementById('category');
+            const loanFields = document.getElementById('loanFields');
+            const lblNote = document.getElementById('lblNote');
+            const noteInput = document.getElementById('note');
+
+            if (btnExpense && btnIncome && btnLoan) {
+                [btnExpense, btnIncome, btnLoan].forEach(btn => {
+                    btn.className = "type-btn py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800";
+                });
+
+                if (type === 'expense') {
+                    btnExpense.className = "type-btn py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-expense-500 shadow-sm";
+                    if (categoryFieldContainer) categoryFieldContainer.classList.remove('hidden');
+                    if (categoryEl) categoryEl.required = true;
+                    if (loanFields) loanFields.classList.add('hidden');
+                    if (lblNote) lblNote.textContent = "備註說明 (選填)";
+                    if (noteInput) noteInput.placeholder = "例如：早餐、通勤車資";
+                } else if (type === 'income') {
+                    btnIncome.className = "type-btn py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-brand-500 shadow-sm";
+                    if (categoryFieldContainer) categoryFieldContainer.classList.remove('hidden');
+                    if (categoryEl) categoryEl.required = true;
+                    if (loanFields) loanFields.classList.add('hidden');
+                    if (lblNote) lblNote.textContent = "備註說明 (選填)";
+                    if (noteInput) noteInput.placeholder = "例如：薪資發放、副業獎金";
+                } else if (type === 'loan') {
+                    btnLoan.className = "type-btn py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-sm";
+                    if (categoryFieldContainer) categoryFieldContainer.classList.add('hidden');
+                    if (categoryEl) categoryEl.required = false; // 解除防呆阻擋
+                    if (loanFields) loanFields.classList.remove('hidden');
+                    if (lblNote) lblNote.textContent = "買了什麼 / 借貸用途";
+                    if (noteInput) noteInput.placeholder = "例如：幫買排骨便當、高鐵代墊車資";
+                }
+            }
+            updateCategoryDropdown();
+        }
+
+        function updateCategoryDropdown() {
+            const dropdown = document.getElementById('category');
+            if (!dropdown) return;
+            dropdown.innerHTML = '';
+            
+            const list = categories[currentType];
+            if (list) {
+                Object.keys(list).forEach(key => {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = key;
+                    dropdown.appendChild(opt);
+                });
+            }
+        }
+
+        function resetFilters() {
+            const searchBar = document.getElementById('searchBar');
+            if (searchBar) searchBar.value = '';
+            
+            const filterCategory = document.getElementById('filterCategory');
+            if (filterCategory) filterCategory.value = 'all';
+            
+            document.querySelectorAll('.filter-type-btn').forEach(btn => {
+                if (btn.dataset.filter === 'all') {
+                    btn.click();
+                }
+            });
+
+            renderTransactionsList();
+            showToast("篩選條件已重設！", "info");
+        }
+
+        // 12. 更新數據統計與分析
+        function updateApp() {
+            const mParts = selectedMonth.split('-');
+            const displayMonthText = `${mParts[0]}年${mParts[1]}月`;
+            
+            document.getElementById('lblNetBalance').textContent = `${displayMonthText}結餘`;
+            document.getElementById('lblTotalIncome').textContent = `${displayMonthText}總收入`;
+            document.getElementById('lblTotalExpense').textContent = `${displayMonthText}總支出`;
+            document.getElementById('lblBudgetPlannerTitle').textContent = `${displayMonthText} 預算規劃與進度`;
+            document.getElementById('lblTrendTitle').innerHTML = `<span class="w-2.5 h-5 bg-cyan-500 rounded-full inline-block"></span> ${displayMonthText} 每日支出趨勢`;
+
+            renderStats();
+            renderTransactionsList();
+            renderCharts();
+            renderBudgetProgress();
+        }
+
+        // 統整未結與總支出進度 (防禦型空值檢查守衛)
+        function renderStats() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let incomeCount = 0;
+            let expenseCount = 0;
+
+            const currentMonthTxs = transactions.filter(t => t.date && t.date.substring(0, 7) === selectedMonth);
+
+            currentMonthTxs.forEach(t => {
+                if (t.type === 'income') {
+                    totalIncome += t.amount;
+                    incomeCount++;
+                } else if (t.type === 'expense') {
+                    totalExpense += t.amount;
+                    expenseCount++;
+                }
+            });
+
+            const netBalance = totalIncome - totalExpense;
+
+            const elNetBalance = document.getElementById('valNetBalance');
+            if (elNetBalance) elNetBalance.textContent = `NT$ ${netBalance.toLocaleString()}`;
+
+            const elTotalIncome = document.getElementById('valTotalIncome');
+            if (elTotalIncome) elTotalIncome.textContent = `NT$ ${totalIncome.toLocaleString()}`;
+
+            const elTotalExpense = document.getElementById('valTotalExpense');
+            if (elTotalExpense) elTotalExpense.textContent = `NT$ ${totalExpense.toLocaleString()}`;
+
+            const elIncomeCount = document.getElementById('incomeCount');
+            if (elIncomeCount) elIncomeCount.textContent = incomeCount;
+
+            // 統計未還款項 (全域跨月跟進)
+            let totalToCollect = 0;
+            let totalToRepay = 0;
+            let toCollectCount = 0;
+            let toRepayCount = 0;
+
+            transactions.forEach(t => {
+                if (t.type === 'loan' && t.loanStatus === 'unpaid') {
+                    if (t.loanSubtype === 'lend') {
+                        totalToCollect += t.amount;
+                        toCollectCount++;
+                    } else if (t.loanSubtype === 'borrow') {
+                        totalToRepay += t.amount;
+                        toRepayCount++;
+                    }
+                }
+            });
+
+            const elTotalToCollect = document.getElementById('valTotalToCollect');
+            if (elTotalToCollect) elTotalToCollect.textContent = `NT$ ${totalToCollect.toLocaleString()}`;
+
+            const elTotalToRepay = document.getElementById('valTotalToRepay');
+            if (elTotalToRepay) elTotalToRepay.textContent = `NT$ ${totalToRepay.toLocaleString()}`;
+
+            const elToCollectCount = document.getElementById('lblToCollectCount');
+            if (elToCollectCount) elToCollectCount.textContent = `${toCollectCount} 筆未收`;
+
+            const elToRepayCount = document.getElementById('lblToRepayCount');
+            if (elToRepayCount) elToRepayCount.textContent = `${toRepayCount} 筆未還`;
+
+            // 預算條即時進度更新
+            const currentBudget = budgets[selectedMonth] || { total: 0 };
+            const totalBudgetLimit = currentBudget.total || 0;
+            const bar = document.getElementById('barTotalBudget');
+            const percentLabel = document.getElementById('lblBudgetPercent');
+            const infoLabel = document.getElementById('lblBudgetBarInfo');
+
+            if (bar && percentLabel && infoLabel) {
+                if (totalBudgetLimit > 0) {
+                    const usePercent = Math.round((totalExpense / totalBudgetLimit) * 100);
+                    percentLabel.textContent = `${usePercent}%`;
+                    infoLabel.textContent = `預算：$${totalExpense.toLocaleString()} / $${totalBudgetLimit.toLocaleString()}`;
+                    
+                    bar.style.width = `${Math.min(usePercent, 100)}%`;
+                    if (usePercent >= 100) {
+                        bar.className = "bg-rose-500 h-1.5 rounded-full transition-all duration-500";
+                    } else if (usePercent >= 80) {
+                        bar.className = "bg-amber-500 h-1.5 rounded-full transition-all duration-500";
+                    } else {
+                        bar.className = "bg-brand-500 h-1.5 rounded-full transition-all duration-500";
+                    }
+                } else {
+                    percentLabel.textContent = '0%';
+                    infoLabel.textContent = '未設定總預算額度';
+                    bar.style.width = '0%';
+                    bar.className = "bg-slate-300 h-1.5 rounded-full transition-all duration-500";
+                }
+            }
+
+            // 盈餘盈虧色彩防禦調整
+            const netStatusPercent = document.getElementById('netStatusPercent');
+            const netStatusDesc = document.getElementById('netStatusDesc');
+            if (netStatusPercent && netStatusDesc) {
+                if (netBalance >= 0) {
+                    netStatusPercent.className = "text-brand-500 font-bold flex items-center gap-1";
+                    netStatusPercent.innerHTML = `<i class="fa-solid fa-face-smile"></i> 盈餘`;
+                    netStatusDesc.textContent = "本月收支平衡狀況良好！";
+                } else {
+                    netStatusPercent.className = "text-rose-500 font-bold flex items-center gap-1";
+                    netStatusPercent.innerHTML = `<i class="fa-solid fa-face-sad-tear"></i> 赤字`;
+                    netStatusDesc.textContent = "注意！本月支出大於收入喔。";
+                }
+            }
+
+            renderPersonDebts();
+        }
+
+        // 統計分析所有人欠我的金額 (淨額加總)
+        function renderPersonDebts() {
+            const container = document.getElementById('loanPeopleContainer');
+            const debtorCountEl = document.getElementById('lblDebtorCount');
+            if (!container) return;
+
+            const personDebts = {};
+
+            // 統計所有未還款 (unpaid) 的借貸紀錄
+            transactions.forEach(t => {
+                if (t.type === 'loan' && t.loanPerson && t.loanStatus === 'unpaid') {
+                    const name = t.loanPerson.trim();
+                    if (!personDebts[name]) {
+                        personDebts[name] = 0; // 正為他欠我，負為我欠他
+                    }
+                    if (t.loanSubtype === 'lend') {
+                        personDebts[name] += t.amount;
+                    } else if (t.loanSubtype === 'borrow') {
+                        personDebts[name] -= t.amount;
+                    }
+                }
+            });
+
+            container.innerHTML = '';
+            const names = Object.keys(personDebts).filter(name => personDebts[name] !== 0);
+
+            if (debtorCountEl) {
+                debtorCountEl.textContent = `共 ${names.length} 位有未結清款項`;
+            }
+
+            if (names.length === 0) {
+                container.className = "flex flex-col items-center justify-center py-6 text-slate-400 w-full col-span-full bg-slate-50 rounded-2xl border border-dashed border-slate-200";
+                container.innerHTML = `
+                    <div class="text-center">
+                        <i class="fa-solid fa-circle-check text-3xl text-emerald-500 mb-1.5"></i>
+                        <p class="text-xs font-bold text-slate-500">太棒了！目前沒有任何未結清帳目！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3";
+            
+            names.forEach(name => {
+                const netAmount = personDebts[name];
+                const isCollect = netAmount > 0;
+                const absAmount = Math.abs(netAmount);
+
+                let cardClass = "";
+                let badgeClass = "";
+                let labelText = "";
+                let avatarColor = "";
+
+                if (isCollect) {
+                    cardClass = "border border-emerald-100 bg-emerald-50/20 hover:bg-emerald-50 text-emerald-800";
+                    badgeClass = "bg-emerald-100 text-emerald-700";
+                    labelText = "欠我";
+                    avatarColor = "bg-emerald-500 text-white shadow-sm";
+                } else {
+                    cardClass = "border border-rose-100 bg-rose-50/20 hover:bg-rose-50 text-rose-800";
+                    badgeClass = "bg-rose-100 text-rose-700";
+                    labelText = "我欠他";
+                    avatarColor = "bg-rose-500 text-white shadow-sm";
+                }
+
+                const initial = name.charAt(0);
+                const card = document.createElement('button');
+                card.type = "button";
+                card.onclick = () => filterByPerson(name);
+                card.className = `flex items-center space-x-2.5 p-2.5 rounded-xl text-left transition-all duration-200 hover:shadow-sm active:scale-95 focus:outline-none ${cardClass}`;
+                
+                card.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg ${avatarColor} flex items-center justify-center font-black text-xs flex-shrink-0">
+                        ${initial}
+                    </div>
+                    <div class="min-w-0 flex-grow">
+                        <p class="text-xs font-bold text-slate-700 truncate">${name}</p>
+                        <p class="text-[10px] font-black flex items-center gap-1 mt-0.5">
+                            <span class="px-1 py-0.2 rounded text-[9px] font-bold ${badgeClass}">${labelText}</span>
+                            <span>$${absAmount.toLocaleString()}</span>
+                        </p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 人名過濾
+        function filterByPerson(name) {
+            document.querySelectorAll('.filter-type-btn').forEach(btn => {
+                if (btn.dataset.filter === 'loan') btn.click();
+            });
+
+            const searchBar = document.getElementById('searchBar');
+            if (searchBar) {
+                searchBar.value = name;
+                renderTransactionsList();
+            }
+
+            const listCard = document.getElementById('transactionList');
+            if (listCard) {
+                listCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            showToast(`已自動為您過濾出與「${name}」相關的未結款項！`, "info");
+        }
+
+        // 13. 明細清單渲染與日分群 (Static 書籤定位)
+        function renderTransactionsList() {
+            const listContainer = document.getElementById('transactionList');
+            const noTxContainer = document.getElementById('noTransactions');
+            if (!listContainer) return;
+            
+            const searchBar = document.getElementById('searchBar');
+            const filterCategory = document.getElementById('filterCategory');
+            
+            const searchVal = searchBar ? searchBar.value.toLowerCase().trim() : '';
+            const categoryVal = filterCategory ? filterCategory.value : 'all';
+
+            const filtered = transactions.filter(t => {
+                if (!t.date || t.date.substring(0, 7) !== selectedMonth) {
+                    return false;
+                }
+                if (currentFilterType !== 'all' && t.type !== currentFilterType) {
+                    return false;
+                }
+                if (categoryVal !== 'all' && t.category !== categoryVal) {
+                    return false;
+                }
+                if (searchVal !== '') {
+                    const matchesNote = t.note && t.note.toLowerCase().includes(searchVal);
+                    const matchesCat = t.category && t.category.toLowerCase().includes(searchVal);
+                    const matchesPerson = t.loanPerson && t.loanPerson.toLowerCase().includes(searchVal);
+                    const matchesCreator = t.creatorName && t.creatorName.toLowerCase().includes(searchVal);
+                    if (!matchesNote && !matchesCat && !matchesPerson && !matchesCreator) return false;
+                }
+                return true;
+            });
+
+            listContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                listContainer.classList.add('hidden');
+                if (noTxContainer) noTxContainer.classList.remove('hidden');
+                return;
+            }
+
+            listContainer.classList.remove('hidden');
+            if (noTxContainer) noTxContainer.classList.add('hidden');
+
+            const groupedByDay = {};
+            filtered.forEach(t => {
+                if (!groupedByDay[t.date]) {
+                    groupedByDay[t.date] = { txs: [], dailyIncome: 0, dailyExpense: 0 };
+                }
+                groupedByDay[t.date].txs.push(t);
+                if (t.type === 'income') {
+                    groupedByDay[t.date].dailyIncome += t.amount;
+                } else if (t.type === 'expense') {
+                    groupedByDay[t.date].dailyExpense += t.amount;
+                }
+            });
+
+            const sortedDates = Object.keys(groupedByDay).sort((a, b) => new Date(b) - new Date(a));
+
+            sortedDates.forEach(dateStr => {
+                const dayData = groupedByDay[dateStr];
+                const dateParts = dateStr.split('-');
+                const displayDate = `${dateParts[1]}月${dateParts[2]}日`;
+                const weekday = getChineseWeekday(dateStr);
+
+                const dayGroupDiv = document.createElement('div');
+                dayGroupDiv.className = "space-y-2 mb-5";
+
+                const dayHeader = document.createElement('div');
+                dayHeader.className = "flex items-center justify-between px-3 py-2 bg-slate-100/70 border-b border-slate-200 rounded-xl text-xs font-bold text-slate-500 mb-2 shadow-sm";
+                
+                let daySummaryHTML = '';
+                if (dayData.dailyIncome > 0) {
+                    daySummaryHTML += `<span class="text-brand-600">收 $${dayData.dailyIncome.toLocaleString()}</span>`;
+                }
+                if (dayData.dailyExpense > 0) {
+                    if (daySummaryHTML) daySummaryHTML += ` <span class="text-slate-300">|</span> `;
+                    daySummaryHTML += `<span class="text-expense-500">支 $${dayData.dailyExpense.toLocaleString()}</span>`;
+                }
+
+                dayHeader.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-slate-800 font-extrabold">${displayDate}</span>
+                        <span class="text-[10px] text-slate-400 font-medium">${weekday}</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5 text-[10px]">
+                        ${daySummaryHTML}
+                    </div>
+                `;
+                dayGroupDiv.appendChild(dayHeader);
+
+                const itemsContainer = document.createElement('div');
+                itemsContainer.className = "space-y-2";
+
+                dayData.txs.forEach(t => {
+                    const isExpense = t.type === 'expense';
+                    const isIncome = t.type === 'income';
+                    const isLoan = t.type === 'loan';
+
+                    let catInfo = { icon: "fa-tags", bg: "bg-slate-100 text-slate-700" };
+                    let titleText = t.category;
+                    let badgeHTML = '';
+
+                    if (isExpense) {
+                        catInfo = categories.expense[t.category] || { icon: "fa-tags", bg: "bg-slate-100 text-slate-700" };
+                    } else if (isIncome) {
+                        catInfo = categories.income[t.category] || { icon: "fa-tags", bg: "bg-slate-100 text-slate-700" };
+                    } else if (isLoan) {
+                        const isLend = t.loanSubtype === 'lend';
+                        catInfo = {
+                            icon: isLend ? "fa-hand-holding-dollar" : "fa-file-invoice-dollar",
+                            bg: isLend ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                        };
+                        titleText = isLend ? `借給 ${t.loanPerson}` : `向 ${t.loanPerson} 借入`;
+                        
+                        const isPaid = t.loanStatus === 'paid';
+                        badgeHTML = isPaid 
+                            ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">已結清</span>`
+                            : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">未還清</span>`;
+                    }
+
+                    let amountClass = 'text-brand-600';
+                    let sign = '+';
+                    if (isExpense) {
+                        amountClass = 'text-expense-500';
+                        sign = '-';
+                    } else if (isLoan) {
+                        const isLend = t.loanSubtype === 'lend';
+                        amountClass = isLend ? 'text-emerald-600' : 'text-rose-600';
+                        sign = isLend ? '→ ' : '← ';
+                    }
+
+                    // 借貸開關
+                    let loanToggleHTML = '';
+                    if (isLoan) {
+                        const isPaid = t.loanStatus === 'paid';
+                        loanToggleHTML = `
+                            <button onclick="toggleLoanStatus('${t.id}')" 
+                                    class="w-8 h-8 rounded-lg ${isPaid ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-slate-300 hover:text-emerald-600 hover:bg-emerald-50'} flex items-center justify-center transition-colors focus:outline-none"
+                                    title="${isPaid ? '標示為未還清' : '標示為已結清'}">
+                                <i class="fa-solid ${isPaid ? 'fa-circle-check text-base' : 'fa-regular fa-circle text-base'}"></i>
+                            </button>
+                        `;
+                    }
+
+                    // 顯示誰記的帳 (若非個人模式則顯示成員名稱)
+                    const creatorLabelHTML = isPersonalMode ? '' : `
+                        <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                            <i class="fa-solid fa-user text-[8px]"></i>
+                            <span>由 ${t.creatorName || '成員'} 記帳</span>
+                        </div>
+                    `;
+
+                    const item = document.createElement('div');
+                    item.className = `bg-white border ${isLoan && t.loanStatus === 'unpaid' ? 'border-amber-200/80 bg-amber-50/5' : 'border-slate-100'} hover:border-slate-200 px-4 py-3 rounded-xl flex items-center justify-between transition-all duration-200 shadow-sm hover:shadow-md group`;
+                    
+                    item.innerHTML = `
+                        <div class="flex items-center space-x-3.5 min-w-0">
+                            <div class="w-10 h-10 ${catInfo.bg} rounded-xl flex items-center justify-center text-sm flex-shrink-0">
+                                <i class="fa-solid ${catInfo.icon}"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-bold text-slate-800 text-sm">${titleText}</span>
+                                    ${badgeHTML}
+                                </div>
+                                <p class="text-xs text-slate-400 truncate mt-0.5">${isLoan ? '用途：' : ''}${t.note || `<span class="italic text-slate-300">無備註</span>`}</p>
+                                ${creatorLabelHTML}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <div class="text-right">
+                                <span class="text-sm font-extrabold ${amountClass}">
+                                    ${sign}$${t.amount.toLocaleString()}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                ${loanToggleHTML}
+                                <button onclick="deleteTransaction('${t.id}')" 
+                                        class="w-8 h-8 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors focus:outline-none"
+                                        title="刪除此紀錄">
+                                    <i class="fa-regular fa-trash-can text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    itemsContainer.appendChild(item);
+                });
+
+                dayGroupDiv.appendChild(itemsContainer);
+                listContainer.appendChild(dayGroupDiv);
+            });
+        }
+
+        // 14. 預算規劃進度條列表
+        function renderBudgetProgress() {
+            const listContainer = document.getElementById('budgetProgressList');
+            if (!listContainer) return;
+            listContainer.innerHTML = '';
+
+            const currentBudget = budgets[selectedMonth] || { total: 0, categories: {} };
+            
+            const spentByCat = {};
+            transactions.forEach(t => {
+                if (t.type === 'expense' && t.date && t.date.substring(0, 7) === selectedMonth) {
+                    spentByCat[t.category] = (spentByCat[t.category] || 0) + t.amount;
+                }
+            });
+
+            let totalSpent = 0;
+            let totalLimit = currentBudget.total || 0;
+
+            Object.keys(categories.expense).forEach(cat => {
+                const info = categories.expense[cat];
+                const spent = spentByCat[cat] || 0;
+                const limit = (currentBudget.categories && currentBudget.categories[cat]) || 0;
+                totalSpent += spent;
+
+                const percent = limit > 0 ? Math.min((spent / limit) * 100, 100) : (spent > 0 ? 100 : 0);
+                const displayPercent = limit > 0 ? `${Math.round((spent / limit) * 100)}%` : (spent > 0 ? '無預算' : '0%');
+
+                let barColor = 'bg-brand-500';
+                if (limit > 0) {
+                    const ratio = spent / limit;
+                    if (ratio >= 1.0) barColor = 'bg-rose-500';
+                    else if (ratio >= 0.8) barColor = 'bg-amber-500';
+                } else if (spent > 0) {
+                    barColor = 'bg-rose-500';
+                }
+
+                const remaining = limit - spent;
+                let budgetStatusText = '';
+                if (limit > 0) {
+                    if (remaining >= 0) {
+                        budgetStatusText = `<span class="text-emerald-600 font-medium">剩餘 $${remaining.toLocaleString()}</span>`;
+                    } else {
+                        budgetStatusText = `<span class="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded-md">已超支 $${Math.abs(remaining).toLocaleString()}</span>`;
+                    }
+                } else if (spent > 0) {
+                    budgetStatusText = `<span class="text-rose-500 font-medium">未設預算已支出 $${spent.toLocaleString()}</span>`;
+                } else {
+                    budgetStatusText = `<span class="text-slate-400">未編列預算</span>`;
+                }
+
+                const div = document.createElement('div');
+                div.className = "bg-slate-50/50 hover:bg-slate-50 border border-slate-100 p-3 rounded-xl transition-all duration-200";
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1.5">
+                        <div class="flex items-center space-x-2 min-w-0">
+                            <span class="w-8 h-8 rounded-lg ${info.bg} flex items-center justify-center text-xs flex-shrink-0"><i class="fa-solid ${info.icon}"></i></span>
+                            <div class="min-w-0">
+                                <span class="text-xs font-bold text-slate-800 block truncate">${cat}</span>
+                                <div class="text-[10px] text-slate-400 flex flex-wrap gap-x-1.5">
+                                    <span>預計: $${limit.toLocaleString()}</span>
+                                    <span>|</span>
+                                    <span>已花: $${spent.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right flex flex-col items-end space-y-1 flex-shrink-0">
+                            <span class="text-xs font-black text-slate-700">${displayPercent}</span>
+                            <div class="text-[10px]">
+                                ${budgetStatusText}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
+                        <div class="${barColor} h-1.5 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                    </div>
+                `;
+                listContainer.appendChild(div);
+            });
+
+            const overviewEl = document.getElementById('valBudgetOverview');
+            if (overviewEl) {
+                overviewEl.textContent = `$${totalSpent.toLocaleString()} / $${totalLimit.toLocaleString()}`;
+            }
+        }
+
+        // 開啟預算設定
+        function openBudgetModal() {
+            const modal = document.getElementById('budgetModal');
+            if (!modal) return;
+            const mParts = selectedMonth.split('-');
+            
+            document.getElementById('modalTitleMonth').textContent = `${mParts[0]}年 ${mParts[1]}月 財務預算`;
+
+            const currentBudget = budgets[selectedMonth] || { total: 0, categories: {} };
+            document.getElementById('inputTotalBudget').value = currentBudget.total || '';
+
+            const container = document.getElementById('categoryBudgetInputs');
+            if (container) {
+                container.innerHTML = '';
+                Object.keys(categories.expense).forEach(catName => {
+                    const info = categories.expense[catName];
+                    const value = currentBudget.categories && currentBudget.categories[catName] !== undefined ? currentBudget.categories[catName] : 0;
+                    
+                    const div = document.createElement('div');
+                    div.className = "flex items-center justify-between gap-4";
+                    div.innerHTML = `
+                        <div class="flex items-center space-x-2 text-sm font-semibold text-slate-700 w-1/3">
+                            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${info.color}"></span>
+                            <span>${catName}</span>
+                        </div>
+                        <div class="relative rounded-xl w-2/3 shadow-sm">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <span class="text-xs text-slate-400">$</span>
+                            </div>
+                            <input type="number" data-cat="${catName}" value="${value || ''}" placeholder="0" min="0"
+                                class="budget-cat-input block w-full rounded-xl border border-slate-200 pl-7 pr-3 py-1.5 text-xs text-right font-bold text-slate-800 placeholder-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-all">
+                        </div>
+                    `;
+                    container.appendChild(div);
+                    div.querySelector('input').addEventListener('input', updateModalRemainingDisplay);
+                });
+            }
+
+            updateModalRemainingDisplay();
+            modal.classList.remove('hidden');
+        }
+
+        function updateModalRemainingDisplay() {
+            const inputTotalBudget = document.getElementById('inputTotalBudget');
+            const totalInput = inputTotalBudget ? (parseFloat(inputTotalBudget.value) || 0) : 0;
+            let allocatedSum = 0;
+
+            document.querySelectorAll('.budget-cat-input').forEach(input => {
+                allocatedSum += parseFloat(input.value) || 0;
+            });
+
+            const statusEl = document.getElementById('txtAllocationStatus');
+            if (statusEl) {
+                const difference = totalInput - allocatedSum;
+                if (difference < 0) {
+                    statusEl.className = "text-xs font-semibold text-rose-500";
+                    statusEl.textContent = `已分配: $${allocatedSum.toLocaleString()} (超出 $${Math.abs(difference).toLocaleString()})`;
+                } else {
+                    statusEl.className = "text-xs font-semibold text-brand-600";
+                    statusEl.textContent = `已分配: $${allocatedSum.toLocaleString()} (剩餘未分配: $${difference.toLocaleString()})`;
+                }
+            }
+        }
+
+        function closeBudgetModal() {
+            const modal = document.getElementById('budgetModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // 15. 圖表模組
+        function renderCharts() {
+            try {
+                renderExpensePieChart();
+            } catch (e) {
+                console.warn("PieChart rendering error:", e);
+            }
+            try {
+                renderTrendLineChart();
+            } catch (e) {
+                console.warn("TrendChart rendering error:", e);
+            }
+        }
+
+        function renderExpensePieChart() {
+            const canvas = document.getElementById('expensePieChart');
+            if (!canvas) return;
+            const noDataEl = document.getElementById('noChartData');
+
+            const expenseByCat = {};
+            let totalExp = 0;
+
+            transactions.forEach(t => {
+                if (t.type === 'expense' && t.date && t.date.substring(0, 7) === selectedMonth) {
+                    expenseByCat[t.category] = (expenseByCat[t.category] || 0) + t.amount;
+                    totalExp += t.amount;
+                }
+            });
+
+            if (totalExp === 0) {
+                if (noDataEl) noDataEl.classList.remove('hidden');
+                if (expenseChart) {
+                    expenseChart.destroy();
+                    expenseChart = null;
+                }
+                return;
+            }
+            if (noDataEl) noDataEl.classList.add('hidden');
+
+            const labels = Object.keys(expenseByCat);
+            const data = Object.values(expenseByCat);
+            const backgroundColors = labels.map(label => {
+                return (categories.expense[label] && categories.expense[label].color) || "#64748b";
+            });
+
+            if (expenseChart) expenseChart.destroy();
+
+            expenseChart = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 10,
+                                font: {
+                                    family: "'Noto Sans TC', sans-serif",
+                                    size: 11
+                                },
+                                usePointStyle: true,
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed;
+                                    const pct = ((value / totalExp) * 100).toFixed(1);
+                                    return ` NT$ ${value.toLocaleString()} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        function renderTrendLineChart() {
+            const canvas = document.getElementById('trendLineChart');
+            if (!canvas) return;
+            const noTrendEl = document.getElementById('noTrendData');
+
+            const parts = selectedMonth.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            const dateLabels = [];
+            const dailyExpenses = {};
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dayStr = String(d).padStart(2, '0');
+                const fullDateStr = `${selectedMonth}-${dayStr}`;
+                dateLabels.push(fullDateStr);
+                dailyExpenses[fullDateStr] = 0;
+            }
+
+            let hasData = false;
+            transactions.forEach(t => {
+                if (t.type === 'expense' && t.date && dailyExpenses[t.date] !== undefined) {
+                    dailyExpenses[t.date] += t.amount;
+                    hasData = true;
+                }
+            });
+
+            if (!hasData) {
+                if (noTrendEl) noTrendEl.classList.remove('hidden');
+                if (trendChart) {
+                    trendChart.destroy();
+                    trendChart = null;
+                }
+                return;
+            }
+            if (noTrendEl) noTrendEl.classList.add('hidden');
+
+            const dataPoints = dateLabels.map(date => dailyExpenses[date]);
+            const xLabels = dateLabels.map(date => `${parseInt(date.split('-')[2])}日`);
+
+            if (trendChart) trendChart.destroy();
+
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 220);
+            gradient.addColorStop(0, 'rgba(244, 63, 94, 0.2)');
+            gradient.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
+
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: xLabels,
+                    datasets: [{
+                        label: '每日支出',
+                        data: dataPoints,
+                        borderColor: '#f43f5e',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#f43f5e',
+                        pointBorderWidth: 1.5,
+                        pointRadius: 2.5,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        fill: true,
+                        backgroundColor: gradient
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                callback: value => '$' + value,
+                                font: { size: 10 }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 9 }, maxTicksLimit: 15 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => ` 支出 NT$ ${context.parsed.y.toLocaleString()}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 16. 備份匯出
+        function exportToJSON() {
+            if (transactions.length === 0) {
+                showToast("無資料可匯出！", "error");
+                return;
+            }
+            const exportData = {
+                transactions: transactions,
+                budgets: budgets,
+                mode: isPersonalMode ? 'personal' : 'group',
+                groupInfo: currentGroupData
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            const title = isPersonalMode ? '個人私密' : (currentGroupData ? currentGroupData.name : '共同');
+            downloadAnchor.setAttribute("download", `吉娃娃存錢記_備份_${title}_${getFormattedDate(0)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("雲端資料備份成功！", "success");
+        }
+
+        function exportToCSV() {
+            if (transactions.length === 0) {
+                showToast("無資料可匯出！", "error");
+                return;
+            }
+            
+            let csvContent = "\uFEFF日期,類型,分類項目,金額(TWD),備註/代墊用途,記帳人\n";
+            transactions.forEach(t => {
+                let typeText = t.type === 'expense' ? '支出' : (t.type === 'income' ? '收入' : '借貸代墊');
+                if (t.type === 'loan') {
+                    typeText += ` (${t.loanSubtype === 'lend' ? '我借出/幫代墊' : '我借入/向人借'} - 對象: ${t.loanPerson} - ${t.loanStatus === 'paid' ? '已結清' : '未結清'})`;
+                }
+                const safeNote = t.note ? t.note.replace(/"/g, '""') : '';
+                const creator = isPersonalMode ? '我' : (t.creatorName || '成員');
+                csvContent += `${t.date},${typeText},${t.category},${t.amount},"${safeNote}",${creator}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", url);
+            const title = isPersonalMode ? '個人私密' : (currentGroupData ? currentGroupData.name : '共同');
+            downloadAnchor.setAttribute("download", `吉娃娃存錢記_報表_${title}_${getFormattedDate(0)}.csv`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("CSV 報表匯出成功！", "success");
+        }
+
+        // 17. 監聽點擊綁定 (Lobby & Main Dashboard)
+        function bindLobbyTabs() {
+            const tabPersonal = document.getElementById('tabPersonal');
+            const tabCreate = document.getElementById('tabCreateGroup');
+            const tabJoin = document.getElementById('tabJoinGroup');
+            
+            const panelPersonal = document.getElementById('panelPersonal');
+            const panelCreate = document.getElementById('panelCreateGroup');
+            const panelJoin = document.getElementById('panelJoinGroup');
+
+            tabPersonal.addEventListener('click', () => {
+                tabPersonal.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all bg-white text-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-center gap-1";
+                tabCreate.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1";
+                tabJoin.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1";
+                panelPersonal.classList.remove('hidden');
+                panelCreate.classList.add('hidden');
+                panelJoin.classList.add('hidden');
+            });
+
+            tabCreate.addEventListener('click', () => {
+                tabCreate.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all bg-white text-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-center gap-1";
+                tabPersonal.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1";
+                tabJoin.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1";
+                panelCreate.classList.remove('hidden');
+                panelPersonal.classList.add('hidden');
+                panelJoin.classList.add('hidden');
+            });
+
+            tabJoin.addEventListener('click', () => {
+                tabJoin.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all bg-white text-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-center gap-1";
+                tabPersonal.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1";
+                tabCreate.className = "py-2.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1";
+                panelJoin.classList.remove('hidden');
+                panelPersonal.classList.add('hidden');
+                panelCreate.classList.add('hidden');
+            });
+
+            // 連接各按鈕
+            document.getElementById('btnStartPersonalSubmit').addEventListener('click', handleStartPersonal);
+            document.getElementById('btnCreateGroupSubmit').addEventListener('click', createNewGroup);
+            document.getElementById('btnJoinGroupSubmit').addEventListener('click', joinGroupWithCode);
+        }
+
+        function bindDashboardEvents() {
+            document.getElementById('typeExpense').addEventListener('click', () => setTransactionType('expense'));
+            document.getElementById('typeIncome').addEventListener('click', () => setTransactionType('income'));
+            document.getElementById('typeLoan').addEventListener('click', () => setTransactionType('loan'));
+
+            document.getElementById('ledgerForm').addEventListener('submit', handleFormSubmit);
+
+            document.getElementById('searchBar').addEventListener('input', renderTransactionsList);
+            document.getElementById('filterCategory').addEventListener('change', renderTransactionsList);
+            document.getElementById('btnClearFilters').addEventListener('click', resetFilters);
+
+            document.getElementById('monthSelector').addEventListener('change', (e) => {
+                selectedMonth = e.target.value;
+                updateApp();
+            });
+            document.getElementById('btnPrevMonth').addEventListener('click', () => shiftMonth(-1));
+            document.getElementById('btnNextMonth').addEventListener('click', () => shiftMonth(1));
+
+            // 快篩
+            document.querySelectorAll('.filter-type-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-type-btn').forEach(b => b.classList.remove('bg-white', 'text-slate-800', 'shadow-sm'));
+                    document.querySelectorAll('.filter-type-btn').forEach(b => b.classList.add('text-slate-500'));
+                    e.currentTarget.classList.remove('text-slate-500');
+                    e.currentTarget.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
+
+                    currentFilterType = e.currentTarget.dataset.filter;
+                    renderTransactionsList();
+                });
+            });
+
+            // 預算及比例
+            const tabPie = document.getElementById('tabPie');
+            const tabBudget = document.getElementById('tabBudget');
+            const contentPie = document.getElementById('contentPie');
+            const contentBudget = document.getElementById('contentBudget');
+
+            tabPie.addEventListener('click', () => {
+                tabPie.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-800 bg-white shadow-sm flex items-center justify-center gap-1.5";
+                tabBudget.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5";
+                contentPie.classList.remove('hidden');
+                contentBudget.classList.add('hidden');
+            });
+
+            tabBudget.addEventListener('click', () => {
+                tabBudget.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-800 bg-white shadow-sm flex items-center justify-center gap-1.5";
+                tabPie.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5";
+                contentBudget.classList.remove('hidden');
+                contentPie.classList.add('hidden');
+                renderBudgetProgress();
+            });
+
+            // 預算 Modal
+            document.getElementById('btnOpenBudgetModal').addEventListener('click', openBudgetModal);
+            document.getElementById('btnCloseModal').addEventListener('click', closeBudgetModal);
+            document.getElementById('closeModalOverlay').addEventListener('click', closeBudgetModal);
+            document.getElementById('btnCancelBudget').addEventListener('click', closeBudgetModal);
+            document.getElementById('btnSaveBudget').addEventListener('click', saveBudgetSettings);
+            document.getElementById('inputTotalBudget').addEventListener('input', updateModalRemainingDisplay);
+
+            // 登出/切換模式
+            document.getElementById('btnLeaveGroup').addEventListener('click', leaveGroupLocal);
+
+            // 刪除自製確認框
+            document.getElementById('closeConfirmOverlay').addEventListener('click', () => {
+                document.getElementById('confirmModal').classList.add('hidden');
+            });
+            document.getElementById('btnConfirmCancel').addEventListener('click', () => {
+                document.getElementById('confirmModal').classList.add('hidden');
+            });
+            document.getElementById('btnConfirmDelete').addEventListener('click', executeCloudDelete);
+
+            document.getElementById('btnExportJSON').addEventListener('click', exportToJSON);
+            document.getElementById('btnExportCSV').addEventListener('click', exportToCSV);
+        }
+
+        // Toast 彈出框
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            if (!toast || !toastMessage || !toastIcon) return;
+            toastMessage.textContent = message;
+
+            if (type === 'success') {
+                toastIcon.innerHTML = `<i class="fa-solid fa-circle-check text-brand-500 text-lg"></i>`;
+            } else if (type === 'error') {
+                toastIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500 text-lg"></i>`;
+            } else {
+                toastIcon.innerHTML = `<i class="fa-solid fa-circle-info text-blue-400 text-lg"></i>`;
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // 頁面加載事件
+        window.addEventListener('DOMContentLoaded', async () => {
+            const today = getFormattedDate(0);
+            document.getElementById('date').value = today;
+            selectedMonth = today.substring(0, 7);
+
+            bindLobbyTabs();
+            bindDashboardEvents();
+            updateCategoryDropdown();
+
+            await startAuthentication();
+        });
+    </script>
+</body>
+</html>

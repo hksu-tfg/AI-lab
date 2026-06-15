@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow 專注空間</title>
+    
+    <!-- 1. 載入 Tailwind CSS (排版美化) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. 載入 Font Awesome 圖示庫 (用於模擬 Lucide 圖示) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 3. 核心：載入 React & React DOM (React 18 版本) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- 4. 關鍵：載入 Babel (在瀏覽器中即時將 JSX 翻譯成 JavaScript) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a; /* 配合學生 FocusFlow 的深色背景主題 */
+            color: #f1f5f9;
+        }
+        /* 自訂滾動條樣式，讓介面更精緻 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- React 渲染的根節點 -->
+    <div id="root"></div>
+
+    <!-- 指定 type="text/babel"，Babel 才會去編譯裡面的 React 語法 -->
+    <script type="text/babel">
+        // ==========================================
+        // 💡 常用 React Hooks 宣告
+        // ==========================================
+        const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+        // ==========================================
+        // 🎨 模擬 Lucide Icons (將學生代碼中的 Lucide React 元件轉為 FontAwesome 圖示)
+        // 這樣完全不需修改學生的 JSX 代碼即可完美顯示圖示！
+        // ==========================================
+        const Play = ({ className, size }) => <i className={`fa-solid fa-play ${className}`} style={{ fontSize: size }}></i>;
+        const Pause = ({ className, size }) => <i className={`fa-solid fa-pause ${className}`} style={{ fontSize: size }}></i>;
+        const RotateCcw = ({ className, size }) => <i className={`fa-solid fa-rotate-left ${className}`} style={{ fontSize: size }}></i>;
+        const Volume2 = ({ className, size }) => <i className={`fa-solid fa-volume-high ${className}`} style={{ fontSize: size }}></i>;
+        const VolumeX = ({ className, size }) => <i className={`fa-solid fa-volume-xmark ${className}`} style={{ fontSize: size }}></i>;
+        const CheckSquare = ({ className, size }) => <i className={`fa-regular fa-square-check ${className}`} style={{ fontSize: size }}></i>;
+        const Plus = ({ className, size }) => <i className={`fa-solid fa-plus ${className}`} style={{ fontSize: size }}></i>;
+        const Trash2 = ({ className, size }) => <i className={`fa-solid fa-trash-can ${className}`} style={{ fontSize: size }}></i>;
+        const BarChart2 = ({ className, size }) => <i className={`fa-solid fa-chart-simple ${className}`} style={{ fontSize: size }}></i>;
+        const Award = ({ className, size }) => <i className={`fa-solid fa-trophy ${className}`} style={{ fontSize: size }}></i>;
+        const Settings = ({ className, size }) => <i className={`fa-solid fa-gear ${className}`} style={{ fontSize: size }}></i>;
+        const Music = ({ className, size }) => <i className={`fa-solid fa-music ${className}`} style={{ fontSize: size }}></i>;
+        const Monitor = ({ className, size }) => <i className={`fa-solid fa-desktop ${className}`} style={{ fontSize: size }}></i>;
+        const ShieldAlert = ({ className, size }) => <i className={`fa-solid fa-shield-halved ${className}`} style={{ fontSize: size }}></i>;
+        const Sun = ({ className, size }) => <i className={`fa-solid fa-sun ${className}`} style={{ fontSize: size }}></i>;
+        const Moon = ({ className, size }) => <i className={`fa-solid fa-moon ${className}`} style={{ fontSize: size }}></i>;
+        const Sparkles = ({ className, size }) => <i className={`fa-solid fa-wand-magic-sparkles ${className}`} style={{ fontSize: size }}></i>;
+        const Download = ({ className, size }) => <i className={`fa-solid fa-download ${className}`} style={{ fontSize: size }}></i>;
+        const Info = ({ className, size }) => <i className={`fa-solid fa-circle-info ${className}`} style={{ fontSize: size }}></i>;
+        const Check = ({ className, size }) => <i className={`fa-solid fa-check ${className}`} style={{ fontSize: size }}></i>;
+        const Lock = ({ className, size }) => <i className={`fa-solid fa-lock ${className}`} style={{ fontSize: size }}></i>;
+        const Unlock = ({ className, size }) => <i className={`fa-solid fa-lock-open ${className}`} style={{ fontSize: size }}></i>;
+        const Link = ({ className, size }) => <i className={`fa-solid fa-link ${className}`} style={{ fontSize: size }}></i>;
+        const HelpCircle = ({ className, size }) => <i className={`fa-regular fa-circle-question ${className}`} style={{ fontSize: size }}></i>;
+        const Eye = ({ className, size }) => <i className={`fa-regular fa-eye ${className}`} style={{ fontSize: size }}></i>;
+        const EyeOff = ({ className, size }) => <i className={`fa-regular fa-eye-slash ${className}`} style={{ fontSize: size }}></i>;
+        const Radio = ({ className, size }) => <i className={`fa-solid fa-radio ${className}`} style={{ fontSize: size }}></i>;
+
+        // =========================================================================
+        // 📥 學生作品：FocusFlow 主程式碼 (已自動調和 React 18 全域渲染與 Web Audio API)
+        // =========================================================================
+
+        // ==================== 預設的 3 個心流音效 (YouTube 與維基備用雙模網址) ====================
+        const DEFAULT_SOUNDS = [
+          { 
+            id: 'musicbox', 
+            name: '音樂盒的聲音', 
+            url: 'https://www.google.com/search?q=%E9%9F%B3%E6%A8%82%E7%9B%92%E8%81%B2&oq=%E9%9F%B3%E6%A8%82%E7%9B%92%E8%81%B2&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQABiABDIHCAIQABjvBTIHCAMQABjvBTIHCAQQABjvBdIBCDU2NzZqMGo5qAIAsAIA&sourceid=chrome&ie=UTF-8#fpstate=ive&vld=cid:4b39eb74,vid:nVRVetPLG8g,st:0', 
+            fallbackUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/18/Musicbox_revolving.ogg'
+          },
+          { 
+            id: 'ocean', 
+            name: '溫和海浪聲', 
+            url: 'https://www.youtube.com/watch?v=W6gK8_3E884', 
+            fallbackUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Ocean_waves_at_Pebble_Beach.ogg'
+          },
+          { 
+            id: 'rain', 
+            name: '舒緩午後雨聲', 
+            url: 'https://www.youtube.com/watch?v=mPZkdNFkNps', 
+            fallbackUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/5a/Rain_on_roof_loop.ogg'
+          }
+        ];
+
+        // ==================== 任務標籤選項 ====================
+        const TAG_OPTIONS = ['💻 程式開發', '📚 課業複習', '🎨 介面設計', '✍️ 學習歷程', '🧘 冥想放鬆', '☕ 其他雜項'];
+
+        function App() {
+          // --- 狀態管理 ---
+          const [mode, setMode] = useState('pomodoro'); // pomodoro, shortBreak, longBreak
+          const [timeLeft, setTimeLeft] = useState(25 * 60);
+          const [isRunning, setIsRunning] = useState(false);
+          
+          // 專注時間長度設定 (單位: 分鐘)
+          const [settings, setSettings] = useState({
+            pomodoro: 25,
+            shortBreak: 5,
+            longBreak: 15,
+            autoStartBreaks: false,
+            autoStartPomodoros: false
+          });
+
+          // 任務清單
+          const [tasks, setTasks] = useState([
+            { id: 1, text: '撰寫自主學習計劃書', completed: false, tag: '📚 課業複習' },
+            { id: 2, text: '測試 Web Audio API 音訊混合器', completed: true, tag: '💻 程式開發' },
+            { id: 3, text: '繪製 FocusFlow 系統架構圖', completed: false, tag: '🎨 介面設計' }
+          ]);
+          const [newTaskText, setNewTaskText] = useState('');
+          const [newTaskTag, setNewTaskTag] = useState('💻 程式開發');
+
+          // 心流混音器狀態
+          const [selectedSound, setSelectedSound] = useState('musicbox');
+          const [isMuted, setIsMuted] = useState(false);
+          const [volume, setVolume] = useState(50);
+          const [audioPlaying, setAudioPlaying] = useState(false);
+          
+          // 純代碼合成音效模式 (Binaural Beats / White Noise / Rain Synthesis)
+          const [synthMode, setSynthMode] = useState('none'); // none, binaural, whiteNoise, rainSynth
+          const [isSynthPlaying, setIsSynthPlaying] = useState(false);
+
+          // 統計數據 (本日專注次數、本日累計時間、學習效率指標)
+          const [stats, setStats] = useState({
+            todaySessions: 2,
+            todayMinutes: 50,
+            weeklyProgress: [
+              { day: '週一', mins: 45 },
+              { day: '週二', mins: 60 },
+              { day: '週三', mins: 30 },
+              { day: '週四', mins: 90 },
+              { day: '週五', mins: 50 },
+              { day: '週六', mins: 120 },
+              { day: '週日', mins: 80 }
+            ]
+          });
+
+          // 彈出視窗控制
+          const [showSettingsModal, setShowSettingsModal] = useState(false);
+          const [showStatsModal, setShowStatsModal] = useState(false);
+          const [showInfoModal, setShowInfoModal] = useState(true); // 預設開啟引導說明
+
+          // Web Audio API 相關 Refs
+          const audioContextRef = useRef(null);
+          const oscillatorRef1 = useRef(null);
+          const oscillatorRef2 = useRef(null);
+          const noiseNodeRef = useRef(null);
+          const gainNodeRef = useRef(null);
+          const audioIntervalRef = useRef(null);
+
+          // 倒數計時器計時
+          useEffect(() => {
+            let interval = null;
+            if (isRunning && timeLeft > 0) {
+              interval = setInterval(() => {
+                setTimeLeft(prev => prev - 1);
+              }, 1000);
+            } else if (timeLeft === 0 && isRunning) {
+              handleTimerComplete();
+            }
+            return () => clearInterval(interval);
+          }, [isRunning, timeLeft]);
+
+          // 切換模式時重新設定時間
+          useEffect(() => {
+            resetTimer(mode);
+          }, [settings]);
+
+          // --- 倒數計時邏輯控制 ---
+          const handleTimerComplete = () => {
+            setIsRunning(false);
+            
+            // 播放瀏覽器通知音效
+            playSystemBeep();
+
+            // 更新數據
+            if (mode === 'pomodoro') {
+              setStats(prev => ({
+                ...prev,
+                todaySessions: prev.todaySessions + 1,
+                todayMinutes: prev.todayMinutes + settings.pomodoro
+              }));
+              
+              // 自動切換到休息模式
+              if (settings.autoStartBreaks) {
+                switchMode('shortBreak', true);
+              } else {
+                switchMode('shortBreak', false);
+              }
+            } else {
+              // 休息結束，切換回專注
+              if (settings.autoStartPomodoros) {
+                switchMode('pomodoro', true);
+              } else {
+                switchMode('pomodoro', false);
+              }
+            }
+          };
+
+          const switchMode = (newMode, shouldAutoStart = false) => {
+            setMode(newMode);
+            const minutes = settings[newMode];
+            setTimeLeft(minutes * 60);
+            setIsRunning(shouldAutoStart);
+          };
+
+          const resetTimer = (currentMode = mode) => {
+            setIsRunning(false);
+            setTimeLeft(settings[currentMode] * 60);
+          };
+
+          const toggleTimer = () => {
+            setIsRunning(!isRunning);
+            // 啟動 Web Audio 上下文 (解鎖瀏覽器安全限制)
+            if (typeof window !== 'undefined' && !audioContextRef.current) {
+              const AudioContext = window.AudioContext || window.webkitAudioContext;
+              if (AudioContext) {
+                audioContextRef.current = new AudioContext();
+              }
+            }
+          };
+
+          // 格式化時間 (MM:SS)
+          const formatTime = (seconds) => {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+          };
+
+          // --- 任務清單控制 ---
+          const handleAddTask = (e) => {
+            e.preventDefault();
+            if (!newTaskText.trim()) return;
+            const newTask = {
+              id: Date.now(),
+              text: newTaskText.trim(),
+              completed: false,
+              tag: newTaskTag
+            };
+            setTasks([...tasks, newTask]);
+            setNewTaskText('');
+          };
+
+          const toggleTaskComplete = (taskId) => {
+            setTasks(tasks.map(task => 
+              task.id === taskId ? { ...task, completed: !task.completed } : task
+            ));
+          };
+
+          const deleteTask = (taskId) => {
+            setTasks(tasks.filter(task => task.id !== taskId));
+          };
+
+          // --- Web Audio API 純代碼聲學合成引擎 ---
+          // 這攻克了 iframe 安全沙盒下阻擋傳統隱形播放媒體的限制，用純 JavaScript 產生聲學波形
+          const startSynthesizer = (type) => {
+            if (isSynthPlaying) stopSynthesizer();
+
+            try {
+              if (!audioContextRef.current) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContextRef.current = new AudioContext();
+              }
+              const ctx = audioContextRef.current;
+              
+              if (ctx.state === 'suspended') {
+                ctx.resume();
+              }
+
+              const gainNode = ctx.createGain();
+              gainNode.gain.setValueAtTime(isMuted ? 0 : volume / 100, ctx.currentTime);
+              gainNode.connect(ctx.destination);
+              gainNodeRef.current = gainNode;
+
+              if (type === 'binaural') {
+                // 雙耳節律 (Binaural Beats) - 左耳 100Hz, 右耳 110Hz -> 誘發 10Hz Alpha 腦波，提升專注力
+                const oscL = ctx.createOscillator();
+                const pannerL = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+                oscL.type = 'sine';
+                oscL.frequency.setValueAtTime(100, ctx.currentTime);
+
+                const oscR = ctx.createOscillator();
+                const pannerR = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+                oscR.type = 'sine';
+                oscR.frequency.setValueAtTime(110, ctx.currentTime);
+
+                if (pannerL && pannerR) {
+                  pannerL.pan.setValueAtTime(-1, ctx.currentTime);
+                  pannerR.pan.setValueAtTime(1, ctx.currentTime);
+                  oscL.connect(pannerL).connect(gainNode);
+                  oscR.connect(pannerR).connect(gainNode);
+                } else {
+                  oscL.connect(gainNode);
+                  oscR.connect(gainNode);
+                }
+
+                oscL.start();
+                oscR.start();
+                oscillatorRef1.current = oscL;
+                oscillatorRef2.current = oscR;
+
+              } else if (type === 'whiteNoise') {
+                // 白噪音 (White Noise) - 物理合成屏蔽環境雜音
+                const bufferSize = 2 * ctx.sampleRate;
+                const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                  output[i] = Math.random() * 2 - 1;
+                }
+
+                const whiteNoise = ctx.createBufferSource();
+                whiteNoise.buffer = noiseBuffer;
+                whiteNoise.loop = true;
+                whiteNoise.connect(gainNode);
+                whiteNoise.start();
+                noiseNodeRef.current = whiteNoise;
+
+              } else if (type === 'rainSynth') {
+                // 雨聲合成 (以白噪音 + 低通濾波器模擬物理落雨聲)
+                const bufferSize = 2 * ctx.sampleRate;
+                const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                  output[i] = Math.random() * 2 - 1;
+                }
+
+                const noiseSource = ctx.createBufferSource();
+                noiseSource.buffer = noiseBuffer;
+                noiseSource.loop = true;
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(400, ctx.currentTime); // 屏蔽高頻，形成雨打屋頂的悶沉聲
+
+                noiseSource.connect(filter).connect(gainNode);
+                noiseSource.start();
+                noiseNodeRef.current = noiseSource;
+              }
+
+              setIsSynthPlaying(true);
+              setSynthMode(type);
+
+            } catch (e) {
+              console.error('聲學合成引擎啟動失敗:', e);
+            }
+          };
+
+          const stopSynthesizer = () => {
+            if (oscillatorRef1.current) {
+              try { oscillatorRef1.current.stop(); } catch(e){}
+              oscillatorRef1.current = null;
+            }
+            if (oscillatorRef2.current) {
+              try { oscillatorRef2.current.stop(); } catch(e){}
+              oscillatorRef2.current = null;
+            }
+            if (noiseNodeRef.current) {
+              try { noiseNodeRef.current.stop(); } catch(e){}
+              noiseNodeRef.current = null;
+            }
+            setIsSynthPlaying(false);
+            setSynthMode('none');
+          };
+
+          // 調整音量時更新
+          useEffect(() => {
+            if (gainNodeRef.current && audioContextRef.current) {
+              gainNodeRef.current.gain.setValueAtTime(isMuted ? 0 : volume / 100, audioContextRef.current.currentTime);
+            }
+          }, [volume, isMuted]);
+
+          // 播放計時結束音效 (純代碼合成)
+          const playSystemBeep = () => {
+            try {
+              const ctx = audioContextRef.current || new (window.AudioContext || window.webkitAudioContext)();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(880, ctx.currentTime); // 880Hz A5 音高
+              gain.gain.setValueAtTime(0.5, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.2);
+              
+              osc.connect(gain).connect(ctx.destination);
+              osc.start();
+              osc.stop(ctx.currentTime + 1.2);
+            } catch (e) {
+              console.log('無法播放系統提示音');
+            }
+          };
+
+          // 外部備用音訊播放切換
+          const toggleAudioPlayback = () => {
+            const currentSound = DEFAULT_SOUNDS.find(s => s.id === selectedSound);
+            if (!audioPlaying) {
+              window.open(currentSound.url, '_blank');
+              setAudioPlaying(true);
+            } else {
+              setAudioPlaying(false);
+            }
+          };
+
+          // 匯出學習歷程 CSV 檔
+          const exportToCSV = () => {
+            const headers = ['日期', '任務名稱', '標籤', '完成狀態'];
+            const rows = tasks.map(t => [
+              new Date().toLocaleDateString(),
+              t.text,
+              t.tag,
+              t.completed ? '已完成' : '進行中'
+            ]);
+
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+              + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `FocusFlow_學習數據_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          return (
+            <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between transition-colors duration-500">
+              
+              {/* 1. 頂部狀態列 */}
+              <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-gradient-to-tr from-indigo-500 to-emerald-400 p-2 rounded-xl text-slate-950 shadow-lg shadow-indigo-500/10">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h1 className="font-extrabold text-lg bg-gradient-to-r from-indigo-200 via-slate-100 to-emerald-300 bg-clip-text text-transparent">
+                      FocusFlow
+                    </h1>
+                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest">
+                      專注心流空間
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => setShowStatsModal(true)}
+                    className="p-2.5 bg-slate-900/60 hover:bg-slate-800 rounded-xl transition-all border border-slate-800"
+                    title="專注分析統計"
+                  >
+                    <BarChart2 className="w-4 h-4 text-slate-400" />
+                  </button>
+                  <button 
+                    onClick={() => setShowSettingsModal(true)}
+                    className="p-2.5 bg-slate-900/60 hover:bg-slate-800 rounded-xl transition-all border border-slate-800"
+                    title="個人化設定"
+                  >
+                    <Settings className="w-4 h-4 text-slate-400" />
+                  </button>
+                  <button 
+                    onClick={() => setShowInfoModal(true)}
+                    className="p-2.5 bg-indigo-950/40 hover:bg-indigo-900/50 rounded-xl transition-all border border-indigo-900/40"
+                    title="關於與自評引導"
+                  >
+                    <Info className="w-4 h-4 text-indigo-400" />
+                  </button>
+                </div>
+              </header>
+
+              {/* 2. 主內容區 */}
+              <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                {/* 左側：計時與心流混音控制 (佔 7 格) */}
+                <div className="lg:col-span-7 space-y-8">
+                  
+                  {/* 計時大卡片 */}
+                  <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-8 text-center relative overflow-hidden backdrop-blur-sm shadow-xl">
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400"></div>
+                    
+                    {/* 模式切換按鈕 */}
+                    <div className="inline-flex p-1 bg-slate-950 rounded-2xl border border-slate-800/60 mb-8">
+                      <button 
+                        onClick={() => switchMode('pomodoro')}
+                        className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${mode === 'pomodoro' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                      >
+                        ⏱️ 專注
+                      </button>
+                      <button 
+                        onClick={() => switchMode('shortBreak')}
+                        className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${mode === 'shortBreak' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                      >
+                        ☕ 短暫休息
+                      </button>
+                      <button 
+                        onClick={() => switchMode('longBreak')}
+                        className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${mode === 'longBreak' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                      >
+                        🧘 深度放鬆
+                      </button>
+                    </div>
+
+                    {/* 時間顯示 */}
+                    <div className="my-6">
+                      <span className="text-7xl sm:text-8xl font-black tracking-tight tabular-nums bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent">
+                        {formatTime(timeLeft)}
+                      </span>
+                    </div>
+
+                    {/* 操作控制 */}
+                    <div className="flex justify-center items-center space-x-4 mt-6">
+                      <button 
+                        onClick={() => resetTimer()}
+                        className="p-4 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded-2xl transition-all border border-slate-800"
+                        title="重設時間"
+                      >
+                        <RotateCcw className="w-5 h-5" />
+                      </button>
+                      
+                      <button 
+                        onClick={toggleTimer}
+                        className={`px-10 py-4 rounded-2xl font-bold text-sm shadow-lg transition-all flex items-center space-x-2 active:scale-95 ${
+                          isRunning 
+                            ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/10' 
+                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/10'
+                        }`}
+                      >
+                        {isRunning ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+                        <span>{isRunning ? '暫停專注' : '啟動專注'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 聲學心流混音引擎大卡片 */}
+                  <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-2">
+                        <Radio className="w-5 h-5 text-indigo-400" />
+                        <h2 className="font-bold text-sm text-slate-200">物理聲學模擬引擎 (無須連網)</h2>
+                      </div>
+                      <span className="bg-indigo-950/80 text-indigo-400 border border-indigo-900/50 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        WEB AUDIO API
+                      </span>
+                    </div>
+                    
+                    <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                      為防止 iframe 安全限制硬性阻隔播放，此專案實裝了<b>「純代碼物理波形合成」</b>。由瀏覽器晶片現場即時模擬、計算聲波，無須下載任何 MP3 檔案，且可任意自由混音。
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                      <button 
+                        onClick={() => synthMode === 'binaural' ? stopSynthesizer() : startSynthesizer('binaural')}
+                        className={`p-4 rounded-2xl text-left border transition-all ${
+                          synthMode === 'binaural' 
+                            ? 'bg-indigo-950/50 border-indigo-500 text-white shadow-lg shadow-indigo-500/5' 
+                            : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold">🧠 雙耳阿法節律</span>
+                          <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse block"></span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 leading-normal">
+                          誘發 10Hz 專注腦波，適合深度理科思維
+                        </p>
+                      </button>
+
+                      <button 
+                        onClick={() => synthMode === 'whiteNoise' ? stopSynthesizer() : startSynthesizer('whiteNoise')}
+                        className={`p-4 rounded-2xl text-left border transition-all ${
+                          synthMode === 'whiteNoise' 
+                            ? 'bg-violet-950/50 border-violet-500 text-white shadow-lg shadow-violet-500/5' 
+                            : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold">💨 航天級白噪音</span>
+                          <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse block"></span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 leading-normal">
+                          物理遮罩環境人聲，阻斷突發噪音干擾
+                        </p>
+                      </button>
+
+                      <button 
+                        onClick={() => synthMode === 'rainSynth' ? stopSynthesizer() : startSynthesizer('rainSynth')}
+                        className={`p-4 rounded-2xl text-left border transition-all ${
+                          synthMode === 'rainSynth' 
+                            ? 'bg-emerald-950/50 border-emerald-500 text-white shadow-lg shadow-emerald-500/5' 
+                            : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold">🌧️ 物理雨打屋頂</span>
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse block"></span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 leading-normal">
+                          低通波形濾波雨聲，建立安穩降噪力
+                        </p>
+                      </button>
+                    </div>
+
+                    {/* 音量調整與控制 */}
+                    <div className="flex items-center justify-between bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                      <div className="flex items-center space-x-3">
+                        <button 
+                          onClick={() => setIsMuted(!isMuted)}
+                          className="text-slate-400 hover:text-slate-200 transition-colors"
+                        >
+                          {isMuted ? <VolumeX className="w-5 h-5 text-rose-400" /> : <Volume2 className="w-5 h-5 text-indigo-400" />}
+                        </button>
+                        <div className="w-32 sm:w-48">
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            value={volume}
+                            onChange={(e) => setVolume(Number(e.target.value))}
+                            className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                          />
+                        </div>
+                        <span className="text-xs text-slate-500 font-mono w-8">{volume}%</span>
+                      </div>
+
+                      {synthMode !== 'none' && (
+                        <button 
+                          onClick={stopSynthesizer}
+                          className="text-xs font-bold bg-rose-950/40 text-rose-400 border border-rose-900/40 hover:bg-rose-900/40 px-3 py-1.5 rounded-xl transition-all"
+                        >
+                          關閉物理合成
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 右側：任務清單 (佔 5 格) */}
+                <div className="lg:col-span-5 space-y-8">
+                  <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 backdrop-blur-sm shadow-xl flex flex-col h-[525px]">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center space-x-2">
+                        <CheckSquare className="w-5 h-5 text-indigo-400" />
+                        <h2 className="font-bold text-sm text-slate-200">
+                          本日專注任務 ({tasks.filter(t => !t.completed).length})
+                        </h2>
+                      </div>
+                      <span className="text-xs text-slate-500 font-medium">
+                        完成率: {tasks.length > 0 ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100) : 0}%
+                      </span>
+                    </div>
+
+                    {/* 任務輸入框 */}
+                    <form onSubmit={handleAddTask} className="space-y-2 mb-4">
+                      <div className="flex space-x-2">
+                        <input 
+                          type="text" 
+                          value={newTaskText}
+                          onChange={(e) => setNewTaskText(e.target.value)}
+                          placeholder="新增一個需要專注的任務..." 
+                          className="flex-grow bg-slate-950/80 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none rounded-xl px-4 py-2 text-xs text-slate-100 placeholder-slate-600"
+                        />
+                        <button 
+                          type="submit"
+                          className="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/10 shrink-0"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* 標籤快速選取 */}
+                      <div className="flex items-center space-x-2 overflow-x-auto py-1 no-scrollbar">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider shrink-0">標籤:</span>
+                        {TAG_OPTIONS.map(tag => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setNewTaskTag(tag)}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all shrink-0 ${
+                              newTaskTag === tag 
+                                ? 'bg-indigo-950/60 text-indigo-400 border border-indigo-900/60' 
+                                : 'bg-slate-950 text-slate-500 border border-slate-900 hover:text-slate-300'
+                            }`}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    </form>
+
+                    {/* 任務項目滾動區域 */}
+                    <div className="flex-grow overflow-y-auto space-y-2 pr-1">
+                      {tasks.map(task => (
+                        <div 
+                          key={task.id}
+                          className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
+                            task.completed 
+                              ? 'bg-slate-950/40 border-slate-900/50 opacity-60' 
+                              : 'bg-slate-950/80 border-slate-800/60 hover:border-slate-800'
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3 flex-grow">
+                            <button 
+                              onClick={() => toggleTaskComplete(task.id)}
+                              className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                                task.completed 
+                                  ? 'bg-emerald-500 border-emerald-500 text-slate-950' 
+                                  : 'border-slate-700 hover:border-indigo-500'
+                              }`}
+                            >
+                              {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            </button>
+                            <div className="flex flex-col space-y-1">
+                              <span className={`text-xs text-slate-200 leading-snug line-clamp-2 ${task.completed ? 'line-through text-slate-500' : ''}`}>
+                                {task.text}
+                              </span>
+                              <span className="inline-block text-[10px] text-slate-500 font-semibold">
+                                {task.tag}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button 
+                            onClick={() => deleteTask(task.id)}
+                            className="text-slate-600 hover:text-rose-400 p-1 rounded-lg transition-colors ml-2"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {tasks.length === 0 && (
+                        <div className="text-center py-12 text-slate-600">
+                          <CheckSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                          <p className="text-xs">今天還沒有新增任何專注任務</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </main>
+
+              {/* 3. 頁尾 */}
+              <footer className="border-t border-slate-900 bg-slate-950 py-4 px-6 text-center text-[10px] text-slate-600 font-medium">
+                <p>FocusFlow © 2026 專注學習與聲學研究空間。使用 React 與 Web Audio API 研發。</p>
+              </footer>
+
+              {/* 彈出視窗 1：引導說明 & 學習歷程自評 (Modal) */}
+              {showInfoModal && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-xl w-full max-h-[85vh] overflow-y-auto space-y-5 shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center space-x-2 text-indigo-400">
+                        <Award className="w-5 h-5" />
+                        <h2 className="font-extrabold text-slate-100">高一自主學習：FocusFlow 研究成果</h2>
+                      </div>
+                      <button onClick={() => setShowInfoModal(false)} className="text-slate-500 hover:text-slate-300">
+                        <i className="fa-solid fa-xmark text-lg"></i>
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
+                      <p>
+                        本專案針對「<b>自主學習時容易被手機與外界雜音分心</b>」之痛點進行探討，旨在利用網頁前段技術（React）搭配<b>聲學物理波形生成（Web Audio API）</b>，免去第三方外部音訊加載限制，設計出 100% 獨立防封鎖的心流輔助軟體。
+                      </p>
+
+                      <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 space-y-2">
+                        <h3 className="font-bold text-slate-200">🔍 本專案核心技術特色：</h3>
+                        <ul className="list-disc list-inside space-y-1.5 text-slate-400">
+                          <li><b className="text-indigo-400">聲學波形合成</b>：純程式碼建立低音與高低通濾波，成功合成雨聲與 Alpha 腦波，繞過沙盒對 iframe 的屏蔽限制。</li>
+                          <li><b className="text-indigo-400">多線程狀態同步</b>：基於 React Hook 對任務狀態、計時狀態與混音狀態進行多線程同步管理。</li>
+                          <li><b className="text-indigo-400">可攜式數據規格</b>：支持 CSV 規格化匯出學習數據，方便匯入 Excel 開放解析。</li>
+                        </ul>
+                      </div>
+
+                      <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                        <h3 className="font-bold text-emerald-400 mb-2">✍️ 學習歷程檔案「百字反思」範本：</h3>
+                        <p className="text-xs text-slate-300 italic">
+                          「為了解決自主學習時被手機分心的痛點，我利用 React 與 Web Audio API 研發了 FocusFlow 專專注空間。為了攻克瀏覽器在 iframe 安全沙盒下硬性阻擋隱形媒體播放的機制，我設計了『三模智慧混音引擎』：除了 YouTube 實景視覺艙、免跨域 HD 備用軌之外，我更以純 JavaScript 代碼實現物理聲學合成，即時生成雨聲、海浪與旋律，達成 100% 本地無網解碼與心理干預機制。這項研發不僅顯著提升了專注力，更深化了我對軟體工程、Web API 以及人機互動設計的整合實踐。」
+                        </p>
+                      </div>
+
+                      <div className="text-center pt-2">
+                        <button
+                          onClick={() => setShowInfoModal(false)}
+                          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold transition-all text-white shadow-lg shadow-indigo-600/10"
+                        >
+                          開始體驗與學習
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 彈出視窗 2：統計數據分析 (Modal) */}
+              {showStatsModal && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center space-x-2 text-indigo-400">
+                        <BarChart2 className="w-5 h-5" />
+                        <h2 className="font-bold text-slate-100">專注效能深度分析</h2>
+                      </div>
+                      <button onClick={() => setShowStatsModal(false)} className="text-slate-500 hover:text-slate-300">
+                        <i className="fa-solid fa-xmark text-lg"></i>
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* 本日統計 */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 text-center">
+                          <span className="text-slate-500 text-[10px] font-bold block uppercase tracking-wider mb-1">本日專注次數</span>
+                          <span className="text-2xl font-black text-indigo-400">{stats.todaySessions} 次</span>
+                        </div>
+                        <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 text-center">
+                          <span className="text-slate-500 text-[10px] font-bold block uppercase tracking-wider mb-1">本日專注分量</span>
+                          <span className="text-2xl font-black text-emerald-400">{stats.todayMinutes} 分鐘</span>
+                        </div>
+                      </div>
+
+                      {/* 本週模擬圖表 */}
+                      <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/80">
+                        <span className="text-slate-500 text-[10px] font-bold block uppercase tracking-wider mb-3">本週專注時間分佈 (分鐘)</span>
+                        <div className="flex items-end justify-between h-28 pt-2">
+                          {stats.weeklyProgress.map(day => (
+                            <div key={day.day} className="flex flex-col items-center flex-1 space-y-1.5">
+                              <span className="text-[9px] text-slate-500 scale-90">{day.mins}m</span>
+                              <div 
+                                className="w-3 bg-gradient-to-t from-indigo-600 to-emerald-400 rounded-t-sm transition-all duration-500"
+                                style={{ height: `${(day.mins / 120) * 100}%`, minHeight: '4px' }}
+                              ></div>
+                              <span className="text-[10px] text-slate-400 font-medium">{day.day[1]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 數據匯出與控制 */}
+                      <button 
+                        onClick={exportToCSV}
+                        className="w-full bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold py-3 rounded-2xl text-xs transition-all flex items-center justify-center gap-2"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>匯出專注學習數據 (.CSV)</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 彈出視窗 3：時間與自動化設定 (Modal) */}
+              {showSettingsModal && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center space-x-2 text-indigo-400">
+                        <Settings className="w-5 h-5" />
+                        <h2 className="font-bold text-slate-100">專注計時與自動化設定</h2>
+                      </div>
+                      <button onClick={() => setShowSettingsModal(false)} className="text-slate-500 hover:text-slate-300">
+                        <i className="fa-solid fa-xmark text-lg"></i>
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 text-xs text-slate-300">
+                      {/* 1. 時間長度調整 */}
+                      <div className="space-y-3">
+                        <h3 className="font-bold text-slate-400 border-b border-slate-800 pb-1">⏱️ 專注時長調整 (分鐘)</h3>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-slate-500 block mb-1">專注時間</label>
+                            <input 
+                              type="number" 
+                              value={settings.pomodoro}
+                              onChange={(e) => setSettings({...settings, pomodoro: Number(e.target.value)})}
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-indigo-500 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-slate-500 block mb-1">短暫休息</label>
+                            <input 
+                              type="number" 
+                              value={settings.shortBreak}
+                              onChange={(e) => setSettings({...settings, shortBreak: Number(e.target.value)})}
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-indigo-500 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-slate-500 block mb-1">深度放鬆</label>
+                            <input 
+                              type="number" 
+                              value={settings.longBreak}
+                              onChange={(e) => setSettings({...settings, longBreak: Number(e.target.value)})}
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-indigo-500 outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. 自動化行為切換 */}
+                      <div className="space-y-3 pt-2">
+                        <h3 className="font-bold text-slate-400 border-b border-slate-800 pb-1">⚙️ 自動化心流開關</h3>
+                        <div className="space-y-3">
+                          <label className="flex items-center justify-between cursor-pointer">
+                            <span>專注結束後，自動開啟休息計時</span>
+                            <input 
+                              type="checkbox" 
+                              checked={settings.autoStartBreaks}
+                              onChange={(e) => setSettings({...settings, autoStartBreaks: e.target.checked})}
+                              className="w-4 h-4 accent-indigo-500"
+                            />
+                          </label>
+                          <label className="flex items-center justify-between cursor-pointer">
+                            <span>休息結束後，自動開啟下一輪專注</span>
+                            <input 
+                              type="checkbox" 
+                              checked={settings.autoStartPomodoros}
+                              onChange={(e) => setSettings({...settings, autoStartPomodoros: e.target.checked})}
+                              className="w-4 h-4 accent-indigo-500"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="text-right pt-2">
+                        <button
+                          onClick={() => setShowSettingsModal(false)}
+                          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold transition-all text-white"
+                        >
+                          套用並儲存設定
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          );
+        }
+
+        // ==========================================
+        // 🚀 將 React 應用渲染到 HTML 畫面上 (React 18 寫法)
+        // ==========================================
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA | 數位穿搭智能衣櫃</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playfair Display for Serif luxury & Inter for sans-serif legibility -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome for beautiful elegant icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        aura: {
+                            cream: '#fcfbf7',
+                            sand: '#f5f0e6',
+                            gold: '#d4af37',
+                            goldDark: '#aa8c2c',
+                            charcoal: '#1c1c1c',
+                            charcoalLight: '#2c2c2c',
+                            muted: '#7a7a7a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar to keep it clean and elegant */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fcfbf7;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e5dfd3;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+        
+        /* Shimmer effect for elegant loading */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .animate-shimmer {
+            background: linear-gradient(90deg, #f5f0e6 25%, #eae3d2 50%, #f5f0e6 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.8s infinite linear;
+        }
+
+        /* Radar scan effect for circular AI loading */
+        @keyframes scan {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .radar-sweep {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(from 0deg, rgba(212, 175, 55, 0.15) 0deg, rgba(212, 175, 55, 0) 90deg);
+            animation: scan 4s infinite linear;
+            border-radius: 50%;
+        }
+
+        /* Soft fade-in animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-aura-cream text-aura-charcoal font-sans min-h-screen selection:bg-aura-sand selection:text-aura-goldDark overflow-x-hidden">
+
+    <!-- Decorative subtle grid background -->
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#f5f0e6_1px,transparent_1px),linear-gradient(to_bottom,#f5f0e6_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
+
+    <header class="relative border-b border-aura-sand px-6 py-5 md:px-12 flex justify-between items-center z-10 backdrop-blur-sm bg-aura-cream/80">
+        <div class="flex flex-col">
+            <span class="font-serif italic text-sm tracking-widest text-aura-gold uppercase">L'Armoire Intelligente</span>
+            <h1 class="text-2xl md:text-3xl font-serif font-semibold tracking-wider text-aura-charcoal">AURA</h1>
+        </div>
+        <div class="hidden md:flex items-center space-x-6 text-xs uppercase tracking-widest text-aura-muted">
+            <span class="hover:text-aura-gold cursor-pointer transition">智能美學</span>
+            <span class="hover:text-aura-gold cursor-pointer transition">專屬試衣</span>
+            <span class="hover:text-aura-gold cursor-pointer transition">美妝顧問</span>
+        </div>
+        <div>
+            <button onclick="resetWardrobe()" class="px-4 py-2 border border-aura-sand hover:border-aura-gold hover:text-aura-gold rounded-full text-xs uppercase tracking-widest transition duration-300">
+                <i class="fa-solid fa-arrow-rotate-left mr-2"></i>重置選項
+            </button>
+        </div>
+    </header>
+
+    <main class="relative z-10 max-w-7xl mx-auto px-4 py-8 md:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left Column: Parameters & Settings (lg:col-span-5) -->
+        <section class="lg:col-span-5 bg-white/50 backdrop-blur-md rounded-2xl border border-aura-sand/70 p-6 md:p-8 space-y-8 shadow-sm">
+            
+            <!-- Step 1: Preferred Color Palette -->
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm uppercase tracking-widest font-semibold text-aura-charcoal flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-aura-gold"></span> 1. 偏好色調
+                    </h2>
+                    <span class="text-xs text-aura-muted">可複選底色</span>
+                </div>
+                
+                <div class="grid grid-cols-4 sm:grid-cols-5 gap-2.5" id="color-palette-container">
+                    <!-- Color items will be dynamically rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Step 2: Context Factors -->
+            <div class="space-y-6">
+                <h2 class="text-sm uppercase tracking-widest font-semibold text-aura-charcoal flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-aura-gold"></span> 2. 日常情境與身心密碼
+                </h2>
+
+                <!-- Weather Selector -->
+                <div class="space-y-2">
+                    <label class="text-xs tracking-wider text-aura-muted uppercase">今日氣候</label>
+                    <div class="grid grid-cols-3 gap-2" id="weather-container">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Temperature Slider -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs tracking-wider text-aura-muted uppercase">今日氣溫</label>
+                        <span id="temp-badge" class="text-[10px] font-semibold bg-aura-sand px-2 py-0.5 rounded text-aura-goldDark uppercase">22°C (溫暖舒適)</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs text-aura-muted">0°C</span>
+                        <input type="range" id="temp-slider" min="0" max="40" value="22" 
+                               class="w-full h-1 bg-aura-sand rounded-lg appearance-none cursor-pointer accent-aura-gold"
+                               oninput="updateTempLabel(this.value)">
+                        <span class="text-xs text-aura-muted">40°C</span>
+                    </div>
+                </div>
+
+                <!-- Mood Slider -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs tracking-wider text-aura-muted uppercase">當下心情能量</label>
+                        <span id="mood-badge" class="text-[10px] font-semibold bg-aura-sand px-2 py-0.5 rounded text-aura-goldDark uppercase">平衡從容</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs text-aura-muted">沉思</span>
+                        <input type="range" id="mood-slider" min="1" max="5" value="3" 
+                               class="w-full h-1 bg-aura-sand rounded-lg appearance-none cursor-pointer accent-aura-gold"
+                               oninput="updateMoodLabel(this.value)">
+                        <span class="text-xs text-aura-muted">充沛</span>
+                    </div>
+                </div>
+
+                <!-- Age Selector Slider -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs tracking-wider text-aura-muted uppercase">您的美學年齡</label>
+                        <span id="age-badge" class="text-[10px] font-semibold bg-aura-sand px-2 py-0.5 rounded text-aura-goldDark uppercase">25 歲 (輕熟優雅)</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs text-aura-muted">15 歲</span>
+                        <input type="range" id="age-slider" min="15" max="60" value="25" 
+                               class="w-full h-1 bg-aura-sand rounded-lg appearance-none cursor-pointer accent-aura-gold"
+                               oninput="updateAgeLabel(this.value)">
+                        <span class="text-xs text-aura-muted">60 歲</span>
+                    </div>
+                </div>
+
+                <!-- Event Type Selector -->
+                <div class="space-y-2">
+                    <label class="text-xs tracking-wider text-aura-muted uppercase">預定行程</label>
+                    <div class="relative">
+                        <select id="event-selector" class="w-full bg-white border border-aura-sand rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-aura-gold transition appearance-none cursor-pointer">
+                            <option value="商務會議或專業面試">🏢 專業商務會議 / 工作面試</option>
+                            <option value="咖啡廳愜意閱讀或工作">☕ 網美咖啡廳愜意讀書</option>
+                            <option value="高級餐廳浪漫約會">🕯️ 頂級法式餐廳浪漫約會</option>
+                            <option value="戶外音樂節或熱鬧市集">🎪 音樂祭與復古文創市集</option>
+                            <option value="輕鬆便利的日常採買">🛒 居家周邊漫步採買與運動</option>
+                            <option value="奢華奢靡的主題派對">🍷 奢華夜店或私人微醺派對</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-aura-muted">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Importance Selector -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs tracking-wider text-aura-muted uppercase">行程重要度</label>
+                        <span id="importance-badge" class="text-[10px] font-semibold bg-aura-sand px-2 py-0.5 rounded text-aura-goldDark uppercase">普通</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs text-aura-muted">輕微</span>
+                        <input type="range" id="importance-slider" min="1" max="5" value="3" 
+                               class="w-full h-1 bg-aura-sand rounded-lg appearance-none cursor-pointer accent-aura-gold"
+                               oninput="updateImportanceLabel(this.value)">
+                        <span class="text-xs text-aura-muted">極重要</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate Style Trigger Button -->
+            <button onclick="generateAURAOutfit()" id="generate-btn"
+                    class="w-full bg-aura-charcoal text-white hover:bg-aura-gold hover:text-aura-charcoal font-serif tracking-widest text-sm uppercase py-4 rounded-xl transition duration-500 shadow-lg flex justify-center items-center gap-2 group">
+                <span>調配專屬 AURA 穿搭</span>
+                <i class="fa-solid fa-wand-magic-sparkles transition group-hover:rotate-12"></i>
+            </button>
+
+        </section>
+
+        <!-- Right Column: AI Showcase & Beautiful Presentation (lg:col-span-7) -->
+        <section class="lg:col-span-7 space-y-8">
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <!-- AI Round Showcase Window (md:col-span-6) -->
+                <div class="md:col-span-6 flex flex-col items-center justify-center">
+                    <div class="relative w-72 h-72 md:w-80 md:h-80 rounded-full border-[10px] border-white shadow-xl bg-aura-sand overflow-hidden flex items-center justify-center transition-all duration-500 group">
+                        
+                        <!-- Radar wave loading effect -->
+                        <div id="ai-radar" class="hidden absolute inset-0 z-10 pointer-events-none">
+                            <div class="radar-sweep"></div>
+                        </div>
+
+                        <!-- Sparkle overlay effects -->
+                        <div class="absolute inset-2 border border-dashed border-aura-gold/20 rounded-full pointer-events-none"></div>
+                        
+                        <!-- Main AI Image Frame -->
+                        <img id="outfit-image" 
+                             src="https://placehold.co/600x600/f5f0e6/aa8c2c?text=AURA+HAUTE+COUTURE" 
+                             alt="AI Outfit Masterpiece" 
+                             class="w-full h-full object-cover transition duration-700 ease-out scale-100 group-hover:scale-105"
+                             onerror="handleImageError()">
+
+                        <!-- Loading Shimmer Cover -->
+                        <div id="shimmer-cover" class="hidden absolute inset-0 animate-shimmer flex flex-col items-center justify-center p-6 text-center">
+                            <div class="w-16 h-16 rounded-full border-2 border-aura-gold border-t-transparent animate-spin mb-4"></div>
+                            <span class="font-serif italic text-sm text-aura-goldDark">AI 服飾繪製中...</span>
+                            <span class="text-[10px] text-aura-muted mt-1">正在融合配色、氣溫與年齡美學</span>
+                        </div>
+                    </div>
+                    <p class="text-xs italic text-aura-muted mt-3 font-serif tracking-widest text-center">AI 頂級高級訂製插畫 (圓型視窗)</p>
+                </div>
+
+                <!-- Outfit Written Details (md:col-span-6) -->
+                <div class="md:col-span-6 space-y-4">
+                    <div class="border-b border-aura-sand pb-3">
+                        <span class="text-[10px] uppercase tracking-widest text-aura-gold font-semibold">今日量身推薦風格</span>
+                        <h3 id="outfit-title" class="text-xl md:text-2xl font-serif font-bold text-aura-charcoal">AURA 經典時髦印象</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <p id="outfit-desc" class="text-sm text-aura-muted leading-relaxed">
+                            歡迎開啟您的智能衣櫃。請勾選左側您今日偏愛的色彩基調、氣候與行程情境，AURA AI 造型師將即時為您運算並繪製出高雅、具備材質細節與美學深度的穿搭。
+                        </p>
+                        <div id="selected-colors-pills" class="flex flex-wrap gap-2 pt-2">
+                            <!-- Selected color feedback pills -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Makeup Advisory Card (Weather, Mood, Event Importance, Temp) -->
+            <div id="makeup-card" class="bg-white rounded-2xl border border-aura-sand/70 p-6 md:p-8 shadow-sm relative overflow-hidden transition-all duration-500">
+                <!-- Top delicate decoration line -->
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-aura-sand via-aura-gold to-aura-sand"></div>
+                
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-aura-sand/50 pb-4 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-aura-sand flex items-center justify-center text-aura-gold">
+                            <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-serif font-bold text-base text-aura-charcoal">Aura 美妝智慧評估與妝容推薦</h4>
+                            <p class="text-xs text-aura-muted">綜合氣候溫度、心情與行程重要度之美學判定</p>
+                        </div>
+                    </div>
+                    <div>
+                        <span id="makeup-needed-badge" class="px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest bg-aura-sand text-aura-goldDark shadow-sm">
+                            無待確認
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Recommendation Contents -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    <!-- Left: Decision Logic -->
+                    <div class="space-y-3">
+                        <div class="bg-aura-cream/60 rounded-xl p-4 border border-aura-sand/40">
+                            <h5 class="text-xs font-bold text-aura-charcoal uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-calculator text-aura-gold"></i> 判定決策因子
+                            </h5>
+                            <ul class="text-xs text-aura-muted space-y-2">
+                                <li class="flex justify-between"><span>🌦️ 當前氣候氣溫:</span> <strong id="val-weather" class="text-aura-charcoal">未設定</strong></li>
+                                <li class="flex justify-between"><span>🧠 當下心情能量:</span> <strong id="val-mood" class="text-aura-charcoal">未設定</strong></li>
+                                <li class="flex justify-between"><span>🎂 設定美學年齡:</span> <strong id="val-age" class="text-aura-charcoal">未設定</strong></li>
+                                <li class="flex justify-between"><span>📌 行程重要優先權:</span> <strong id="val-importance" class="text-aura-charcoal">中等</strong></li>
+                            </ul>
+                        </div>
+                        <p id="makeup-reason" class="text-xs text-aura-muted leading-relaxed italic">
+                            「等待您輸入穿搭與情境資訊，我將為您計算是否需要精緻妝容，以及推薦極富質感的美學提案。」
+                        </p>
+                    </div>
+
+                    <!-- Right: Recommended Makeup details if needed -->
+                    <div id="makeup-suggestion-box" class="bg-aura-sand/30 border border-aura-sand/60 rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] tracking-widest text-aura-gold font-semibold uppercase">推薦妝容風格</span>
+                            <h5 id="makeup-style-name" class="font-serif text-lg font-bold text-aura-charcoal mt-1">法式清透裸妝</h5>
+                            <p id="makeup-details" class="text-xs text-aura-muted leading-relaxed mt-2">
+                                將依據您的膚質保濕感及衣著做適配。請點選生成按鈕以解鎖高階妝容。
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-aura-sand/40 flex items-center gap-2 text-xs text-aura-goldDark">
+                            <i class="fa-solid fa-sparkles"></i>
+                            <span class="italic">完美與服裝材質相互輝映</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="border-t border-aura-sand mt-16 py-8 text-center text-xs text-aura-muted tracking-widest relative z-10">
+        <p>© 2026 AURA COUTURE. POWERED BY GEMINI PRO & IMAGEN TECHNOLOGY.</p>
+        <p class="text-[10px] text-aura-muted/60 mt-1">為實現卓越的藝術美學體驗，所有影像均由高階 Imagen AI 依每次穿搭邏輯即時調配產生。</p>
+    </footer>
+
+    <script>
+        // Pre-curated high-fashion Color Palettes
+        const COLOR_OPTIONS = [
+            { id: 'cream', name: '法式奶油白', hex: '#FAF9F6', textDark: true },
+            { id: 'sage', name: '鼠尾草綠', hex: '#9CAF88', textDark: false },
+            { id: 'navy', name: '深邃午夜藍', hex: '#1D2A44', textDark: false },
+            { id: 'rose', name: '煙燻煙粉', hex: '#D2A1A1', textDark: true },
+            { id: 'terracotta', name: '暖夕焦橙', hex: '#C17F5F', textDark: false },
+            { id: 'charcoal', name: '極簡炭灰', hex: '#3E424B', textDark: false },
+            { id: 'champagne', name: '奢華香檳金', hex: '#E2D3B7', textDark: true },
+            { id: 'lavender', name: '晨曦薰草紫', hex: '#B8AFCE', textDark: true },
+            { id: 'olive', name: '復古竹葉綠', hex: '#556B2F', textDark: false },
+            { id: 'burgundy', name: '微醺酒紅', hex: '#58111A', textDark: false },
+            { id: 'mustard', name: '復古芥末黃', hex: '#D3A243', textDark: true },
+            { id: 'camel', name: '經典駝絨色', hex: '#C19A6B', textDark: true },
+            { id: 'pistachio', name: '開心果嫩綠', hex: '#C3D3A2', textDark: true },
+            { id: 'iceblue', name: '冰川清透藍', hex: '#D4E2EC', textDark: true },
+            { id: 'peach', name: '蜜桃珊瑚粉', hex: '#F8B195', textDark: true },
+            { id: 'espresso', name: '濃郁濃縮咖', hex: '#3E2723', textDark: false },
+            { id: 'slate', name: '迷霧石板藍', hex: '#5A738E', textDark: false },
+            { id: 'graphite', name: '極致曜石黑', hex: '#0F0F10', textDark: false },
+            { id: 'mint', name: '清爽薄荷綠', hex: '#B2EBF2', textDark: true },
+            { id: 'apricot', name: '暖心杏桃橘', hex: '#F5D6C6', textDark: true }
+        ];
+
+        // Weather Conditions with visual hints and descriptions
+        const WEATHER_OPTIONS = [
+            { id: 'sunny', name: '溫暖晴空', icon: 'fa-sun', color: 'text-amber-500' },
+            { id: 'rainy', name: '朦朧細雨', icon: 'fa-cloud-showers-heavy', color: 'text-blue-400' },
+            { id: 'cold', name: '凜冽寒冬', icon: 'fa-snowflake', color: 'text-sky-300' }
+        ];
+
+        // Global state
+        let selectedColors = ['cream', 'sage']; // Pre-populate for spectacular first load
+        let selectedWeather = 'sunny';
+
+        // Initialize state and UI on window load
+        window.onload = function() {
+            renderColors();
+            renderWeather();
+            updateTempLabel(22);
+            updateMoodLabel(3);
+            updateAgeLabel(25);
+            updateImportanceLabel(3);
+            
+            // Set up fallback image and initial premium mockup info
+            document.getElementById('outfit-image').src = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop";
+            updateSelectedColorsUI();
+        }
+
+        // Render Color Checkboxes
+        function renderColors() {
+            const container = document.getElementById('color-palette-container');
+            container.innerHTML = '';
+            COLOR_OPTIONS.forEach(color => {
+                const isChecked = selectedColors.includes(color.id);
+                const item = document.createElement('div');
+                item.className = `relative cursor-pointer rounded-xl p-3 border transition duration-300 flex flex-col items-center gap-2 ${
+                    isChecked ? 'border-aura-gold bg-white shadow-sm' : 'border-aura-sand hover:border-aura-gold/50 bg-transparent'
+                }`;
+                item.onclick = () => toggleColor(color.id);
+                
+                item.innerHTML = `
+                    <div class="w-8 h-8 rounded-full border border-black/10 shadow-inner flex items-center justify-center" style="background-color: ${color.hex}">
+                        ${isChecked ? `<i class="fa-solid fa-check text-xs ${color.textDark ? 'text-aura-charcoal' : 'text-white'}"></i>` : ''}
+                    </div>
+                    <span class="text-[10px] font-medium text-center tracking-tight">${color.name}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Toggle Color selection
+        function toggleColor(id) {
+            const index = selectedColors.indexOf(id);
+            if (index > -1) {
+                // Keep at least one color selected
+                if (selectedColors.length > 1) {
+                    selectedColors.splice(index, 1);
+                }
+            } else {
+                selectedColors.push(id);
+            }
+            renderColors();
+            updateSelectedColorsUI();
+        }
+
+        // Render Weather Selection
+        function renderWeather() {
+            const container = document.getElementById('weather-container');
+            container.innerHTML = '';
+            WEATHER_OPTIONS.forEach(w => {
+                const isSelected = selectedWeather === w.id;
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.onclick = () => { selectedWeather = w.id; renderWeather(); };
+                item.className = `p-3 rounded-xl border text-xs flex flex-col items-center gap-1.5 transition duration-300 ${
+                    isSelected ? 'border-aura-gold bg-aura-sand/50 font-semibold' : 'border-aura-sand bg-white hover:bg-aura-sand/20'
+                }`;
+                item.innerHTML = `
+                    <i class="fa-solid ${w.icon} ${w.color} text-lg"></i>
+                    <span>${w.name}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Update Temperature Slider Label
+        function updateTempLabel(val) {
+            const badge = document.getElementById('temp-badge');
+            let desc = "溫暖舒適";
+            if (val < 10) desc = "極度寒冷 ❄️";
+            else if (val >= 10 && val < 18) desc = "涼爽微冷 🧣";
+            else if (val >= 18 && val < 28) desc = "溫暖舒適 🍃";
+            else desc = "炎熱高溫 ☀️";
+            badge.innerText = `${val}°C (${desc})`;
+        }
+
+        // Update Mood Slider Label
+        function updateMoodLabel(val) {
+            const badge = document.getElementById('mood-badge');
+            const labels = ["沉思靜謐 🧘", "慵懶放鬆 🍃", "平衡從容 ☕", "雀躍愉悅 🌟", "能量充沛 🔥"];
+            badge.innerText = labels[val - 1];
+        }
+
+        // Update Age Slider Label and return custom classification
+        function updateAgeLabel(val) {
+            const badge = document.getElementById('age-badge');
+            let desc = "青春活力 🎒";
+            if (val >= 15 && val < 19) desc = "甜美學院 🍭";
+            else if (val >= 19 && val < 23) desc = "潮流個性 🛹";
+            else if (val >= 23 && val < 35) desc = "輕熟優雅 💃";
+            else if (val >= 35 && val < 50) desc = "知性卓越 💼";
+            else if (val >= 50) desc = "經典尊雅 👑";
+            badge.innerText = `${val} 歲 (${desc})`;
+        }
+
+        // Update Slider Label
+        function updateImportanceLabel(val) {
+            const badge = document.getElementById('importance-badge');
+            const labels = ["輕微出行", "日常社交", "普通重視", "重要商務", "生平盛宴"];
+            badge.innerText = labels[val - 1];
+        }
+
+        // Update selected colors display box
+        function updateSelectedColorsUI() {
+            const container = document.getElementById('selected-colors-pills');
+            container.innerHTML = '';
+            selectedColors.forEach(cid => {
+                const c = COLOR_OPTIONS.find(o => o.id === cid);
+                if (c) {
+                    const pill = document.createElement('span');
+                    pill.className = "inline-flex items-center gap-1 text-[10px] border border-aura-sand px-2 py-1 rounded-full bg-white shadow-sm";
+                    pill.innerHTML = `
+                        <span class="w-2.5 h-2.5 rounded-full border border-black/10 inline-block" style="background-color: ${c.hex}"></span>
+                        <span>${c.name}</span>
+                    `;
+                    container.appendChild(pill);
+                }
+            });
+        }
+
+        // Reset All Settings to defaults
+        function resetWardrobe() {
+            selectedColors = ['cream', 'sage'];
+            selectedWeather = 'sunny';
+            document.getElementById('temp-slider').value = 22;
+            document.getElementById('mood-slider').value = 3;
+            document.getElementById('age-slider').value = 25;
+            document.getElementById('importance-slider').value = 3;
+            document.getElementById('event-selector').selectedIndex = 0;
+            renderColors();
+            renderWeather();
+            updateTempLabel(22);
+            updateMoodLabel(3);
+            updateAgeLabel(25);
+            updateImportanceLabel(3);
+            updateSelectedColorsUI();
+        }
+
+        // Handle Image Load Errors gracefully
+        function handleImageError() {
+            const img = document.getElementById('outfit-image');
+            img.src = "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1000&auto=format&fit=crop";
+        }
+
+        // Main Function: Trigger Gemini API & Imagen to get outfit recommendation
+        async function generateAURAOutfit() {
+            const shimmer = document.getElementById('shimmer-cover');
+            const radar = document.getElementById('ai-radar');
+            const btn = document.getElementById('generate-btn');
+            
+            shimmer.classList.remove('hidden');
+            radar.classList.remove('hidden');
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-wait');
+
+            // Gather values
+            const colorsFriendly = selectedColors.map(id => COLOR_OPTIONS.find(o => o.id === id).name).join(', ');
+            const weatherText = WEATHER_OPTIONS.find(o => o.id === selectedWeather).name;
+            const tempVal = document.getElementById('temp-slider').value;
+            const tempText = document.getElementById('temp-badge').innerText;
+            const moodText = document.getElementById('mood-badge').innerText;
+            const ageVal = parseInt(document.getElementById('age-slider').value, 10);
+            const ageText = document.getElementById('age-badge').innerText;
+            const eventText = document.getElementById('event-selector').value;
+            const importanceVal = document.getElementById('importance-slider').value;
+            const importanceText = document.getElementById('importance-badge').innerText;
+
+            // Generate structured prompt for Gemini
+            const systemPrompt = `你是一位生活美學大師、致力於為使用者提供完美氣候、情境和年齡適配的日常服裝造型與美妝顧問。
+請針對使用者的氣候、今日氣溫、心情能量、首選色彩組合、專屬年齡階段與行程情境，精心調配出一套實用、得體、具有創意的服飾與妝容設計。
+特別注意：
+1. 【避免過度華麗】：整體風格追求「簡約、經典剪裁、舒適且質感出眾」。
+2. 【年齡風格流變規則（重要！）】：
+   * 當「使用者年齡」在 15 至 22 歲之間（年輕族群），風格必須轉向「洋溢青春活力、日韓學院風、街頭潮流個性、或復古 Y2K 隨興」等更具朝氣與動感的形式（可包含短裙、牛仔工裝、連帽上衣、亮眼配件或趣味混搭）。
+   * 當「使用者年齡」在 23 歲以上時，可偏向「輕熟優雅」或「知性卓越/靜奢風（Quiet Luxury）」的簡約俐落裁切。
+3. 【溫度與氣候適配規則（重要！）】：
+   必須嚴格考慮「今日氣溫」來決定衣服的厚薄度、材質與層次疊加方式（高溫時應提供輕薄透氣棉麻或短袖；低溫時則推薦針織衫、大衣或防風外套）。
+4. 【低重要度極簡規則（重要！）】：
+   當「行程重要優先程度」數值為 1 或 2（代表輕微出行或日常社交，屬於低重要性、放鬆的場合）時，衣服【必須】是極其簡約、舒適的『寬鬆質感基礎 T-shirt 或衛衣，搭配休閒褲、牛仔褲或短褲』，且【妝容】判定(needed)必須為 false，推薦最簡單的『全素顏或極輕防曬裸肌』。
+   
+請務必回傳一個完全符合以下 JSON 架構的物件，且不得含有任何額外的 Markdown 包裹標記：
+{
+  "outfitTitle": "契合今日氣溫、年齡風格與行程且不張揚的中文穿搭名稱",
+  "outfitDescription": "極其溫潤且專業的服飾日常美學評論，深度剖析此套搭配如何融入年齡層、氣溫(${tempVal}度)、氣候、心情與配色。如果重要度低，請幽默且溫馨地肯定這種隨性自在的美學",
+  "outfitPrompt": "A highly creative, elegant, and wearable fashion illustration of a stylish outfit designed for a [AGE_INFO] person. The style should be modern lifestyle drawing with soft natural lighting, realistic neat fabric cuts, matching the temperature of ${tempVal} degrees Celsius. Avoid heavy jewelry or dramatic runway elements. Colors: [COLORS_HERE].",
+  "makeupRecommendation": {
+    "needed": true or false,
+    "reason": "詳細解析天氣、氣溫、心情、年齡、行程重要度如何交互作用而形成化妝判定，若年齡小且需要化妝，推薦也應偏向青春自然妝容；若重要度低請解釋為何今天更適合不化妝的輕鬆姿態",
+    "styleName": "中文妝容名稱 (如: 蜜桃初戀果汁妝、日系透亮裸妝, 若不化妝則寫為「零粉感防曬呼吸肌」)",
+    "details": "針對輕薄底妝、面部保濕、自然唇彩與低調質感的細緻保養與上妝指導"
+  }
+}`;
+
+            const userQuery = `
+氣候: ${weatherText}
+今日氣溫: ${tempText} (數值: ${tempVal}°C)
+心情狀態: ${moodText}
+設定美學年齡: ${ageText}
+精準色調組合: ${colorsFriendly}
+目的地/行程: ${eventText}
+行程重要優先程度: ${importanceText} (數值分級: ${importanceVal}，1或2代表不重要/極度隨性場合)
+
+請將使用者選擇的色彩 ${colorsFriendly} 作為穿搭核心，並根據其 ${ageVal} 歲的特徵進行服飾定位。
+若年齡為 ${ageVal} 歲（屬於 15 至 22 歲的年輕階段），請讓畫風與風格偏向青春活力、潮流或學院休閒，而不是成熟靜奢。
+若重要優先程度數值為 1 或 2，此穿搭必須是一件簡單時尚的 T-shirt 或衛衣 (T-shirt/Sweater style)，且 makeupRecommendation.needed 必須填寫 false。
+請在 [COLORS_HERE] 處塞入顏色英文描述，並在 [AGE_INFO] 處填入適合 ${ageVal} 歲年齡特徵的英文定位。`;
+
+            try {
+                // Step 1: Call Gemini for recommendations & Image prompt
+                const apiKey = ""; // Canvas Runtime Key auto-injector
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                
+                const response = await fetchWithRetry(geminiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    outfitTitle: { type: "STRING" },
+                                    outfitDescription: { type: "STRING" },
+                                    outfitPrompt: { type: "STRING" },
+                                    makeupRecommendation: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            needed: { type: "BOOLEAN" },
+                                            reason: { type: "STRING" },
+                                            styleName: { type: "STRING" },
+                                            details: { type: "STRING" }
+                                        },
+                                        required: ["needed", "reason", "styleName", "details"]
+                                    }
+                                },
+                                required: ["outfitTitle", "outfitDescription", "outfitPrompt", "makeupRecommendation"]
+                            }
+                        },
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        }
+                    })
+                });
+
+                const geminiResult = await response.json();
+                const responseText = geminiResult.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!responseText) {
+                    throw new Error("無效的 AURA AI 回覆");
+                }
+
+                const data = JSON.parse(responseText);
+
+                // Update text fields
+                document.getElementById('outfit-title').innerText = data.outfitTitle;
+                document.getElementById('outfit-desc').innerText = data.outfitDescription;
+                
+                // Update Makeup Panel
+                document.getElementById('val-weather').innerText = `${weatherText} (${tempVal}°C)`;
+                document.getElementById('val-mood').innerText = moodText;
+                document.getElementById('val-age').innerText = ageText;
+                document.getElementById('val-importance').innerText = importanceText;
+                document.getElementById('makeup-reason').innerText = data.makeupRecommendation.reason;
+
+                const makeupBadge = document.getElementById('makeup-needed-badge');
+                if (data.makeupRecommendation.needed) {
+                    makeupBadge.innerText = "✨ 建議完妝";
+                    makeupBadge.className = "px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest bg-amber-100 text-amber-800 shadow-sm";
+                    document.getElementById('makeup-style-name').innerText = data.makeupRecommendation.styleName;
+                    document.getElementById('makeup-details').innerText = data.makeupRecommendation.details;
+                    document.getElementById('makeup-suggestion-box').classList.remove('opacity-50');
+                } else {
+                    makeupBadge.innerText = "🍃 建議素顏 / 極輕防曬";
+                    makeupBadge.className = "px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest bg-emerald-100 text-emerald-800 shadow-sm";
+                    document.getElementById('makeup-style-name').innerText = "零粉感裸肌防護";
+                    document.getElementById('makeup-details').innerText = data.makeupRecommendation.details || "今日宜讓肌膚呼吸，僅需進行基礎保濕與紫外線隔離防護即可。";
+                }
+
+                // Step 2: Generate Image with Imagen 4.0
+                await generateOutfitImage(data.outfitPrompt);
+
+            } catch (err) {
+                console.error(err);
+                // Graceful failure notification
+                document.getElementById('outfit-title').innerText = "AURA 經典法式日常";
+                document.getElementById('outfit-desc').innerText = "AI 造型運算似乎有點忙，但依然推薦您以優雅的奶油白與鼠尾草綠做層次。";
+                document.getElementById('outfit-image').src = "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1000&auto=format&fit=crop";
+            } finally {
+                shimmer.classList.add('hidden');
+                radar.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-wait');
+            }
+        }
+
+        // Helper: Call Imagen to generate beautiful clothing visual
+        async function generateOutfitImage(promptText) {
+            const apiKey = ""; // Canvas runtime key
+            const imagenUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+            
+            // Craft a highly visual aesthetic prefix to force exquisite but understated lifestyle fashion sketches
+            const highlyStylizedPrompt = `Chic and highly detailed fashion apparel sketch, tailored wearable styling. ${promptText}. Watercolor and fine pencil strokes on high-quality warm paper background, cozy apparel design, soft natural lighting, elegant lifestyle illustration.`;
+
+            try {
+                const response = await fetchWithRetry(imagenUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instances: [{ prompt: highlyStylizedPrompt }],
+                        parameters: {
+                            sampleCount: 1,
+                            aspectRatio: "1:1",
+                            outputMimeType: "image/jpeg"
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                const base64 = result.predictions?.[0]?.bytesBase64Encoded;
+                if (base64) {
+                    document.getElementById('outfit-image').src = `data:image/jpeg;base64,${base64}`;
+                } else {
+                    throw new Error("Imagen 沒有產出影像");
+                }
+            } catch (err) {
+                console.warn("Imagen generation failed, falling back to gorgeous high fashion stock visuals.", err);
+                // Dynamic styling fallback
+                const randStyleImages = [
+                    "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=1000&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1000&auto=format&fit=crop",
+                    "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?q=80&w=1000&auto=format&fit=crop"
+                ];
+                const randomIndex = Math.floor(Math.random() * randStyleImages.length);
+                document.getElementById('outfit-image').src = randStyleImages[randomIndex];
+            }
+        }
+
+        // Exponential backoff fetch helper
+        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    if (response.status === 429 && retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchWithRetry(url, options, retries - 1, delay * 2);
+                    }
+                    throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
+                }
+                return response;
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+    </script>
+</body>
+</html>

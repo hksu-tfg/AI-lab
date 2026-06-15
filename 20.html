@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天可以請假嗎？— 高中生歐趴/被當機率算命大師</title>
+    <!-- 載入 Font Awesome 圖標與 Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at center, #0d1117 0%, #05070a 100%);
+            --card-bg: rgba(22, 27, 34, 0.7);
+            --card-border: rgba(48, 54, 61, 0.8);
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            
+            /* 霓虹警示色 */
+            --color-safe: #39ff14;      /* 螢光綠 */
+            --color-warning: #ffaa00;   /* 橘黃 */
+            --color-danger: #ff0055;    /* 霓虹紅 */
+            --color-cyan: #00f0ff;      /* 科技青 */
+            
+            --glow-safe: 0 0 15px rgba(57, 255, 20, 0.4);
+            --glow-warning: 0 0 15px rgba(255, 170, 0, 0.4);
+            --glow-danger: 0 0 15px rgba(255, 0, 85, 0.4);
+            --glow-cyan: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', 'Orbitron', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 背景科技裝飾線條 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            text-align: center;
+            padding: 2.5rem 1rem 1.5rem 1rem;
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--color-cyan), #ffffff, var(--color-danger));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+        }
+
+        header p span {
+            color: var(--color-cyan);
+            font-weight: bold;
+        }
+
+        /* 主容器排版 */
+        .container {
+            width: 92%;
+            max-width: 1200px;
+            margin: 0 auto 3rem auto;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        /* 響應式：平板與手機改為單欄 */
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 卡片共用樣式 */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--color-cyan), transparent);
+        }
+
+        .card:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 12px 40px 0 rgba(0, 240, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--color-cyan);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        /* 表單元素樣式 */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(10, 14, 20, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--color-cyan);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+            background: rgba(15, 23, 36, 0.9);
+        }
+
+        select.form-control {
+            appearance: none;
+            cursor: pointer;
+        }
+
+        /* 算命風格切換按鈕組 */
+        .style-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .style-btn {
+            background: rgba(22, 27, 34, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.6rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .style-btn.active {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: var(--color-cyan);
+            color: var(--color-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        /* 主要按鈕 */
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--color-cyan), #00a8ff);
+            border: none;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #05070a;
+            font-size: 1.1rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: var(--glow-cyan);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+            background: linear-gradient(135deg, #00f0ff, #00c4ff);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* 右側儀表板樣式 */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* 圓形進度條/儀表 */
+        .gauge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0;
+            position: relative;
+        }
+
+        /* SVG 圓環計量器 */
+        .gauge-svg {
+            width: 180px;
+            height: 180px;
+            transform: rotate(-90deg);
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(48, 54, 61, 0.5);
+            stroke-width: 12;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: var(--color-safe);
+            stroke-width: 12;
+            stroke-dasharray: 502; /* 2 * PI * r (r=80) */
+            stroke-dashoffset: 502;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.8s ease;
+        }
+
+        .gauge-info {
+            position: absolute;
+            top: 36%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--color-safe);
+            text-shadow: var(--glow-safe);
+            transition: color 0.5s ease;
+        }
+
+        .gauge-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: -2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 警告次數顯示 */
+        .quota-box {
+            background: rgba(10, 14, 20, 0.6);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border-left: 4px solid var(--color-safe);
+            transition: border-color 0.5s ease;
+        }
+
+        .quota-box p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .quota-count {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--color-safe);
+            margin: 0.2rem 0;
+            transition: color 0.5s ease;
+        }
+
+        /* AI 開示訊息卡片 */
+        .ai-oracle-card {
+            background: rgba(10, 14, 20, 0.6);
+            border: 1px dashed var(--card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-height: 120px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .ai-oracle-card::before {
+            content: '"';
+            position: absolute;
+            top: 0px;
+            left: 10px;
+            font-size: 3.5rem;
+            font-family: serif;
+            color: rgba(0, 240, 255, 0.15);
+            line-height: 1;
+        }
+
+        .oracle-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #e6edf3;
+            z-index: 1;
+            text-align: justify;
+        }
+
+        .oracle-header {
+            font-size: 0.8rem;
+            color: var(--color-cyan);
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .oracle-header i {
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* 頁尾 */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: auto;
+            border-top: 1px solid var(--card-border);
+            background: rgba(10, 14, 20, 0.5);
+        }
+
+        footer a {
+            color: var(--color-cyan);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-crystal-ball"></i> 今天可以請假嗎？</h1>
+        <p>高中生專屬 ─ <span>學分歐趴/被當機率算命大師</span> • 賴床者的命運羅盤</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- 左側：輸入卡片 -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-sliders-up"></i> 
+                輸入今日請假參數
+            </div>
+            
+            <form id="calculatorForm" onsubmit="return false;">
+                
+                <div class="form-group">
+                    <label for="courseName">科目名稱</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-book"></i>
+                        <input type="text" id="courseName" class="form-control" placeholder="例如：數學、英文、物理、體育..." value="數學課">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="weeklyHours">每週堂數 (堂/節)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-clock"></i>
+                            <select id="weeklyHours" class="form-control" onchange="calculateRisk()">
+                                <option value="1">每週 1 堂</option>
+                                <option value="2">每週 2 堂</option>
+                                <option value="3">每週 3 堂</option>
+                                <option value="4" selected>每週 4 堂</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="absentCount">本學期已缺席堂數 (節)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-user-slash"></i>
+                            <input type="number" id="absentCount" class="form-control" min="0" max="100" value="4" oninput="calculateRisk()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rollCallStyle">這堂課點名抓多嚴？</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-person-chalkboard"></i>
+                        <select id="rollCallStyle" class="form-control" onchange="calculateRisk()">
+                            <option value="always">每堂必點（教官/導師眼線超多）</option>
+                            <option value="random" selected>班長看心情登記（有機會塞飲料擋掉）</option>
+                            <option value="mood">任課老師看心情（偶爾睡過頭沒被發現）</option>
+                            <option value="never">老師根本不認得人（有去有保庇）</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">今天想請假的理由</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-face-frown-slight"></i>
+                        <select id="reason" class="form-control">
+                            <option value="morning">太累不想上學</option>
+                            <option value="exam-done">段考剛考完，去學校也只是在檢討考卷</option>
+                            <option value="dodge">今天那堂課要補考/上台報告，想逃避</option>
+                            <option value="rain">外面下暴雨，穿制服鞋子濕掉心情會超爛</option>
+                            <option value="sick">覺得今天靈魂受創，需要在家修復一天</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>大師開示語氣風格</label>
+                    <div class="style-selector">
+                        <div class="style-btn active" onclick="setOracleStyle('professor', this)">
+                            <i class="fa-solid fa-user-tie"></i> 導師碎碎念
+                        </div>
+                        <div class="style-btn" onclick="setOracleStyle('zen', this)">
+                            <i class="fa-solid fa-om"></i> 佛系通靈
+                        </div>
+                        <div class="style-btn" onclick="setOracleStyle('mad', this)">
+                            <i class="fa-solid fa-face-laugh-squint"></i> 損友大發瘋
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-submit" onclick="askTheOracle()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> 召喚大師開示命運
+                </button>
+
+            </form>
+        </div>
+
+        <!-- 右側：儀表板與 AI 開示 -->
+        <div class="dashboard">
+            
+            <!-- 儀表卡片 -->
+            <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div class="card-title" style="align-self: flex-start; width: 100%;">
+                    <i class="fa-solid fa-gauge-high"></i> 
+                    請假風險評估報告
+                </div>
+
+                <!-- 圓形危險度計量器 -->
+                <div class="gauge-container">
+                    <svg class="gauge-svg">
+                        <circle class="gauge-bg" cx="90" cy="90" r="80"></circle>
+                        <circle id="gaugeFill" class="gauge-fill" cx="90" cy="90" r="80"></circle>
+                    </svg>
+                    <div class="gauge-info">
+                        <div id="gaugeValue" class="gauge-value">33%</div>
+                        <div class="gauge-label">被當危險度</div>
+                    </div>
+                </div>
+
+                <!-- 剩餘翹課額度 -->
+                <div id="quotaBox" class="quota-box" style="width: 100%;">
+                    <p id="quotaMessage">你本學期大約還剩下</p>
+                    <div id="quotaCount" class="quota-count">8 堂</div>
+                    <p style="font-size: 0.75rem;">請假額度（依高中缺課 1/3 被當規定計算）</p>
+                </div>
+            </div>
+
+            <!-- AI 算命結果卡片 -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="fa-solid fa-brain-circuit"></i> 
+                    AI 大師即時開示
+                </div>
+                
+                <div class="ai-oracle-card">
+                    <div id="oracleHeader" class="oracle-header">
+                        <i class="fa-solid fa-sparkles"></i> 
+                        <span>大師正在讀取你的靈魂命盤...</span>
+                    </div>
+                    <div id="oracleText" class="oracle-text">
+                        請在左側輸入你的上課狀況，並點選「召喚大師開示命運」按鈕，獲取今日的請假啟示。
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <footer>
+        <p>© 2026 高中生生存研究所 | 利用 Gemini 協作開發的學分救星</p>
+    </footer>
+
+    <script>
+        // 大師風格設定，預設為導師風
+        let currentStyle = 'professor';
+
+        // 預設開示語料庫 - 貼近學生心情、高中情境
+        const oracleDatabase = {
+            professor: {
+                safe: [
+                    "「唉，看在你最近每天都累成狗的份上，今天我就當沒看到。安心補眠吧，但段考要是退步你就死定了！」",
+                    "「好啦好啦，我知道段考剛考完大家都心浮氣躁。今天的課去學校也是在發呆，你自己看著辦，別被風紀登記到就好。」",
+                    "「目前的請假額度還算安全。如果真的身體不舒服或純粹心情憂鬱，今天就稍微偷懶一下吧，但明天一定要給我乖乖出現在教室！」"
+                ],
+                warning: [
+                    "「注意！你已經缺課很多堂了。今天要是再請，教務處那邊的警告單就要發下來了，到時候我真的很難幫你消假。」",
+                    "「再請下去，我真的必須要打電話跟你的家長聊聊了。打起精神，今天來學校吃個午餐，下午課撐一下就放學了！」",
+                    "「警告！你的缺課次數已經在被當邊緣徘徊。今天乖乖來學校，要是真的很累，大不了升旗完我讓你去保健室躺著睡。」"
+                ],
+                danger: [
+                    "「你居然還敢算機率？你再缺一堂課，這科就直接以零分計算（被當）了！這不是請不請假的問題，這是生死存亡！用爬的也給我爬進學校！」",
+                    "「完蛋，你已經在被當的絕壁邊緣了。今天要是敢不來，連我都保不住你。立刻起床穿衣服，遲到也比直接曠課好，懂嗎？！」",
+                    "「別看網頁了！你的學分已經在加護病房插管了！再不來學校，明年你就準備在暑期重修班跟學弟妹原班重聚吧！」"
+                ]
+            },
+            zen: {
+                safe: [
+                    "「施主，人非草木，孰能無累？既然今天外面風雨交加，便順應身體的召喚在家靜心休息吧。你的學分命盤還厚實得很。」",
+                    "「今天這堂課去與不去，宇宙都早已寫好了結局。去學校是在桌上發呆，在家也是在床上發呆。既然身心俱疲，便好好在家給靈魂放個假。」",
+                    "「感知到了你內心深處的疲憊。一週有五天要早起，確實辛苦。今天這堂課額度還夠，請假一日在家泡杯熱可可，不失為一樁美事。」"
+                ],
+                warning: [
+                    "---------------\"「阿彌陀佛，施主，貧僧算到你心中浮現了逃避的念頭。但倘若今天真的請了，你與導師之間恐將會產生不必要的命運糾纏（打電話給家長）。」",
+                    "「因果循環。你先前種下的缺席之因，已讓今日的學分亮起黃燈。今日雖有倦意，但若咬牙前往學校，便能擋下未來的重修之劫。」",
+                    "「萬物皆空，唯有操行與學分不空。聽大師一句勸，今天這堂課還是去吧，去了能幫你積點期末不被當的課堂福報。」"
+                ],
+                danger: [
+                    "「大凶之兆！你的數學學分生命線已然中斷。此時若再貪戀床鋪，必墜入重修班的無間地獄，太上老君下凡也難救你。」",
+                    "「回頭是岸啊！你已經無路可退。今天哪怕是以最虔誠的姿態去學校趴著睡，也絕不能讓點名單上出現你的名字。」",
+                    "「命盤已是一片血紅。施主莫再多言，立刻抄起你的書包，施展輕功往校門口飛奔吧，這是你挽救命運的唯一機會！」"
+                ]
+            },
+            mad: {
+                safe: [
+                    "「笑死，額度超多好不好！不請假根本對不起你那張溫暖的被窩！今天風紀股長我罩的，幫你神不知鬼不覺瞞過去，快去睡！」",
+                    "「這天氣去學校根本是在修行吧！聽我的，今天直接假單填生理痛或頭痛，在家吹冷氣打傳說才是真理，衝了啦！」",
+                    "「反正今天段考考完了，去學校也是在抄抄寫寫、檢討考卷。聽哥們一句勸：今天安心在家睡，午餐我幫你吃！」"
+                ],
+                warning: [
+                    "「欸不是！你已經缺席這麼多次了喔？今天再不來，下次分組報告你就只能跟班上的怪咖同一組了，快給我滾來學校！」",
+                    "「哥們！今天老師說要抽籤問問題，你再不來我就要把你的名字報上去了！快起床，早餐我都幫你買好了！」",
+                    "「危險危險危險！再缺席你真的要被請家長了。雖然我很想叫你在家睡，但今天還是先來，放學我們去買手搖杯！」"
+                ],
+                danger: [
+                    "「阿阿阿阿阿要被當了啦！你居然還有空在這邊點下拉選單？！快把手機收起來！用百米衝刺的速度跪著去教室！」",
+                    "「這不是演習！這堂課你要零分了啦！難道你明年想跟學弟妹一起坐在第一排聽課嗎？恥度爆表啊！快跑！往校門口衝啊！」",
+                    "「救命啊！你的數學老師已經拿著點名夾在門口了！再不出現，你就真的要跟重修班主任當好朋友了！衝鋒啊啊啊！」"
+                ]
+            }
+        };
+
+        // 設定大師語氣風格
+        function setOracleStyle(style, element) {
+            currentStyle = style;
+            
+            // 更新按鈕 active 樣式
+            document.querySelectorAll('.style-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        // 核心風險與額度計算邏輯（高中 1/3 學分被當制）
+        function calculateRisk() {
+            const weeklyHours = parseInt(document.getElementById('weeklyHours').value);
+            const absentCount = parseInt(document.getElementById('absentCount').value) || 0;
+            const rollCallStyle = document.getElementById('rollCallStyle').value;
+
+            // 高中一學期約 18 週，總堂數 = 每週堂數 * 18
+            const totalHours = weeklyHours * 18;
+            
+            // 缺課達該科全學期總堂數 1/3 (即總堂數的 1/3) 即該科成績以零分計算（被當）
+            const limitHours = Math.floor(totalHours / 3); 
+            const remaining = limitHours - absentCount;
+
+            // 計算被當危險度百分比
+            let riskPercent = 0;
+            if (limitHours > 0) {
+                riskPercent = Math.round((absentCount / limitHours) * 100);
+            }
+            if (riskPercent > 100) riskPercent = 100;
+            if (riskPercent < 0) riskPercent = 0;
+
+            // 根據點名嚴格程度加成風險
+            let weight = 1.0;
+            if (rollCallStyle === 'always') weight = 1.2;
+            if (rollCallStyle === 'random') weight = 1.0;
+            if (rollCallStyle === 'mood') weight = 1.1;
+            if (rollCallStyle === 'never') weight = 0.6;
+
+            let finalRisk = Math.round(riskPercent * weight);
+            if (finalRisk > 100) finalRisk = 100;
+            if (finalRisk < 0) finalRisk = 0;
+
+            // 更新 UI 顯示
+            updateGauge(finalRisk);
+            updateQuota(remaining);
+
+            return { finalRisk, remaining };
+        }
+
+        // 更新圓形進度條
+        function updateGauge(percent) {
+            const circle = document.getElementById('gaugeFill');
+            const valueText = document.getElementById('gaugeValue');
+            
+            // 2 * PI * r (r=80) = 502.6
+            const circumference = 502.6;
+            const offset = circumference - (percent / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+            
+            valueText.innerText = percent + "%";
+
+            // 根據危險度調整顏色
+            let color, glow;
+            if (percent < 40) {
+                color = 'var(--color-safe)';
+                glow = 'var(--glow-safe)';
+            } else if (percent < 80) {
+                color = 'var(--color-warning)';
+                glow = 'var(--glow-warning)';
+            } else {
+                color = 'var(--color-danger)';
+                glow = 'var(--glow-danger)';
+            }
+
+            circle.style.stroke = color;
+            valueText.style.color = color;
+            valueText.style.textShadow = glow;
+        }
+
+        // 更新剩餘額度卡片
+        function updateQuota(remaining) {
+            const quotaBox = document.getElementById('quotaBox');
+            const quotaCount = document.getElementById('quotaCount');
+            const quotaMessage = document.getElementById('quotaMessage');
+
+            if (remaining > 2) {
+                quotaCount.innerText = remaining + " 堂";
+                quotaCount.style.color = 'var(--color-safe)';
+                quotaCount.style.textShadow = 'var(--glow-safe)';
+                quotaBox.style.borderColor = 'var(--color-safe)';
+                quotaMessage.innerText = "你本學期大約還剩下";
+            } else if (remaining >= 1 && remaining <= 2) {
+                quotaCount.innerText = remaining + " 堂！";
+                quotaCount.style.color = 'var(--color-warning)';
+                quotaCount.style.textShadow = 'var(--glow-warning)';
+                quotaBox.style.borderColor = 'var(--color-warning)';
+                quotaMessage.innerText = "黃色警戒！你只剩下";
+            } else {
+                const absoluteVal = Math.abs(remaining);
+                quotaCount.innerText = "0 堂 (已超額 " + absoluteVal + " 堂)";
+                quotaCount.style.color = 'var(--color-danger)';
+                quotaCount.style.textShadow = 'var(--glow-danger)';
+                quotaBox.style.borderColor = 'var(--color-danger)';
+                quotaMessage.innerText = "紅色警報！你已無請假額度";
+            }
+        }
+
+        // 點擊召喚算命大師
+        function askTheOracle() {
+            const courseName = document.getElementById('courseName').value || "這門課";
+            const reasonSelect = document.getElementById('reason');
+            const reasonText = reasonSelect.options[reasonSelect.selectedIndex].text;
+            
+            const results = calculateRisk();
+            const risk = results.finalRisk;
+            
+            let riskLevel = 'safe';
+            if (risk >= 40 && risk < 80) {
+                riskLevel = 'warning';
+            } else if (risk >= 80) {
+                riskLevel = 'danger';
+            }
+
+            // 更新開示面板標題
+            const headerText = document.querySelector('#oracleHeader span');
+            let styleName = "導師碎碎念";
+            if (currentStyle === 'zen') styleName = "佛系通靈大師";
+            if (currentStyle === 'mad') styleName = "損友大發瘋";
+            headerText.innerText = `【${styleName}】開示了關於《${courseName}》的請假命盤`;
+
+            // 從資料庫中隨機抓一句對應的話
+            const options = oracleDatabase[currentStyle][riskLevel];
+            const randomMsg = options[Math.floor(Math.random() * options.length)];
+
+            // 動態替換效果
+            const oracleTextDiv = document.getElementById('oracleText');
+            oracleTextDiv.style.opacity = 0;
+            
+            setTimeout(() => {
+                let prefix = "";
+                if (riskLevel === 'safe') {
+                    prefix = `針對你想「${reasonText}」... `;
+                } else {
+                    prefix = `什麼？你居然說你想「${reasonText}」？！ `;
+                }
+                
+                oracleTextDiv.innerHTML = `<strong style="color:var(--color-cyan);">${prefix}</strong><br><br>${randomMsg}`;
+                oracleTextDiv.style.transition = 'opacity 0.5s ease';
+                oracleTextDiv.style.opacity = 1;
+            }, 200);
+        }
+
+        // 初始化
+        window.onload = function() {
+            calculateRisk();
+        };
+    </script>
+</body>
+</html>

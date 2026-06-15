@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>極簡番茄鐘待辦清單與專注日曆</title>
+  <!-- 引入 Tailwind CSS 確保現代感且乾淨明亮的排版 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Lucide Icons 用於直覺的圖示 -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <header class="bg-white border-b border-slate-100 py-4 px-6 sticky top-0 z-10 shadow-sm">
+    <div class="max-w-6xl mx-auto flex justify-between items-center flex-wrap gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md shadow-indigo-100">
+          <i data-lucide="timer" class="w-6 h-6"></i>
+        </div>
+        <h1 class="text-xl font-bold text-slate-800 tracking-wide">PomoTodo <span class="text-xs font-normal text-slate-400">專注與效率</span></h1>
+      </div>
+      
+      <!-- 頂部日期指示器與快捷返回按鈕 -->
+      <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2">
+          <!-- 今日徽章改為深靛藍 -->
+          <div id="date-badge" class="flex items-center space-x-2 text-sm px-3.5 py-1.5 rounded-full transition-all duration-300">
+            <i id="date-badge-icon" data-lucide="calendar" class="w-4 h-4"></i>
+            <span id="current-viewing-date" class="font-bold">載入中...</span>
+          </div>
+          <!-- 快捷返回今天按鈕（沉穩的靛藍色） -->
+          <button 
+            id="btn-back-to-today"
+            class="hidden bg-indigo-600 hover:bg-indigo-700 hover:scale-105 active:scale-95 text-white text-xs font-bold px-3 py-2 rounded-full transition-all flex items-center gap-1 shadow-md shadow-indigo-100"
+          >
+            <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
+            返回今天
+          </button>
+        </div>
+        <button 
+          id="btn-open-calendar-header"
+          class="bg-slate-100 hover:bg-slate-200 text-slate-700 hover:scale-105 active:scale-95 text-xs font-bold px-3.5 py-2 rounded-full transition-all flex items-center gap-1.5 border border-slate-200"
+        >
+          <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
+          切換歷史日期
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8">
+    
+    <div id="notification-banner" class="hidden mb-6 bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <i data-lucide="bell" class="w-5 h-5 text-blue-600 shrink-0"></i>
+        <p class="text-sm text-blue-800 font-medium">開啟瀏覽器通知，在番茄鐘結束時收到即時提醒！</p>
+      </div>
+      <button onclick="requestNotificationPermission()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition duration-200 shadow-sm">
+        啟用通知
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <section class="lg:col-span-7 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col min-h-[500px]">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="list-todo" class="w-6 h-6 text-indigo-500"></i>
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-1.5" id="list-header-title">今日任務清單</h2>
+          </div>
+          <span id="task-count" class="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full font-medium">共 0 項任務</span>
+        </div>
+
+        <!-- 新增任務輸入框 -->
+        <form id="todo-form" class="flex flex-col sm:flex-row gap-2 mb-6">
+          <input 
+            type="text" 
+            id="todo-input" 
+            placeholder="今天想要專注在什麼任務上？" 
+            class="flex-grow px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+            required
+            maxlength="40"
+          >
+          <div class="flex items-center gap-2 shrink-0">
+            <!-- 預估番茄目標設定 -->
+            <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 h-full">
+              <label for="todo-target" class="text-xs text-slate-400 font-semibold mr-2 whitespace-nowrap">目標</label>
+              <input 
+                type="number" 
+                id="todo-target" 
+                value="3" 
+                min="1" 
+                max="20" 
+                class="w-10 bg-transparent text-center font-bold text-slate-700 focus:outline-none text-sm"
+                required
+              >
+              <span class="text-xs text-indigo-500 font-bold ml-1">🍅</span>
+            </div>
+            <button 
+              type="submit" 
+              class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-5 py-3 rounded-xl font-medium text-sm flex items-center gap-1.5 transition-all shadow-md shadow-indigo-100"
+            >
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              新增
+            </button>
+          </div>
+        </form>
+
+        <!-- 任務列表容器 -->
+        <div class="flex-grow overflow-y-auto max-h-[450px] pr-1" id="task-list-container">
+          <!-- 任務為空時的佔位圖 -->
+          <div id="empty-state" class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="bg-slate-50 p-4 rounded-full mb-3 text-slate-300">
+              <i data-lucide="clipboard-list" class="w-12 h-12"></i>
+            </div>
+            <p class="text-slate-500 font-medium text-sm">此日期沒有任務</p>
+            <p class="text-slate-400 text-xs mt-1">點擊上方「新增」按鈕，為選擇的這一天排定工作吧！</p>
+          </div>
+
+          <!-- 任務列表 (Dynamic) -->
+          <ul id="task-list" class="space-y-3 hidden">
+            <!-- JS 將會在此動態渲染任務項目 -->
+          </ul>
+        </div>
+      </section>
+
+      <section class="lg:col-span-5 flex flex-col gap-6">
+        
+        <!-- 番茄鐘計時器 -->
+        <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex flex-col items-center text-center relative overflow-hidden">
+          <!-- 選定任務狀態提示 -->
+          <div class="w-full mb-2">
+            <span class="text-xs font-semibold text-slate-400 tracking-wider uppercase">當前專注任務</span>
+            <div id="active-task-title" class="text-slate-700 font-medium text-base mt-1 truncate max-w-xs mx-auto px-2">
+              -- 未選取任務 --
+            </div>
+            <p id="active-task-hint" class="text-xs text-amber-500 mt-1 flex items-center justify-center gap-1">
+              <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+              請先點擊左側任務以綁定番茄鐘
+            </p>
+          </div>
+
+          <!-- 倒數計時圓盤/數字 (進度條為專注的湛藍色) -->
+          <div class="relative w-48 h-48 flex items-center justify-center my-4">
+            <!-- 圓形進度條底圈 -->
+            <svg class="absolute w-full h-full transform -rotate-90">
+              <circle cx="96" cy="96" r="82" stroke-width="7" stroke="#F1F5F9" fill="transparent" />
+              <!-- 動態進度條 -->
+              <circle id="progress-ring" cx="96" cy="96" r="82" stroke-width="7" stroke="#2563EB" fill="transparent" 
+                stroke-dasharray="515.2" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-1000" />
+            </svg>
+            
+            <!-- 時間數字 (15:00 正式版畫面) -->
+            <div class="flex flex-col items-center justify-center z-10">
+              <span id="timer-display" class="text-4xl font-bold text-slate-800 tracking-tight font-mono">15:00</span>
+              <span id="timer-status" class="text-[10px] font-semibold text-slate-400 mt-1 tracking-widest">準備中</span>
+            </div>
+          </div>
+
+          <!-- 控制按鈕 -->
+          <div class="flex items-center w-full justify-center">
+            <!-- 開始/暫停按鈕 (深靛藍配色) -->
+            <button id="btn-play-pause" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 transition duration-200 active:scale-95 shadow-md shadow-indigo-100 text-sm">
+              <i id="play-pause-icon" data-lucide="play" class="w-4 h-4"></i>
+              <span id="play-pause-text">開始專注</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-slate-800 font-bold text-sm flex items-center gap-2">
+              <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
+              <span id="stats-panel-title">專注成就報告</span>
+            </h3>
+            <button 
+              id="btn-open-calendar-stats"
+              class="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center gap-1 transition"
+            >
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+              切換日期
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <!-- 該日總番茄 -->
+            <div class="bg-slate-50 rounded-2xl p-4 text-center">
+              <div class="text-slate-400 text-xs font-medium mb-1">該日番茄數</div>
+              <div class="flex items-center justify-center gap-1.5">
+                <i data-lucide="clock" class="w-4 h-4 text-indigo-500"></i>
+                <span id="total-pomodoros" class="text-xl font-extrabold text-slate-800">0</span>
+              </div>
+            </div>
+            <!-- 該日專注時間 -->
+            <div class="bg-slate-50 rounded-2xl p-4 text-center">
+              <div class="text-slate-400 text-xs font-medium mb-1">該日專注時長</div>
+              <div class="flex items-center justify-center gap-1.5">
+                <i data-lucide="hourglass" class="w-4 h-4 text-indigo-500"></i>
+                <span id="total-focus-time" class="text-xl font-extrabold text-slate-800">0 min</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- 專注日曆彈出 Modal -->
+  <div id="calendar-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-xl border border-slate-100 transform scale-95 transition-all duration-300" id="calendar-modal-card">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+        <h3 class="text-slate-800 font-bold text-base flex items-center gap-2">
+          <i data-lucide="calendar-days" class="w-5 h-5 text-indigo-500"></i>
+          專注歷史日曆
+        </h3>
+        <button id="btn-close-calendar" class="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-50 rounded-full transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 切換月份控制 -->
+      <div class="flex items-center justify-between mb-4 bg-slate-50 p-2 rounded-xl">
+        <button id="btn-prev-month" class="p-1.5 hover:bg-white rounded-lg text-slate-500 transition shadow-sm border border-transparent hover:border-slate-100">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+        <span id="calendar-month-year" class="text-sm font-bold text-slate-700 min-w-[100px] text-center">2026年6月</span>
+        <button id="btn-next-month" class="p-1.5 hover:bg-white rounded-lg text-slate-500 transition shadow-sm border border-transparent hover:border-slate-100">
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+      
+      <!-- 星期欄 -->
+      <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-2">
+        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+      </div>
+      
+      <!-- 日期網格 -->
+      <div id="calendar-days-container" class="grid grid-cols-7 gap-1.5 text-xs mb-4">
+        <!-- 動態生成 -->
+      </div>
+
+      <div class="text-[11px] text-slate-400 text-center border-t border-slate-100 pt-3 pb-3">
+        💡 點選任何有標記 <span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span> 的日期，可回顧該日任務。
+      </div>
+
+      <!-- 底部關閉按鈕 -->
+      <div class="flex justify-end border-t border-slate-100 pt-3">
+        <button id="btn-close-calendar-footer" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold py-2.5 rounded-xl transition">
+          關閉日曆
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 任務移轉自訂 Modal -->
+  <div id="reschedule-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-xl border border-slate-100 transform scale-95 transition-all duration-300" id="reschedule-modal-card">
+      <h3 class="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
+        <i data-lucide="calendar-range" class="text-indigo-500 w-5 h-5"></i>
+        將任務移轉至其他天
+      </h3>
+      <p class="text-xs text-slate-500 mb-4">
+        此未完成任務將同時保留在原建立日期（標示移出），並在未來的目標日期自動產生新副本，延續目前的番茄進度。
+      </p>
+      
+      <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">選擇移轉的日期</label>
+      <input 
+        type="date" 
+        id="reschedule-date-input" 
+        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 mb-6 text-sm"
+      >
+      
+      <div class="flex gap-2 justify-end">
+        <button id="btn-cancel-reschedule" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition">取消</button>
+        <button id="btn-confirm-reschedule" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-indigo-100">確認移轉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 頁尾 -->
+  <footer class="bg-slate-100 text-slate-400 text-xs text-center py-6 border-t border-slate-200">
+    <p>極簡 PomoTodo 日曆版 &copy; 2026. 每一顆番茄，都讓你離目標更近一步。</p>
+  </footer>
+
+  <!-- 自訂非同步訊息通知 Modal -->
+  <div id="toast-message" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm shadow-lg z-50 flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
+    <i id="toast-icon" data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
+    <span id="toast-text">提示訊息</span>
+  </div>
+
+  <script>
+    // --- 初始變數與狀態管理 ---
+    let tasks = [];
+    let activeTaskId = null; // 當前選中綁定番茄鐘的任務 ID
+    
+    // 日曆與日期管理
+    let selectedDate = getLocalDateString(new Date()); // 當前選取的查看日期 (預設今天 YYYY-MM-DD)
+    let calendarYear = new Date().getFullYear();
+    let calendarMonth = new Date().getMonth(); // 0-11
+
+    // 番茄鐘設定 (正式版設定：設為 15 分鐘)
+    const FOCUS_MINUTES = 15; // 統計報表上每個番茄以 15 分鐘計算
+    const TOTAL_SECONDS = 15 * 60;  // 倒數計時實際時間改為 15 分鐘 (900 秒)
+    
+    let timerInterval = null;
+    let secondsLeft = TOTAL_SECONDS;
+    let isRunning = false;
+
+    // 圓形進度條參數
+    const ringCircle = document.getElementById('progress-ring');
+    const ringCircumference = 2 * Math.PI * 82; // r=82 -> 515.22
+
+    // DOM 元素選取
+    const todoForm = document.getElementById('todo-form');
+    const todoInput = document.getElementById('todo-input');
+    const taskList = document.getElementById('task-list');
+    const taskListContainer = document.getElementById('task-list-container');
+    const emptyState = document.getElementById('empty-state');
+    const taskCountEl = document.getElementById('task-count');
+
+    const timerDisplay = document.getElementById('timer-display');
+    const timerStatus = document.getElementById('timer-status');
+    const btnPlayPause = document.getElementById('btn-play-pause');
+    const playPauseIcon = document.getElementById('play-pause-icon');
+    const playPauseText = document.getElementById('play-pause-text');
+    
+    const activeTaskTitle = document.getElementById('active-task-title');
+    const activeTaskHint = document.getElementById('active-task-hint');
+    const totalPomodorosEl = document.getElementById('total-pomodoros');
+    const totalFocusTimeEl = document.getElementById('total-focus-time');
+    
+    // 頂部日期與徽章 DOM
+    const currentViewingDateEl = document.getElementById('current-viewing-date');
+    const dateBadgeEl = document.getElementById('date-badge');
+    const dateBadgeIconEl = document.getElementById('date-badge-icon');
+    const btnBackToToday = document.getElementById('btn-back-to-today');
+
+    const listHeaderTitleEl = document.getElementById('list-header-title');
+    const statsPanelTitleEl = document.getElementById('stats-panel-title');
+    const notificationBanner = document.getElementById('notification-banner');
+
+    // 移轉 Modal DOM
+    const rescheduleModal = document.getElementById('reschedule-modal');
+    const rescheduleModalCard = document.getElementById('reschedule-modal-card');
+    const rescheduleDateInput = document.getElementById('reschedule-date-input');
+    const btnCancelReschedule = document.getElementById('btn-cancel-reschedule');
+    const btnConfirmReschedule = document.getElementById('btn-confirm-reschedule');
+    let taskPendingRescheduleId = null;
+
+    // 日曆 Modal DOM
+    const calendarModal = document.getElementById('calendar-modal');
+    const calendarModalCard = document.getElementById('calendar-modal-card');
+    const btnOpenCalendarHeader = document.getElementById('btn-open-calendar-header');
+    const btnOpenCalendarStats = document.getElementById('btn-open-calendar-stats');
+    const btnCloseCalendar = document.getElementById('btn-close-calendar');
+    const btnCloseCalendarFooter = document.getElementById('btn-close-calendar-footer');
+
+    // --- 日期與輔助工具 ---
+    function getLocalDateString(dateObj) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatToMD(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+    }
+
+    function updateDateLabels() {
+      const todayStr = getLocalDateString(new Date());
+      const isToday = selectedDate === todayStr;
+      const isPast = selectedDate < todayStr;
+      const isFuture = selectedDate > todayStr;
+      
+      const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+      const dateObj = new Date(selectedDate + 'T00:00:00');
+      const dateFormatted = dateObj.toLocaleDateString('zh-TW', options);
+      
+      if (isToday) {
+        currentViewingDateEl.textContent = `${dateFormatted} (今天)`;
+        dateBadgeEl.className = "flex items-center space-x-2 text-sm px-4 py-1.5 rounded-full bg-indigo-600 text-white font-bold shadow-md shadow-indigo-200";
+        dateBadgeIconEl.setAttribute('data-lucide', 'clock-active');
+        btnBackToToday.classList.add('hidden');
+      } else {
+        currentViewingDateEl.textContent = dateFormatted;
+        btnBackToToday.classList.remove('hidden');
+        
+        if (isPast) {
+          dateBadgeEl.className = "flex items-center space-x-2 text-sm px-4 py-1.5 rounded-full bg-slate-200 text-slate-700 font-bold border border-slate-300";
+          dateBadgeIconEl.setAttribute('data-lucide', 'history');
+        } else {
+          dateBadgeEl.className = "flex items-center space-x-2 text-sm px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 font-bold";
+          dateBadgeIconEl.setAttribute('data-lucide', 'calendar');
+        }
+      }
+
+      if (isToday) {
+        listHeaderTitleEl.innerHTML = `<span class="bg-indigo-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider mr-1.5 shadow-sm">Today</span>今日任務清單`;
+        statsPanelTitleEl.innerHTML = `<span class="bg-indigo-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider mr-1.5 shadow-sm">Today</span>今日專注成就`;
+      } else if (isPast) {
+        listHeaderTitleEl.innerHTML = `<span class="bg-slate-400 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider mr-1.5 shadow-sm">歷史</span>${formatToMD(selectedDate)} 任務回顧`;
+        statsPanelTitleEl.innerHTML = `<span class="bg-slate-400 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider mr-1.5 shadow-sm">歷史</span>${formatToMD(selectedDate)} 專注回報`;
+      } else {
+        listHeaderTitleEl.innerHTML = `<span class="bg-blue-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider mr-1.5 shadow-sm">未來</span>${formatToMD(selectedDate)} 預定計畫`;
+        statsPanelTitleEl.innerHTML = `<span class="bg-blue-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider mr-1.5 shadow-sm">未來</span>${formatToMD(selectedDate)} 預定專注`;
+      }
+
+      if (isPast) {
+        todoInput.disabled = true;
+        todoInput.placeholder = "過去的日期無法再新增任務";
+        const submitBtn = todoForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      } else {
+        todoInput.disabled = false;
+        todoInput.placeholder = isFuture ? "這天預計計畫什麼任務？" : "今天想要專注在什麼任務上？";
+        const submitBtn = todoForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+      }
+
+      if (!isToday) {
+        btnPlayPause.classList.add('opacity-60');
+        if (!isRunning) {
+          playPauseText.textContent = "限今日專注";
+        }
+      } else {
+        btnPlayPause.classList.remove('opacity-60');
+        if (!isRunning) {
+          playPauseText.textContent = "開始專注";
+        }
+      }
+
+      lucide.createIcons();
+    }
+
+    btnBackToToday.addEventListener('click', () => {
+      if (isRunning) {
+        pauseTimer();
+        resetTimer();
+      }
+      selectedDate = getLocalDateString(new Date());
+      updateDateLabels();
+      renderTasks();
+      updateStats();
+      
+      if (activeTaskId) {
+        const currentTask = tasks.find(t => t.id === activeTaskId);
+        if (!currentTask || currentTask.date !== selectedDate) {
+          activeTaskId = null;
+          updateActiveTaskUI();
+        }
+      }
+      showToast('已快速回到今天！✨', 'sparkles');
+    });
+
+    // --- 初始化與本地儲存 ---
+    window.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      updateDateLabels();
+      renderCalendar();
+      updateProgressRing(1);
+      checkNotificationPermission();
+      lucide.createIcons();
+    });
+
+    function showToast(message, iconName = 'info') {
+      const toast = document.getElementById('toast-message');
+      const toastText = document.getElementById('toast-text');
+      const toastIcon = document.getElementById('toast-icon');
+      
+      toastIcon.setAttribute('data-lucide', iconName);
+      toastText.textContent = message;
+      
+      lucide.createIcons();
+
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 3000);
+    }
+
+    // --- 瀏覽器通知系統 ---
+    function checkNotificationPermission() {
+      if (!("Notification" in window)) return;
+      
+      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        notificationBanner.classList.remove('hidden');
+      }
+    }
+
+    function requestNotificationPermission() {
+      if (!("Notification" in window)) return;
+
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          notificationBanner.classList.add('hidden');
+          showToast('通知功能已啟用！', 'check-circle');
+        } else {
+          notificationBanner.classList.add('hidden');
+        }
+      });
+    }
+
+    function sendNotification(title, body) {
+      if (!("Notification" in window)) return;
+
+      if (Notification.permission === "granted") {
+        new Notification(title, {
+          body: body,
+          icon: 'https://cdn-icons-png.flaticon.com/512/862/862734.png'
+        });
+      }
+    }
+
+    function loadData() {
+      const savedTasks = localStorage.getItem('pomotodo_tasks');
+      if (savedTasks) {
+        try {
+          tasks = JSON.parse(savedTasks);
+          
+          tasks = tasks.map(t => {
+            if (!t.date) {
+              t.date = getLocalDateString(new Date(t.createdAt));
+            }
+            if (t.extraTarget === undefined) t.extraTarget = 0;
+            return t;
+          });
+
+          renderTasks();
+          updateStats();
+        } catch (e) {
+          console.error("解析資料失敗，重設為空陣列", e);
+          tasks = [];
+        }
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('pomotodo_tasks', JSON.stringify(tasks));
+      updateStats();
+      renderCalendar(); 
+    }
+
+    // --- 日曆 Modal 控制與「今天」高光渲染 ---
+    function openCalendarModal() {
+      const activeDateParts = selectedDate.split('-');
+      calendarYear = parseInt(activeDateParts[0]);
+      calendarMonth = parseInt(activeDateParts[1]) - 1;
+      
+      renderCalendar();
+
+      calendarModal.classList.remove('opacity-0', 'pointer-events-none');
+      calendarModalCard.classList.remove('scale-95');
+      calendarModalCard.classList.add('scale-100');
+    }
+
+    function closeCalendarModal() {
+      calendarModal.classList.add('opacity-0', 'pointer-events-none');
+      calendarModalCard.classList.remove('scale-100');
+      calendarModalCard.classList.add('scale-95');
+    }
+
+    // 點擊事件綁定
+    btnOpenCalendarHeader.addEventListener('click', openCalendarModal);
+    btnOpenCalendarStats.addEventListener('click', openCalendarModal);
+    btnCloseCalendar.addEventListener('click', closeCalendarModal);
+    btnCloseCalendarFooter.addEventListener('click', closeCalendarModal);
+
+    // 點擊半透明背景也可以直接關閉彈窗 (日曆與移轉任務視窗皆支援)
+    calendarModal.addEventListener('click', (e) => {
+      if (e.target === calendarModal) {
+        closeCalendarModal();
+      }
+    });
+
+    rescheduleModal.addEventListener('click', (e) => {
+      if (e.target === rescheduleModal) {
+        closeRescheduleModal();
+      }
+    });
+
+    // 專注日曆渲染邏輯
+    function renderCalendar() {
+      const calendarDaysContainer = document.getElementById('calendar-days-container');
+      const calendarMonthYear = document.getElementById('calendar-month-year');
+      
+      calendarDaysContainer.innerHTML = '';
+      
+      const monthNames = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+      calendarMonthYear.textContent = `${calendarYear}年 ${monthNames[calendarMonth]}`;
+
+      const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
+      const totalDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+      
+      const todayStr = getLocalDateString(new Date());
+
+      // 1. 渲染空白前贅格
+      for (let i = 0; i < firstDayIndex; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = "p-2";
+        calendarDaysContainer.appendChild(emptyCell);
+      }
+
+      // 2. 渲染日期網格
+      for (let day = 1; day <= totalDays; day++) {
+        const dayButton = document.createElement('button');
+        const formattedMonth = String(calendarMonth + 1).padStart(2, '0');
+        const formattedDay = String(day).padStart(2, '0');
+        const dateStr = `${calendarYear}-${formattedMonth}-${formattedDay}`;
+
+        const isCurrentSelected = dateStr === selectedDate;
+        const isToday = dateStr === todayStr;
+
+        const dayTasks = tasks.filter(t => t.date === dateStr);
+        const dayPomodoros = dayTasks.reduce((sum, task) => sum + task.pomodoros, 0);
+
+        let baseClasses = "p-1 rounded-xl flex flex-col items-center justify-between relative transition focus:outline-none w-11 h-14 mx-auto";
+        
+        if (isCurrentSelected) {
+          dayButton.className = `${baseClasses} bg-indigo-600 text-white font-bold hover:bg-indigo-700 ${isToday ? 'ring-4 ring-indigo-200 border border-indigo-300' : ''}`;
+        } else if (isToday) {
+          dayButton.className = `${baseClasses} border-2 border-indigo-600 text-indigo-700 bg-indigo-50/70 font-extrabold ring-4 ring-indigo-100`;
+        } else {
+          dayButton.className = `${baseClasses} hover:bg-slate-100 text-slate-700`;
+        }
+        
+        const dayNumberSpan = document.createElement('span');
+        dayNumberSpan.textContent = day;
+        dayNumberSpan.className = "font-bold text-[11px] leading-tight mt-0.5";
+        dayButton.appendChild(dayNumberSpan);
+
+        const bottomContainer = document.createElement('div');
+        bottomContainer.className = "flex flex-col items-center justify-end w-full leading-none mb-0.5 mt-auto gap-0.5";
+
+        if (isToday) {
+          const todayLabel = document.createElement('span');
+          todayLabel.textContent = "今天";
+          todayLabel.className = `text-[8px] font-extrabold scale-90 leading-none whitespace-nowrap ${isCurrentSelected ? 'text-indigo-100' : 'text-indigo-600'}`;
+          bottomContainer.appendChild(todayLabel);
+        }
+
+        if (dayPomodoros > 0) {
+          const pomoLabel = document.createElement('span');
+          pomoLabel.className = `text-[8px] font-extrabold flex items-center justify-center scale-90 leading-none ${isCurrentSelected ? 'text-white' : 'text-indigo-500'}`;
+          pomoLabel.innerHTML = `🍅<span class="font-mono ml-0.5">${dayPomodoros}</span>`;
+          bottomContainer.appendChild(pomoLabel);
+        } else if (dayTasks.length > 0) {
+          const dot = document.createElement('span');
+          dot.className = `w-1 h-1 rounded-full ${isCurrentSelected ? 'bg-white' : 'bg-slate-300'}`;
+          bottomContainer.appendChild(dot);
+        }
+
+        dayButton.appendChild(bottomContainer);
+
+        dayButton.addEventListener('click', () => {
+          if (isRunning) {
+            pauseTimer();
+            resetTimer();
+            showToast('已切換查看日期，自動暫停計時！', 'pause');
+          }
+          selectedDate = dateStr;
+          updateDateLabels();
+          renderTasks();
+          updateStats();
+          
+          if (activeTaskId) {
+            const currentTask = tasks.find(t => t.id === activeTaskId);
+            if (!currentTask || currentTask.date !== selectedDate) {
+              activeTaskId = null;
+              updateActiveTaskUI();
+            }
+          }
+          
+          closeCalendarModal(); 
+          showToast(`已切換至 ${formatToMD(dateStr)}！`, 'calendar-check');
+        });
+
+        calendarDaysContainer.appendChild(dayButton);
+      }
+      lucide.createIcons();
+    }
+
+    document.getElementById('btn-prev-month').addEventListener('click', () => {
+      calendarMonth--;
+      if (calendarMonth < 0) {
+        calendarMonth = 11;
+        calendarYear--;
+      }
+      renderCalendar();
+    });
+
+    document.getElementById('btn-next-month').addEventListener('click', () => {
+      calendarMonth++;
+      if (calendarMonth > 11) {
+        calendarMonth = 0;
+        calendarYear++;
+      }
+      renderCalendar();
+    });
+
+
+    // --- 待辦清單與任務管理邏輯 ---
+
+    todoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const todayStr = getLocalDateString(new Date());
+      if (selectedDate < todayStr) {
+        showToast('無法在過去日期新增任務！', 'alert-circle');
+        return;
+      }
+      const taskName = todoInput.value.trim();
+      const targetInput = document.getElementById('todo-target');
+      const targetVal = parseInt(targetInput.value) || 3;
+      if (!taskName) return;
+
+      const newTask = {
+        id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        title: taskName,
+        completed: false,
+        pomodoros: 0,
+        targetPomodoros: targetVal,
+        extraTarget: 0, 
+        date: selectedDate, 
+        createdAt: new Date().toISOString(),
+        rescheduledTo: null,   
+        rescheduledFrom: null  
+      };
+
+      tasks.push(newTask);
+      saveData();
+      renderTasks();
+      
+      if (!activeTaskId) {
+        selectActiveTask(newTask.id);
+      }
+
+      todoInput.value = '';
+      targetInput.value = '3';
+      showToast('已成功新增任務！', 'plus-circle');
+    });
+
+    function deleteTask(taskId) {
+      tasks = tasks.filter(task => task.id !== taskId);
+      
+      if (activeTaskId === taskId) {
+        activeTaskId = null;
+        updateActiveTaskUI();
+      }
+
+      saveData();
+      renderTasks();
+      showToast('任務已刪除。', 'trash-2');
+    }
+
+    function toggleTaskComplete(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      if (task.rescheduledTo) {
+        showToast('此任務已改至其他天，無法在原日期打勾完成！', 'lock');
+        return;
+      }
+
+      const baseTarget = task.targetPomodoros || 3;
+      
+      if (task.pomodoros < baseTarget) {
+        showToast(`未達到目標番茄數 ${baseTarget} 顆，無法標記為完成！`, 'lock');
+        return;
+      }
+
+      tasks = tasks.map(t => {
+        if (t.id === taskId) {
+          return { ...t, completed: !t.completed };
+        }
+        return t;
+      });
+      saveData();
+      renderTasks();
+      showToast(task.completed ? '已取消完成狀態。' : '恭喜完成此項工作！🎉', 'check-circle-2');
+    }
+
+    function decreaseTarget(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      if (task.rescheduledTo) return;
+
+      const baseTarget = task.targetPomodoros || 3;
+      const extraTarget = task.extraTarget || 0;
+
+      if (extraTarget > 0) {
+        tasks = tasks.map(t => {
+          if (t.id === taskId) {
+            return { ...t, extraTarget: extraTarget - 1 };
+          }
+          return t;
+        });
+        showToast('已扣除 1 顆追加目標番茄 🍅', 'minus');
+      } else if (baseTarget > 1) {
+        tasks = tasks.map(t => {
+          if (t.id === taskId) {
+            return { ...t, targetPomodoros: baseTarget - 1 };
+          }
+          return t;
+        });
+        showToast('已減少基本目標番茄 🍅', 'minus');
+      } else {
+        showToast('基本目標番茄最少為 1 顆！', 'alert-circle');
+        return;
+      }
+
+      saveData();
+      renderTasks();
+    }
+
+    function addExtraTarget(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task && task.rescheduledTo) return;
+
+      tasks = tasks.map(t => {
+        if (t.id === taskId) {
+          const currentExtra = t.extraTarget || 0;
+          return { ...t, extraTarget: currentExtra + 1 };
+        }
+        return t;
+      });
+      saveData();
+      renderTasks();
+      showToast('已為此任務加時（追加 1 顆番茄目標）！', 'clock-5');
+    }
+
+    // --- 任務未來移轉 ---
+    function openRescheduleModal(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      if (task.completed) {
+        showToast('已完成的任務不需要移轉！', 'alert-circle');
+        return;
+      }
+
+      taskPendingRescheduleId = taskId;
+      
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      rescheduleDateInput.value = getLocalDateString(tomorrow);
+      rescheduleDateInput.min = getLocalDateString(new Date()); 
+
+      rescheduleModal.classList.remove('opacity-0', 'pointer-events-none');
+      rescheduleModalCard.classList.remove('scale-95');
+      rescheduleModalCard.classList.add('scale-100');
+    }
+
+    function closeRescheduleModal() {
+      rescheduleModal.classList.add('opacity-0', 'pointer-events-none');
+      rescheduleModalCard.classList.remove('scale-100');
+      rescheduleModalCard.classList.add('scale-95');
+      taskPendingRescheduleId = null;
+    }
+
+    btnConfirmReschedule.addEventListener('click', () => {
+      const targetDate = rescheduleDateInput.value;
+      if (!targetDate) {
+        showToast('請選擇合適的未來日期！', 'alert-circle');
+        return;
+      }
+
+      const originalTask = tasks.find(t => t.id === taskPendingRescheduleId);
+      if (!originalTask) return;
+
+      if (targetDate === originalTask.date) {
+        showToast('新日期不能與原日期相同！', 'alert-circle');
+        return;
+      }
+
+      tasks = tasks.map(t => {
+        if (t.id === taskPendingRescheduleId) {
+          return { ...t, rescheduledTo: targetDate, completed: false };
+        }
+        return t;
+      });
+
+      const futureTask = {
+        id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        title: originalTask.title,
+        completed: false,
+        pomodoros: originalTask.pomodoros, 
+        targetPomodoros: originalTask.targetPomodoros,
+        extraTarget: originalTask.extraTarget,
+        date: targetDate, 
+        createdAt: new Date().toISOString(),
+        rescheduledTo: null,
+        rescheduledFrom: originalTask.date 
+      };
+
+      tasks.push(futureTask);
+
+      if (activeTaskId === taskPendingRescheduleId) {
+        activeTaskId = null;
+        updateActiveTaskUI();
+      }
+
+      saveData();
+      renderTasks();
+      closeRescheduleModal();
+      showToast(`已成功將任務移轉至 ${formatToMD(targetDate)}！`, 'calendar-check');
+    });
+
+    btnCancelReschedule.addEventListener('click', closeRescheduleModal);
+
+    function selectActiveTask(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task && task.rescheduledTo) {
+        showToast('此任務已移轉，無法選定為今日專注任務！', 'lock');
+        return;
+      }
+      activeTaskId = taskId;
+      updateActiveTaskUI();
+      renderTasks(); 
+    }
+
+    // --- 待辦列表視圖渲染與更新 ---
+    function renderTasks() {
+      const filteredTasks = tasks.filter(task => task.date === selectedDate);
+
+      if (filteredTasks.length === 0) {
+        emptyState.classList.remove('hidden');
+        taskList.classList.add('hidden');
+        taskCountEl.textContent = '共 0 項任務';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      taskList.classList.remove('hidden');
+      taskList.innerHTML = '';
+
+      filteredTasks.forEach(task => {
+        const isSelected = task.id === activeTaskId;
+        const baseTarget = task.targetPomodoros || 3;
+        const extraTarget = task.extraTarget || 0;
+        
+        const isBaseReached = task.pomodoros >= baseTarget;
+        const isRescheduled = !!task.rescheduledTo; 
+        const isImported = !!task.rescheduledFrom; 
+
+        let checkboxClickAction = '';
+        if (isRescheduled) {
+          checkboxClickAction = `event.stopPropagation(); showToast('已改期任務無法勾選！', 'lock')`;
+        } else if (isBaseReached) {
+          checkboxClickAction = `event.stopPropagation(); toggleTaskComplete('${task.id}')`;
+        } else {
+          checkboxClickAction = `event.stopPropagation(); showToast('未達到目標番茄數 ${baseTarget} 顆，無法打勾！', 'lock')`;
+        }
+
+        let badgeText = '';
+        let badgeColorClass = '';
+        let iconColorClass = '';
+
+        if (!isBaseReached) {
+          badgeText = `${task.pomodoros}/${baseTarget}`;
+          badgeColorClass = 'bg-blue-50 text-blue-600 border border-transparent';
+          iconColorClass = 'fill-blue-500 text-blue-600';
+        } else {
+          const extraCompleted = task.pomodoros - baseTarget;
+          
+          if (extraTarget > 0) {
+            badgeText = `${baseTarget}/${baseTarget}(${extraCompleted}/${extraTarget})`;
+          } else {
+            badgeText = `${baseTarget}/${baseTarget}`;
+          }
+
+          const isExtraReached = extraCompleted >= extraTarget;
+          if (isExtraReached) {
+            badgeColorClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+            iconColorClass = 'fill-emerald-500 text-emerald-600';
+          } else {
+            badgeColorClass = 'bg-amber-50 text-amber-700 border border-amber-200';
+            iconColorClass = 'fill-amber-500 text-amber-600';
+          }
+        }
+
+        const showAddExtraBtn = isBaseReached && !task.completed && !isRescheduled;
+        const extraBtnHtml = showAddExtraBtn 
+          ? `<button class="action-btn text-[10px] bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold px-1.5 py-0.5 rounded transition-all" onclick="event.stopPropagation(); addExtraTarget('${task.id}')" title="追加目標番茄顆數">
+              + 加時
+             </button>`
+          : '';
+
+        const showRescheduleBtn = !task.completed && !isRescheduled;
+        const rescheduleBtnHtml = showRescheduleBtn
+          ? `<button class="action-btn text-slate-400 hover:text-indigo-600 hover:bg-slate-100 p-1 rounded-lg transition-all" onclick="event.stopPropagation(); openRescheduleModal('${task.id}')" title="移轉至未來日期">
+              <i data-lucide="calendar-range" class="w-4 h-4"></i>
+             </button>`
+          : '';
+
+        let statusTagHtml = '';
+        if (isRescheduled) {
+          statusTagHtml = `<span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
+            <i data-lucide="arrow-right" class="w-3 h-3 text-slate-400"></i> 已改至 ${formatToMD(task.rescheduledTo)}
+          </span>`;
+        } else if (isImported) {
+          statusTagHtml = `<span class="text-[10px] bg-indigo-50 text-indigo-500 font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
+            <i data-lucide="corner-down-right" class="w-3 h-3 text-indigo-400"></i> 來自 ${formatToMD(task.rescheduledFrom)}
+          </span>`;
+        }
+
+        const li = document.createElement('li');
+        
+        li.className = `flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 ${
+          isRescheduled 
+            ? 'border-dashed border-slate-200 bg-slate-50/50 opacity-70 cursor-not-allowed' 
+            : isSelected 
+              ? 'border-indigo-500 bg-indigo-50/50 shadow-sm cursor-pointer' 
+              : 'border-slate-100 hover:border-slate-200 bg-white'
+        }`;
+        
+        li.addEventListener('click', (e) => {
+          if (isRescheduled || e.target.closest('.action-btn')) return;
+          selectActiveTask(task.id);
+        });
+
+        li.innerHTML = `
+          <div class="flex items-center space-x-3 flex-grow min-w-0">
+            <button class="action-btn focus:outline-none shrink-0 ${isBaseReached && !isRescheduled ? 'text-slate-300 hover:text-indigo-600' : 'text-slate-300 cursor-not-allowed'}" onclick="${checkboxClickAction}">
+              ${task.completed 
+                ? `<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500 fill-emerald-50"></i>` 
+                : isBaseReached && !isRescheduled
+                  ? `<i data-lucide="circle" class="w-5 h-5"></i>`
+                  : isRescheduled
+                    ? `<i data-lucide="calendar-check" class="w-5 h-5 text-slate-400"></i>`
+                    : `<i data-lucide="lock" class="w-4 h-4 text-slate-400" title="目標未達，暫時鎖定"></i>`
+              }
+            </button>
+            
+            <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 min-w-0">
+              <span class="truncate text-sm font-medium ${task.completed ? 'line-through text-slate-400 font-normal' : 'text-slate-700'}">
+                ${task.title}
+              </span>
+              ${statusTagHtml}
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2 shrink-0 ml-2">
+            ${!task.completed && !isRescheduled ? `
+              <div class="flex items-center bg-slate-50 border border-slate-100 rounded-xl p-0.5 space-x-0.5">
+                <button class="action-btn text-slate-400 hover:text-indigo-600 hover:bg-white p-1 rounded-lg transition-all" onclick="event.stopPropagation(); decreaseTarget('${task.id}')" title="減少目標番茄">
+                  <i data-lucide="minus" class="w-3 h-3"></i>
+                </button>
+                <div class="flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold ${badgeColorClass}" title="番茄鐘進度">
+                  <i data-lucide="tomato" class="w-3.5 h-3.5 ${iconColorClass}"></i>
+                  <span class="font-mono">${badgeText}</span>
+                </div>
+                ${extraBtnHtml}
+              </div>
+            ` : `
+              <div class="flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold ${badgeColorClass}">
+                <i data-lucide="tomato" class="w-3.5 h-3.5 ${iconColorClass}"></i>
+                <span class="font-mono">${badgeText}</span>
+              </div>
+            `}
+
+            ${rescheduleBtnHtml}
+
+            ${isSelected ? `
+              <span class="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-600 text-white px-2 py-1 rounded-md animate-pulse">
+                專注中
+              </span>
+            ` : ''}
+
+            <button class="action-btn text-slate-400 hover:text-red-500 p-1 rounded-lg hover:bg-slate-50 transition" onclick="event.stopPropagation(); deleteTask('${task.id}')">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+
+        taskList.appendChild(li);
+      });
+
+      taskCountEl.textContent = `共 ${filteredTasks.length} 項任務`;
+      lucide.createIcons();
+    }
+
+    function updateActiveTaskUI() {
+      const activeTask = tasks.find(t => t.id === activeTaskId);
+      
+      if (activeTask && activeTask.date === selectedDate) {
+        activeTaskTitle.textContent = activeTask.title;
+        activeTaskTitle.className = "text-slate-800 font-semibold text-sm mt-1 truncate max-w-xs mx-auto px-2";
+        activeTaskHint.classList.add('hidden');
+      } else {
+        activeTaskTitle.textContent = "-- 未選取任務 --";
+        activeTaskTitle.className = "text-slate-400 font-medium text-sm mt-1 truncate max-w-xs mx-auto px-2";
+        activeTaskHint.classList.remove('hidden');
+        activeTaskId = null; 
+      }
+    }
+
+
+    // --- 番茄計時模組運行邏輯 ---
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateProgressRing(percent) {
+      const offset = ringCircumference - (percent * ringCircumference);
+      ringCircle.style.strokeDasharray = ringCircumference;
+      ringCircle.style.strokeDashoffset = offset;
+    }
+
+    function updateTimerUI() {
+      timerDisplay.textContent = formatTime(secondsLeft);
+      const ratio = secondsLeft / TOTAL_SECONDS;
+      updateProgressRing(ratio);
+    }
+
+    function toggleTimer() {
+      const todayStr = getLocalDateString(new Date());
+      if (selectedDate !== todayStr) {
+        showToast('只能在「今天」進行專注！請先切換回今日。', 'alert-circle');
+        return;
+      }
+      if (isRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      if (timerInterval) return;
+
+      isRunning = true;
+      btnPlayPause.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'shadow-indigo-100');
+      btnPlayPause.classList.add('bg-slate-700', 'hover:bg-slate-800', 'shadow-slate-100');
+      playPauseText.textContent = "暫停計時";
+      playPauseIcon.setAttribute('data-lucide', 'pause');
+      timerStatus.textContent = "專注中";
+      timerStatus.className = "text-[10px] font-semibold text-indigo-600 mt-1 tracking-widest";
+      lucide.createIcons();
+
+      timerInterval = setInterval(() => {
+        if (secondsLeft > 0) {
+          secondsLeft--;
+          updateTimerUI();
+        } else {
+          completePomodoroSession();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      isRunning = false;
+
+      btnPlayPause.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'shadow-indigo-100');
+      btnPlayPause.classList.remove('bg-slate-700', 'hover:bg-slate-800', 'shadow-slate-100');
+      playPauseText.textContent = "繼續專注";
+      playPauseIcon.setAttribute('data-lucide', 'play');
+      timerStatus.textContent = "已暫停";
+      timerStatus.className = "text-[10px] font-semibold text-slate-400 mt-1 tracking-widest";
+      lucide.createIcons();
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      secondsLeft = TOTAL_SECONDS;
+      updateTimerUI();
+      timerStatus.textContent = "準備中";
+      playPauseText.textContent = "開始專注";
+      lucide.createIcons();
+    }
+
+    function completePomodoroSession() {
+      pauseTimer();
+      secondsLeft = TOTAL_SECONDS; 
+      updateTimerUI();
+
+      let activeTask = tasks.find(t => t.id === activeTaskId);
+      
+      if (activeTask) {
+        let reachedTargetJustNow = false;
+        let reachedExtraTargetJustNow = false;
+        
+        tasks = tasks.map(t => {
+          if (t.id === activeTaskId) {
+            const oldPomos = t.pomodoros;
+            const updatedPomos = oldPomos + 1;
+            const baseTarget = t.targetPomodoros || 3;
+            const extraTarget = t.extraTarget || 0;
+
+            if (updatedPomos === baseTarget) {
+              reachedTargetJustNow = true;
+            } 
+            else if (oldPomos >= baseTarget && extraTarget > 0) {
+              const oldExtraCompleted = oldPomos - baseTarget;
+              const newExtraCompleted = updatedPomos - baseTarget;
+              if (newExtraCompleted === extraTarget) {
+                reachedExtraTargetJustNow = true;
+              }
+            }
+
+            return { ...t, pomodoros: updatedPomos };
+          }
+          return t;
+        });
+        saveData();
+        renderTasks();
+
+        if (reachedExtraTargetJustNow) {
+          sendNotification(
+            "追加目標圓滿達成！🎉🍅", 
+            `太強了！任務「${activeTask.title}」已完成追加的全部番茄目標！`
+          );
+          showToast(`追加目標圓滿達成！「${activeTask.title}」太強了！`, 'award');
+        } else if (reachedTargetJustNow) {
+          sendNotification(
+            "目標達成！🎉🍅", 
+            `太棒了！任務「${activeTask.title}」已圓滿達成預設的 ${activeTask.targetPomodoros || 3} 顆番茄目標，可以開始打勾或加時囉！`
+          );
+          showToast(`恭喜達成目標！「${activeTask.title}」解鎖完成勾選！`, 'award');
+        } else {
+          sendNotification(
+            "番茄鐘完成！🍅", 
+            `恭喜！你完成了專注。任務「${activeTask.title}」番茄進度成功推進！`
+          );
+          showToast(`太棒了！任務「${activeTask.title}」獲得 1 顆番茄！`, 'award');
+        }
+      } else {
+        sendNotification(
+          "番茄鐘完成！🍅", 
+          "恭喜！你完成了專注。雖然沒有選定任務，你依然做得很棒！"
+        );
+        showToast("太棒了！完成了一節專注！別忘了選取任務來追蹤喔！", 'award');
+      }
+
+      updateStats();
+    }
+
+    function updateStats() {
+      const targetDateTasks = tasks.filter(t => t.date === selectedDate);
+      const totalPomos = targetDateTasks.reduce((sum, task) => sum + task.pomodoros, 0);
+      
+      totalPomodorosEl.textContent = totalPomos;
+
+      const totalMinutes = totalPomos * FOCUS_MINUTES;
+      totalFocusTimeEl.textContent = `${totalMinutes} min`;
+    }
+
+    btnPlayPause.addEventListener('click', toggleTimer);
+
+  </script>
+</body>
+</html>

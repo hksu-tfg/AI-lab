@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 考卷筆跡擦除還原工具</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    /* 自訂捲軸 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- 自訂 Toast 訊息提示元件 -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- 頂部導覽列 -->
+  <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md px-6 py-4 flex flex-wrap justify-between items-center z-10">
+    <div class="flex items-center space-x-3">
+      <!-- 標誌圖標 -->
+      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+      </svg>
+      <div>
+        <h1 class="text-xl font-bold tracking-wide">AI 考卷筆跡擦除還原工具</h1>
+        <p class="text-xs text-blue-100 hidden sm:block">極速去筆跡・還原新考卷・學生二次練習神器</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <span class="w-1.5 h-1.5 mr-1.5 bg-green-500 rounded-full animate-ping"></span>
+        Gemini 影像防偽引擎
+      </span>
+    </div>
+  </header>
+
+  <!-- 主要工作區 -->
+  <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+    
+    <!-- 左側：工具控制面板 -->
+    <aside class="w-full lg:w-96 bg-white border-r border-slate-200 flex flex-col overflow-y-auto max-h-[calc(100vh-72px)] lg:max-h-none">
+      
+      <!-- 區塊一：上傳與拍照 -->
+      <div class="p-6 border-b border-slate-100">
+        <h2 class="text-base font-bold text-slate-800 tracking-wide mb-1 flex items-center">
+          <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold mr-2">1</span>
+          匯入考卷
+        </h2>
+        <p class="text-xs text-slate-400 mb-4 pl-7">支援拖曳、本機上傳或相機拍照</p>
+        
+        <!-- 拖曳上傳區域 -->
+        <div id="drop-zone" class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50 group">
+          <input type="file" id="file-input" class="hidden" accept="image/*">
+          <svg class="w-10 h-10 text-slate-400 group-hover:text-blue-500 mx-auto mb-2 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <p class="text-xs font-semibold text-slate-700">拖曳或點擊選擇檔案</p>
+          <p class="text-[11px] text-slate-400 mt-1">支援 PNG, JPG, JPEG 格式</p>
+        </div>
+
+        <!-- 雙軌相機拍照按鈕 -->
+        <input type="file" id="native-camera-input" class="hidden" accept="image/*" capture="environment">
+        <button id="btn-camera" class="w-full mt-3 flex items-center justify-center space-x-2 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition-colors border border-slate-200">
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 1110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span>啟動相機現場拍照</span>
+        </button>
+      </div>
+
+      <!-- 區塊二：Gemini AI 去除筆跡 -->
+      <div id="ai-controls" class="p-6 bg-gradient-to-br from-indigo-50/70 to-blue-50/70 opacity-50 pointer-events-none transition-opacity">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-base font-bold text-indigo-950 flex items-center">
+            <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mr-2">2</span>
+            去除筆跡
+          </h2>
+          <span class="text-[9px] font-bold tracking-wider px-1.5 py-0.5 bg-indigo-600 text-white rounded-md">AI 智慧</span>
+        </div>
+        <p class="text-[11px] text-indigo-700 leading-relaxed mb-4">
+          一鍵清除試卷上所有的手寫鉛筆、彩色原子筆痕跡、批改分數，並保留原本清晰的印刷字體。
+        </p>
+        <button id="btn-ai-erase" class="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs font-bold rounded-lg shadow-md transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>立即去除筆跡</span>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- 右側：主顯示與預覽面板 -->
+    <section class="flex-1 bg-slate-100 flex flex-col overflow-hidden relative">
+      
+      <!-- 頂部對比與縮放控制列 -->
+      <div id="workspace-controls" class="bg-white border-b border-slate-200 px-6 py-3 flex flex-wrap justify-between items-center space-y-2 sm:space-y-0 opacity-0 pointer-events-none transition-opacity">
+        <div class="flex items-center space-x-3">
+          <span class="text-xs text-slate-500 font-semibold tracking-wider">預覽控制：</span>
+          <button id="btn-toggle-compare" class="text-xs px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-md font-semibold hover:bg-slate-200 transition-colors flex items-center">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            對比原圖
+          </button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button id="btn-rotate" class="p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors" title="旋轉 90 度">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8.89M9 11l3-3 3 3m-3-3v12"/></svg>
+          </button>
+          
+          <button id="btn-print" class="flex items-center space-x-1.5 py-1.5 px-4 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span>直接列印</span>
+          </button>
+          
+          <button id="btn-download" class="flex items-center space-x-1.5 py-1.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>下載試卷</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 相片品質微瑕疵建議橫幅 (非侵入式) -->
+      <div id="warning-banner" class="hidden bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-start justify-between space-x-4 animate-fade-in transition-all font-sans">
+        <div class="flex items-start space-x-3">
+          <div class="p-1 bg-amber-100 rounded text-amber-700 shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-amber-900">⚠️ 影像重建提示</h4>
+            <p id="warning-message" class="text-[11px] text-amber-700 mt-0.5 leading-relaxed whitespace-pre-line"></p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-1 shrink-0">
+          <button id="btn-banner-reupload" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold rounded transition-colors shadow-xs">
+            重傳
+          </button>
+          <button id="btn-banner-close" class="p-1 text-amber-600 hover:text-amber-800 rounded hover:bg-amber-150 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 主畫布與重新拍攝卡片放置區域 -->
+      <div id="canvas-container" class="flex-1 flex flex-col items-center justify-center p-6 overflow-auto min-h-[300px] relative">
+        
+        <!-- 當未上傳時的歡迎狀態 -->
+        <div id="welcome-view" class="max-w-sm text-center p-6 bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-slate-200">
+          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-sm font-bold text-slate-800 mb-1">請匯入考卷照片</h3>
+          <p class="text-xs text-slate-500 mb-2">上傳手機拍下的考卷即可自動分析</p>
+        </div>
+
+        <!-- 情況 C：照片模糊或筆跡重疊時跳出的「重新拍攝」懸浮診斷卡 (言簡意賅) -->
+        <div id="blurry-error-view" class="hidden absolute top-6 right-6 max-w-xs bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-red-200 p-4 z-20 animate-fade-in transition-all">
+          <div class="flex items-start space-x-2.5">
+            <div class="p-1 bg-red-100 rounded text-red-600 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-red-900">⚠️ 偵測到相片過度模糊</h4>
+              <p id="blurry-diagnostic-text" class="text-[11px] text-red-700 mt-1 leading-relaxed whitespace-pre-line"></p>
+            </div>
+          </div>
+          <div class="flex justify-end gap-1.5 mt-3 pt-2.5 border-t border-red-100">
+            <button id="btn-blurry-reupload" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded transition-colors">
+              重新上傳
+            </button>
+            <button id="btn-blurry-recamera" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold rounded border border-slate-200 transition-colors">
+              重新拍攝
+            </button>
+          </div>
+        </div>
+
+        <!-- 運作中畫布 -->
+        <div id="interactive-editor" class="hidden relative max-w-full max-h-full shadow-lg border border-slate-300 bg-white">
+          <canvas id="display-canvas" class="max-w-full block"></canvas>
+        </div>
+
+        <!-- 運作中遮罩 / Loading (含階段性判讀檢查指示) -->
+        <div id="loading-overlay" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-30 flex flex-col items-center justify-center hidden">
+          <div class="bg-white px-6 py-5 rounded-xl shadow-xl flex flex-col items-center space-y-3 max-w-xs text-center">
+            <div class="w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            <div>
+              <p class="text-xs font-bold text-slate-800" id="loading-text">正在清除筆跡...</p>
+              <p class="text-[10px] text-indigo-600 font-semibold mt-1" id="loading-subtext">正在進行字元結構比對與防偽檢查...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 頁尾宣告 -->
+      <footer class="bg-white border-t border-slate-200 px-6 py-2.5 text-center text-xs text-slate-400 flex justify-between items-center w-full">
+        <span>© 2026 AI 考卷還原工坊</span>
+        <span>純靜態・隱私安全</span>
+      </footer>
+
+    </section>
+
+  </main>
+
+  <!-- 相機拍照模態框 -->
+  <div id="camera-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-slate-900 text-white rounded-2xl overflow-hidden shadow-2xl max-w-2xl w-full mx-4 flex flex-col">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="text-sm font-bold flex items-center">
+          <svg class="w-4 h-4 mr-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 1110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+          考卷直接拍照
+        </h3>
+        <button id="btn-close-camera" class="p-1 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <!-- 視訊畫面 -->
+      <div class="relative bg-black flex-1 min-h-[250px] flex items-center justify-center overflow-hidden">
+        <video id="webcam-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+        <div class="absolute inset-6 border-2 border-dashed border-white/30 pointer-events-none rounded flex items-center justify-center">
+          <span class="text-[10px] bg-black/50 px-2 py-0.5 text-slate-300 rounded-full">請將考卷對齊在此框線內</span>
+        </div>
+      </div>
+      <div class="p-3 bg-slate-950 flex justify-center">
+        <button id="btn-capture" class="px-5 py-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-xs font-bold rounded-full shadow-lg transition-colors flex items-center space-x-1.5">
+          <span class="w-2 h-2 bg-white rounded-full animate-ping"></span>
+          <span>拍照</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 溫馨小叮嚀模態框 (學生防抄作業提醒) -->
+  <div id="warm-reminder-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center hidden animate-fade-in">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-slate-100 flex flex-col items-center text-center transform scale-95 transition-transform duration-300 ease-out" id="warm-reminder-card">
+      <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-4 text-3xl">
+        ✍️
+      </div>
+      <h3 class="text-base font-bold text-slate-800 mb-2">溫馨小叮嚀</h3>
+      <p class="text-xs text-slate-600 leading-relaxed mb-6">
+        記得不要抄作業喔！<br>
+        要自己寫完才不用寫第二次。💡
+      </p>
+      <button id="btn-close-reminder" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-md transition-colors">
+        我知道了，馬上去練習！
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Global API Configuration
+    const apiKey = ""; // Dynamic key injection at runtime
+
+    // DOM Selection
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const btnCamera = document.getElementById('btn-camera');
+    const nativeCameraInput = document.getElementById('native-camera-input');
+    const cameraModal = document.getElementById('camera-modal');
+    const btnCloseCamera = document.getElementById('btn-close-camera');
+    const webcamVideo = document.getElementById('webcam-video');
+    const btnCapture = document.getElementById('btn-capture');
+    
+    const aiControls = document.getElementById('ai-controls');
+    const workspaceControls = document.getElementById('workspace-controls');
+    
+    const welcomeView = document.getElementById('welcome-view');
+    const blurryErrorView = document.getElementById('blurry-error-view');
+    const blurryDiagnosticText = document.getElementById('blurry-diagnostic-text');
+    const btnBlurryReupload = document.getElementById('btn-blurry-reupload');
+    const btnBlurryRecamera = document.getElementById('btn-blurry-recamera');
+    
+    const warningBanner = document.getElementById('warning-banner');
+    const warningMessage = document.getElementById('warning-message');
+    const btnBannerReupload = document.getElementById('btn-banner-reupload');
+    const btnBannerClose = document.getElementById('btn-banner-close');
+    
+    const interactiveEditor = document.getElementById('interactive-editor');
+    const displayCanvas = document.getElementById('display-canvas');
+    const displayCtx = displayCanvas.getContext('2d');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    const loadingSubtext = document.getElementById('loading-subtext');
+
+    const btnToggleCompare = document.getElementById('btn-toggle-compare');
+    const btnRotate = document.getElementById('btn-rotate');
+    const btnPrint = document.getElementById('btn-print');
+    const btnDownload = document.getElementById('btn-download');
+    const btnAiErase = document.getElementById('btn-ai-erase');
+
+    const toastContainer = document.getElementById('toast-container');
+
+    // 溫馨提醒元件
+    const warmReminderModal = document.getElementById('warm-reminder-modal');
+    const warmReminderCard = document.getElementById('warm-reminder-card');
+    const btnCloseReminder = document.getElementById('btn-close-reminder');
+
+    let originalImg = null;       
+    let cleanedImg = null;        
+    let rotationAngle = 0;        
+    let localBlurDetected = false; // 本地模糊偵測標記
+
+    // 自訂 Toast 通知
+    function showToast(message, type = "info") {
+      const toast = document.createElement('div');
+      toast.className = `p-3 rounded-lg shadow-md border text-xs font-semibold flex items-center space-x-2 transition-all transform translate-y-2 opacity-0 pointer-events-auto max-w-xs ${
+        type === "success" ? "bg-green-50 border-green-200 text-green-800" :
+        type === "error" ? "bg-red-50 border-red-200 text-red-800" :
+        "bg-blue-50 border-blue-200 text-blue-800"
+      }`;
+      
+      let icon = '';
+      if (type === 'success') {
+        icon = '<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+      } else if (type === 'error') {
+        icon = '<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+      } else {
+        icon = '<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+      }
+
+      toast.innerHTML = `${icon}<span>${message}</span>`;
+      toastContainer.appendChild(toast);
+
+      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 50);
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // ==========================================
+    // 0. 本地像素模糊檢測 (避免低解析度、晃動照片過關)
+    // ==========================================
+    function checkImageSharpness(img) {
+      // 1. 解析度過低檢測
+      if (img.width < 500 || img.height < 500) {
+        return "照片解析度過低（低於 500px），請重新拍攝高畫質照片。";
+      }
+
+      // 2. 邊緣對比梯度檢測 (Sobel 變異數分析)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const size = 200;
+      canvas.width = size;
+      canvas.height = size;
+      ctx.drawImage(img, 0, 0, size, size);
+
+      try {
+        const imgData = ctx.getImageData(0, 0, size, size);
+        const data = imgData.data;
+        let totalDiff = 0;
+        let count = 0;
+
+        for (let y = 1; y < size - 1; y += 2) {
+          for (let x = 1; x < size - 1; x += 2) {
+            const idx = (y * size + x) * 4;
+            const val = (data[idx] + data[idx+1] + data[idx+2]) / 3;
+            const valRight = (data[idx + 4] + data[idx + 5] + data[idx + 6]) / 3;
+            totalDiff += Math.abs(val - valRight);
+            count++;
+          }
+        }
+
+        const avgGradient = totalDiff / count;
+        // 當平均梯度小於 6.5，高度疑似為失焦模糊
+        if (avgGradient < 6.5) {
+          return "照片對焦模糊或晃動嚴重，印刷文字可能失真。";
+        }
+      } catch (e) {
+        console.warn("無法取得像素資料（可能跨域限制）");
+      }
+      return null;
+    }
+
+    // ==========================================
+    // 1. 檔案載入與拍照
+    // ==========================================
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+      if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    let localStream = null;
+    
+    async function triggerCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        nativeCameraInput.click();
+        return;
+      }
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+        });
+        webcamVideo.srcObject = localStream;
+        webcamVideo.play().catch(e => console.log(e));
+        cameraModal.classList.remove('hidden');
+      } catch (err) {
+        nativeCameraInput.click();
+      }
+    }
+
+    btnCamera.addEventListener('click', triggerCamera);
+
+    nativeCameraInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function stopWebcam() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      cameraModal.classList.add('hidden');
+    }
+    btnCloseCamera.addEventListener('click', stopWebcam);
+
+    btnCapture.addEventListener('click', () => {
+      if (!localStream) return;
+      const captureCanvas = document.createElement('canvas');
+      captureCanvas.width = webcamVideo.videoWidth || 1280;
+      captureCanvas.height = webcamVideo.videoHeight || 720;
+      const ctx = captureCanvas.getContext('2d');
+      ctx.drawImage(webcamVideo, 0, 0, captureCanvas.width, captureCanvas.height);
+      
+      const dataUrl = captureCanvas.toDataURL('image/jpeg');
+      const img = new Image();
+      img.onload = function() {
+        initImageWorkspace(img);
+        stopWebcam();
+      };
+      img.src = dataUrl;
+    });
+
+    function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        showToast("格式錯誤，請上傳圖檔", "error");
+        return;
+      }
+      showLoading("載入影像中...");
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          initImageWorkspace(img);
+          hideLoading();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function initImageWorkspace(img) {
+      originalImg = img;
+      cleanedImg = null; 
+      rotationAngle = 0;
+      
+      aiControls.classList.remove('opacity-50', 'pointer-events-none');
+      workspaceControls.classList.remove('opacity-0', 'pointer-events-none');
+      
+      welcomeView.classList.add('hidden');
+      blurryErrorView.classList.add('hidden'); 
+      warningBanner.classList.add('hidden'); 
+      interactiveEditor.classList.remove('hidden');
+
+      // 本地模糊預檢
+      const localResult = checkImageSharpness(img);
+      if (localResult) {
+        localBlurDetected = true;
+        blurryDiagnosticText.innerText = localResult;
+        blurryErrorView.classList.remove('hidden');
+        showToast("⚠️ 照片有些模糊，可能會影響清除效果", "info");
+      } else {
+        localBlurDetected = false;
+      }
+
+      render();
+    }
+
+    // ==========================================
+    // 2. 品質建議與重試控制
+    // ==========================================
+    btnBannerReupload.addEventListener('click', () => fileInput.click());
+    btnBannerClose.addEventListener('click', () => warningBanner.classList.add('hidden'));
+    btnBlurryReupload.addEventListener('click', () => fileInput.click());
+    btnBlurryRecamera.addEventListener('click', triggerCamera);
+
+    // 溫馨提醒關閉事件
+    btnCloseReminder.addEventListener('click', () => {
+      warmReminderCard.classList.add('scale-95');
+      setTimeout(() => {
+        warmReminderModal.classList.add('hidden');
+      }, 150);
+    });
+
+    // ==========================================
+    // 3. 影像繪製
+    // ==========================================
+
+    function render(showOriginalInstead = false) {
+      const activeImg = showOriginalInstead ? originalImg : (cleanedImg || originalImg);
+      if (!activeImg) return;
+
+      let drawW = activeImg.width;
+      let drawH = activeImg.height;
+
+      if (rotationAngle === 90 || rotationAngle === 270) {
+        drawW = activeImg.height;
+        drawH = activeImg.width;
+      }
+
+      displayCanvas.width = drawW;
+      displayCanvas.height = drawH;
+
+      displayCtx.clearRect(0, 0, drawW, drawH);
+      displayCtx.fillStyle = 'white';
+      displayCtx.fillRect(0, 0, drawW, drawH);
+
+      displayCtx.translate(drawW/2, drawH/2);
+      displayCtx.rotate((rotationAngle * Math.PI) / 180);
+      displayCtx.drawImage(activeImg, -activeImg.width/2, -activeImg.height/2);
+      displayCtx.setTransform(1, 0, 0, 1, 0, 0); 
+    }
+
+    btnRotate.addEventListener('click', () => {
+      if (!originalImg) return;
+      showLoading("旋轉中...");
+      setTimeout(() => {
+        rotationAngle = (rotationAngle + 90) % 360;
+        render();
+        hideLoading();
+      }, 50);
+    });
+
+    // ==========================================
+    // 4. 精緻化文字解析器 (深度解析 JSON 及 image_pills，阻絕原始碼外洩)
+    // ==========================================
+    function sanitizeFeedbackText(text) {
+      if (!text) return "";
+      
+      // 1. 去除所有 Markdown Codeblock 標籤
+      let clean = text.replace(/```[a-zA-Z]*\n?/g, "").replace(/```/g, "").trim();
+      
+      // 2. 深度 JSON 解析診斷
+      try {
+        const jsonMatch = clean.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          
+          if (parsed.errorMessage) return parsed.errorMessage;
+          if (parsed.label) return parsed.label;
+          
+          if (parsed.image_pills && Array.isArray(parsed.image_pills)) {
+            const labels = parsed.image_pills
+              .map(p => p.label)
+              .filter(l => l && l.toLowerCase() !== "ok");
+            if (labels.length > 0) {
+              return "偵測到以下模糊或手寫覆蓋區域：\n" + labels.map((l, idx) => `${idx + 1}. ${l}`).join("\n");
+            }
+          }
+        }
+      } catch (e) {
+        // 解析失敗，則視為普通文字進行下一步過濾
+      }
+      
+      // 3. 過濾掉 markdown 的圖片語法
+      clean = clean.replace(/!\[.*?\]\(.*?\)/g, "");
+      
+      return clean.trim();
+    }
+
+    // ==========================================
+    // 5. 去除筆跡 API 串接與階段檢驗機制
+    // ==========================================
+
+    btnAiErase.addEventListener('click', async () => {
+      if (!originalImg) return;
+      
+      showLoading("正在對焦與評估影像清晰度...", "步驟 1: 清晰度預檢中...");
+      warningBanner.classList.add('hidden'); 
+      blurryErrorView.classList.add('hidden'); 
+      
+      // 模擬階段性檢測指示以改善使用者信心
+      setTimeout(() => {
+        if (loadingOverlay.classList.contains('hidden')) return;
+        loadingText.textContent = "字元結構對比與防偽檢測中...";
+        loadingSubtext.textContent = "步驟 2: 嚴準對比印刷字體，嚴防 AI 瞎掰...";
+      }, 3500);
+
+      setTimeout(() => {
+        if (loadingOverlay.classList.contains('hidden')) return;
+        loadingText.textContent = "正在精準擦除手寫筆跡...";
+        loadingSubtext.textContent = "步驟 3: 抹除紅藍墨水與石墨，保留線條...";
+      }, 7000);
+      
+      try {
+        const base64Data = displayCanvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+        const response = await callGeminiAPI(base64Data);
+        
+        const cleanWarning = sanitizeFeedbackText(response.warningMessage);
+        
+        // 核心攔截安全鎖：結合本地預檢與 AI 反饋
+        // 只要任何一端判定模糊，強制彈出橘紅色重拍診斷卡，絕不瞎掰字體。
+        const forceBlurryView = localBlurDetected || (cleanWarning && (
+          cleanWarning.includes("模糊") ||
+          cleanWarning.includes("重拍") ||
+          cleanWarning.includes("重新") ||
+          cleanWarning.includes("解析度") ||
+          cleanWarning.includes("辨識") ||
+          cleanWarning.includes("對焦") ||
+          cleanWarning.includes("失真") ||
+          cleanWarning.includes("晃動") ||
+          cleanWarning.includes("不佳") ||
+          cleanWarning.includes("看不清") ||
+          cleanWarning.includes("糊") ||
+          cleanWarning.includes("難以")
+        ));
+
+        if (response.imageData) {
+          // 先出圖 (尊重使用者查看需求)
+          const aiImg = new Image();
+          aiImg.onload = function() {
+            cleanedImg = aiImg; 
+            render();
+            hideLoading();
+            
+            if (forceBlurryView) {
+              // 有模糊疑慮，雖然出了圖，但依然強制拉起重拍提示框
+              const errorDetail = cleanWarning || "影像不夠清晰。為防字體判讀出錯，建議重新上傳。";
+              blurryDiagnosticText.innerText = errorDetail;
+              blurryErrorView.classList.remove('hidden');
+              showToast("⚠️ 影像重構完成，但因模糊可能存在判讀誤差。", "error");
+            } else {
+              blurryErrorView.classList.add('hidden');
+              showToast("✨ 筆跡已成功擦除！", "success");
+              
+              // 成功擦除筆跡後，跳出精緻的溫馨小叮嚀視窗
+              warmReminderModal.classList.remove('hidden');
+              warmReminderCard.classList.remove('scale-95');
+            }
+          };
+          aiImg.src = `data:${response.mimeType};base64,${response.imageData}`;
+          
+        } else if (response.hasWarning && cleanWarning) {
+          // 若無影像資料但有診斷
+          hideLoading();
+          interactiveEditor.classList.add('hidden');
+          
+          blurryDiagnosticText.innerText = cleanWarning;
+          blurryErrorView.classList.remove('hidden');
+          showToast("⚠️ 照片太模糊，無法安全還原。", "error");
+        } else {
+          throw new Error("無效的回傳資料");
+        }
+      } catch (err) {
+        hideLoading();
+        showToast("處理失敗，請稍後重試", "error");
+        console.error(err);
+      }
+    });
+
+    async function callGeminiAPI(base64Image) {
+      const modelName = "gemini-2.5-flash-image-preview";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+      const systemPrompt = `You are an expert exam paper cleaner.
+      
+      CRITICAL RULE 1 (Anti-Hallucination & Seamless Pixel Integration):
+      DO NOT REDRAW, RE-TYPE, RECONSTRUCT OR HALLUCINATE PRINTED CHARACTERS (including Hanzi and Zhuyin/Bopomofo phonetic symbols).
+      Your only allowed transformation is to erase student's handwriting (including pencil strokes, ink annotations, and printed or digitally-drawn white handwriting/answers over non-white paper backgrounds).
+      To erase handwriting, you must SEAMLESSLY blend/inpaint the erased areas with the exact color and texture of the surrounding paper background. 
+      Alternatively, you may normalize the entire paper background to a clean uniform white and render the printed characters and diagrams in crisp, solid black.
+      DO NOT simply paint flat white rectangles or white brush strokes over the handwriting if the surrounding paper background is greyish, yellowish, or textured, as this leaves ugly, unnatural white traces of the characters. Erased areas must have NO ghost silhouettes or white character borders left behind.
+
+      CRITICAL RULE 2 (Strict Clarity Assessment):
+      If the input photo is heavily blurred, out of focus, or shaken such that printed text characters are illegible, do NOT attempt to redraw or output an image. 
+      Output a 1-sentence diagnostic response in Traditional Chinese (Taiwan, zh-TW) under 25 words explaining the image quality issue (e.g., "影像過於模糊且晃動，字體結構已失真。"), requesting a retake.
+
+      If clear enough:
+      1. Output the masked/cleaned image in the IMAGE modality.
+      2. If there are minor blurry spots or ambiguous text, output a 1-sentence warning under 20 words in Traditional Chinese in the TEXT part. Otherwise, output "OK" in the text part.
+      
+      Ensure all text responses are plain Traditional Chinese. Do not wrap in markdown code blocks or JSON.`;
+
+      const payload = {
+        contents: [
+          {
+            parts: [
+              { text: "Clean this paper or output a blurry warning if characters are illegible. Ensure no white traces of erased letters are left." },
+              { inlineData: { mimeType: "image/jpeg", data: base64Image } }
+            ]
+          }
+        ],
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"]
+        }
+      };
+
+      const maxRetries = 5;
+      let delay = 1000;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP Error ${response.status}`);
+          }
+
+          const result = await response.json();
+          const textPart = result.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
+          const imagePart = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+          
+          const imageBase64 = imagePart?.inlineData?.data;
+          const mimeType = imagePart?.inlineData?.mimeType || "image/png";
+          const hasWarning = textPart && textPart.trim() !== "OK" && textPart.trim() !== "CLEAR";
+          
+          return {
+            imageData: imageBase64 || null,
+            mimeType: mimeType,
+            hasWarning: !!hasWarning,
+            warningMessage: textPart || null
+          };
+        } catch (error) {
+          if (attempt === maxRetries) throw error;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2;
+        }
+      }
+    }
+
+    // ==========================================
+    // 6. 對比與輸出
+    // ==========================================
+
+    btnToggleCompare.addEventListener('mousedown', () => render(true));
+    btnToggleCompare.addEventListener('mouseup', () => render(false));
+    btnToggleCompare.addEventListener('touchstart', (e) => { e.preventDefault(); render(true); });
+    btnToggleCompare.addEventListener('touchend', (e) => { e.preventDefault(); render(false); });
+
+    btnDownload.addEventListener('click', () => {
+      if (!originalImg) return;
+      const link = document.createElement('a');
+      link.download = 'clean_exam_paper.png';
+      link.href = displayCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    btnPrint.addEventListener('click', () => {
+      if (!originalImg) return;
+      const imgDataUrl = displayCanvas.toDataURL('image/png');
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>列印</title>
+          <style>
+            @page { size: A4; margin: 0; }
+            body { margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+            img { max-width: 100%; max-height: 100%; object-fit: contain; }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          <img src="${imgDataUrl}" />
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    });
+
+    function showLoading(text, subtext = "正在進行字元結構比對與防偽檢查...") {
+      loadingText.textContent = text;
+      loadingSubtext.textContent = subtext;
+      loadingOverlay.classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      loadingOverlay.classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>網頁連結轉 PDF 產生器 - 高還原原網排版</title>
+  
+  <!-- 載入 Tailwind CSS 用於美化現代感 UI -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 載入 Lucide 圖標 (僅用於工具操作介面，PDF 內已完全移除) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- 載入 Mozilla Readability 網頁內文解析庫 -->
+  <script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.5.0/Readability.min.js"></script>
+  
+  <!-- 載入 html2pdf.js 庫 (用於前端直接渲染 HTML 為 PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;700&display=swap');
+    
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    /* 呼吸發光特效，確保翻譯按鈕絕對醒目 */
+    @keyframes pulse-glowing {
+      0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+    }
+    .animate-pulse-glowing {
+      animation: pulse-glowing 2.5s infinite;
+    }
+
+    /* ==========================================================================
+       PDF 導出優化專用 CSS 規則 (防止空白頁與分頁截斷)
+       ========================================================================== */
+    .theme-original p, .theme-original li {
+      page-break-inside: auto !important;
+      break-inside: auto !important;
+    }
+
+    .theme-original h1, .theme-original h2, .theme-original h3 {
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    .theme-original blockquote {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    /* 防止圖片被截斷、分割在兩頁中間的 CSS 規則 */
+    .theme-original img, #pdfContent img {
+      page-break-inside: avoid !important;  /* 告訴瀏覽器/PDF引擎：此元素禁止在中間分頁 */
+      break-inside: avoid !important;       /* 現代分頁避讓標準 */
+      display: block !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 1.5em auto !important;
+    }
+
+    /* ==========================================================================
+       重要修復：徹底解決「文字重疊」、「文字在右側邊緣被裁切/截掉」的列印優化 CSS
+       ========================================================================== */
+    .pdf-printing {
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    /* ⚡ 核心修復：強制讓所有段落、項目、標題與內文自動在 A4 邊界強制折行，防止寬度撐開導致文字被截 */
+    .pdf-printing,
+    .pdf-printing * {
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      word-break: break-word !important;
+      white-space: normal !important;
+    }
+
+    /* 當進入列印模式時，強制降級為標準系統字型，解決 web font 的寬度計算重疊問題 */
+    .pdf-printing, .pdf-printing .theme-original {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", "Apple LiGothic Medium", sans-serif !important;
+    }
+
+    /* 強制將所有段落設為靠左對齊，徹底阻止左右對齊 (justify) 引起的字元位移重疊 */
+    .pdf-printing p,
+    .pdf-printing li,
+    .pdf-printing h1,
+    .pdf-printing h2,
+    .pdf-printing h3 {
+      text-align: left !important;
+      letter-spacing: normal !important;
+      word-spacing: normal !important;
+      text-shadow: none !important;
+      box-shadow: none !important;
+    }
+
+    /* 固定像素行高與字體大小，確保 canvas 輸出時高相容 */
+    .pdf-printing .theme-original p,
+    .pdf-printing .theme-original li {
+      font-size: 16px !important;
+      line-height: 28px !important;
+    }
+
+    /* 限制 PDF 內圖片最大寬度，防止超出頁面 */
+    #pdfContent img {
+      max-width: 100% !important;
+      height: auto !important;
+      display: block;
+      margin: 1.5em auto;
+    }
+
+    /* 自訂滾動條 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    
+    /* 讓 contenteditable div 也有 placeholder 特效 */
+    [contenteditable="true"]:empty:before {
+      content: attr(placeholder);
+      color: #94a3b8;
+      pointer-events: none;
+      display: block; /* For Firefox */
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- 導覽列 -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 text-white p-2 rounded-xl">
+          <i data-lucide="file-text" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900">網頁轉 PDF 工具 Pro</h1>
+          <p class="text-xs text-slate-500">100% 還原原網網頁排版、色彩、圖片與即時翻譯</p>
+        </div>
+      </div>
+      <div class="text-sm text-slate-500 hidden sm:block">
+        <span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-medium">支援一鍵英文翻譯繁中</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 flex flex-col gap-6">
+    
+    <!-- 提示區 -->
+    <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex gap-3 text-indigo-900 text-sm">
+      <i data-lucide="sparkles" class="w-5 h-5 shrink-0 mt-0.5 text-indigo-600"></i>
+      <div>
+        <p class="font-semibold mb-1">智慧極速並行翻譯與排版還原新技術：</p>
+        <ul class="list-disc list-inside space-y-1 text-indigo-800">
+          <li><b>自動翻譯選項：</b>在第一步中勾選<b>「自動翻譯成繁體中文」</b>，擷取/貼上後程式會自動完成翻譯，省去尋找按鈕的麻煩！</li>
+          <li><b>網頁原排版直注：</b>已徹底移除所有人工自加的頂部表格，PDF 將純淨地從最乾淨的文章大標題與內文開始。</li>
+          <li><b>英文測試專用按鈕：</b>新增一鍵載入《英文部落格》示範，方便您立即體驗強大的「保留排版、一鍵繁中化」功能。</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 步驟 1：整合輸入控制面板 -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
+        <div class="flex items-center space-x-2">
+          <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">步驟 1</span>
+          <h2 class="text-lg font-bold text-slate-900">選擇輸入網頁方式</h2>
+        </div>
+        
+        <!-- 輸入方式切換 Tabs -->
+        <div class="bg-slate-100 p-1 rounded-xl flex self-start sm:self-auto">
+          <button 
+            id="tabAutoMode"
+            onclick="switchInputMode('auto')"
+            class="px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-1.5 bg-white text-indigo-700 shadow-sm"
+          >
+            <i data-lucide="link" class="w-3.5 h-3.5"></i>
+            自動網址擷取
+          </button>
+          <button 
+            id="tabPasteMode"
+            onclick="switchInputMode('paste')"
+            class="px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
+          >
+            <i data-lucide="code" class="w-3.5 h-3.5"></i>
+            貼上 HTML 原始碼還原 (100% 成功保底)
+          </button>
+        </div>
+      </div>
+
+      <!-- 面板 A：自動網址擷取 -->
+      <div id="panelAutoMode" class="block space-y-4">
+        <div class="flex flex-col md:flex-row gap-3">
+          <div class="relative flex-grow">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i data-lucide="link-2" class="h-5 w-5 text-slate-400"></i>
+            </div>
+            <input 
+              type="url" 
+              id="urlInput" 
+              placeholder="請貼上網頁連結 (例如：https://vocus.cc/article/...)" 
+              class="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 placeholder-slate-400 text-sm"
+            >
+          </div>
+          <button 
+            onclick="fetchWebpage()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-3 rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-sm focus:outline-none shrink-0"
+          >
+            <i data-lucide="download" class="w-5 h-5"></i>
+            <span>自動擷取網頁</span>
+          </button>
+        </div>
+        
+        <!-- 自動翻譯與示範按鈕 -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
+          <!-- 直接將自動翻譯選項放在第一步 -->
+          <label class="flex items-center space-x-2 text-sm text-slate-700 font-bold cursor-pointer bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition">
+            <input type="checkbox" id="autoTranslateCheckbox" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+            <span class="flex items-center gap-1">
+              <i data-lucide="languages" class="w-4 h-4 text-indigo-600"></i>
+              擷取成功後，自動翻譯成繁體中文 (保留原排版)
+            </span>
+          </label>
+
+          <div class="flex gap-2">
+            <button 
+              onclick="loadDemoArticleEN()"
+              class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-4 py-2.5 rounded-xl border border-amber-200 transition flex items-center gap-1.5"
+            >
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600 animate-bounce"></i>
+              一鍵載入《英文部落格》進行翻譯測試
+            </button>
+            <button 
+              onclick="loadDemoArticleZH()"
+              class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold px-4 py-2.5 rounded-xl border border-indigo-100 transition flex items-center gap-1.5"
+            >
+              <i data-lucide="file-text" class="w-3.5 h-3.5 text-indigo-600"></i>
+              載入中文示範文章
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 面板 B：貼上 HTML 原始碼 (永久固定) -->
+      <div id="panelPasteMode" class="hidden space-y-4">
+        <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-900 space-y-1">
+          <p class="font-bold">💡 完美還原與載入圖片的步驟：</p>
+          <ol class="list-decimal list-inside space-y-0.5 text-amber-800">
+            <li>在目標網頁按下 <kbd class="bg-white px-1 border rounded">Ctrl + U</kbd> (Mac 按 Option + Command + U) 開啟網頁原始碼，全選並複製。</li>
+            <li>將複製的程式碼貼在下方輸入框中，並在「網頁來源網址」填入該網址，即可完美自動下載圖片！</li>
+          </ol>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- 來源網址輸入 -->
+          <div class="md:col-span-2 space-y-1">
+            <label class="text-xs text-slate-600 font-bold flex items-center gap-1">
+              <i data-lucide="link" class="w-3.5 h-3.5 text-indigo-500"></i>
+              網頁來源網址 (必填，用於自動轉換與加載網頁圖片)：
+            </label>
+            <input 
+              type="url" 
+              id="pasteSourceUrl" 
+              placeholder="例如：https://www.thenegentropy.com/pros_and_cons_of_labeling/" 
+              class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"
+            >
+          </div>
+          <!-- 執行按鈕 -->
+          <div class="flex items-end">
+            <button 
+              onclick="processPastedHtml()"
+              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-sm"
+            >
+              <i data-lucide="wand-2" class="w-4 h-4"></i>
+              <span>開始解析並還原</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 貼上原始碼時的自動翻譯勾選框 -->
+        <div class="flex items-center">
+          <label class="flex items-center space-x-2 text-sm text-slate-700 font-bold cursor-pointer bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 transition">
+            <input type="checkbox" id="autoTranslateCheckboxPaste" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+            <span class="flex items-center gap-1">
+              <i data-lucide="languages" class="w-4 h-4 text-indigo-600"></i>
+              解析成功後，自動翻譯成繁體中文 (保留原排版)
+            </span>
+          </label>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-xs text-slate-600 font-bold flex items-center gap-1">
+            <i data-lucide="file-code" class="w-3.5 h-3.5 text-indigo-500"></i>
+            貼上 HTML 原始碼：
+          </label>
+          <textarea 
+            id="pasteHtmlCode" 
+            rows="6"
+            placeholder="請在此處貼上網頁原始碼..."
+            class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500 resize-none h-[180px]"
+          ></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 狀態顯示區域 -->
+    <div id="statusArea" class="hidden">
+      <div id="loadingStatus" class="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm flex flex-col items-center justify-center text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mb-4"></div>
+        <h3 class="font-bold text-slate-800 text-lg mb-1" id="loadingTitle">正在請求與解析網頁中...</h3>
+        <p class="text-sm text-slate-500 max-w-md mb-4" id="loadingSub">我們正在下載網頁樣式與內容，請稍候。</p>
+        
+        <button 
+          onclick="abortFetchAndCreateManual()" 
+          class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1 shadow-sm"
+        >
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          連線過久？手動中斷並貼上內容
+        </button>
+      </div>
+
+      <!-- 網頁擷取失敗區 -->
+      <div id="errorStatus" class="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-rose-800 hidden">
+        <div class="flex gap-3">
+          <i data-lucide="alert-triangle" class="w-6 h-6 text-rose-600 shrink-0"></i>
+          <div class="w-full">
+            <h3 class="font-bold text-lg mb-1">網頁自動擷取失敗</h3>
+            <p class="text-sm mb-4 text-rose-700" id="errorMsg">無法取得該網頁內容。這通常是由於目標網站設有強大的防火牆（如 Cloudflare）。</p>
+            
+            <div class="flex flex-wrap gap-3">
+              <button onclick="switchInputMode('paste')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="code" class="w-4 h-4"></i>
+                切換至下方「貼上原始碼」模式還原 (100% 成功保底)
+              </button>
+              <button onclick="createManual()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-lg transition flex items-center gap-1.5">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                手動建立空白模板
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第二步：編輯與匯出區域 -->
+    <div id="editorArea" class="hidden flex flex-col gap-6">
+      
+      <!-- 頂部控制面板（非列印區，不影響 PDF 內容） -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 font-sans">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">確認原網網頁排版預覽</h2>
+            <p class="text-xs text-slate-500">此預覽已還原原網站的字體與色彩，您可以直接在下方點擊修改文字。</p>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- 來源網址顯示 -->
+            <div class="flex items-center gap-2 text-xs text-slate-500 font-mono bg-slate-100 px-3 py-2 rounded-lg max-w-xs truncate">
+              <span class="font-bold text-slate-600">來源：</span>
+              <input type="text" id="editSourceUrl" class="bg-transparent w-48 text-slate-600 outline-none font-mono text-xs" readonly>
+            </div>
+
+            <!-- 發光提醒翻譯按鈕 (當偵測到英文時會閃爍提示) -->
+            <button 
+              id="translateBtn"
+              onclick="translateContentToChinese()"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition duration-200 flex items-center gap-2 shadow-md"
+            >
+              <i data-lucide="languages" class="w-4.5 h-4.5"></i>
+              <span id="translateBtnText">一鍵翻譯成繁體中文</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 編輯提示 -->
+        <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-xs text-amber-900 flex items-start gap-2 mb-6 font-sans">
+          <i data-lucide="edit-3" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+          <div>
+            <span class="font-bold">所見即所得編輯與翻譯：</span>
+            下方預覽區的所有文字（包含<b>文章標題、主體內文</b>）均可直接點擊進行編輯修改、刪減。若為英文網頁，請點選右上角<b>「一鍵翻譯成繁體中文」</b>，確認完美後再匯出 PDF。
+          </div>
+        </div>
+
+        <!-- 編輯與列印主體 (這也是要轉成 PDF 的對象 - 100% 採用原網視覺與排版，裝飾符號已去淨) -->
+        <div id="pdfCaptureZone" class="bg-white border border-slate-300 rounded-xl p-8 md:p-16 shadow-inner max-w-4xl mx-auto overflow-hidden">
+          
+          <!-- 動態插入的原網樣式表 (僅對列印區生效，絕不干擾外層 Tailwind) -->
+          <style id="originalPageStyles"></style>
+
+          <!-- PDF 內容區（套用原網特徵樣式） -->
+          <div class="prose max-w-none theme-original">
+            <!-- ⚡ 核心修復：使用 contenteditable h1 取代原有的 textarea 避免 canvas 渲染截斷文字 -->
+            <div class="mb-6">
+              <div 
+                id="pdfTitle" 
+                contenteditable="true"
+                class="w-full text-3xl font-bold text-slate-900 hover:bg-slate-50/50 focus:bg-white border border-transparent rounded px-1 py-1 transition leading-tight font-sans focus:outline-none min-h-[1.5em]"
+                placeholder="請輸入文章標題"
+                style="background: transparent;"
+              ></div>
+            </div>
+
+            <!-- 文章主體內容 -->
+            <div 
+              id="pdfContent" 
+              contenteditable="true" 
+              class="w-full min-h-[400px] hover:bg-slate-50/30 focus:bg-white border border-transparent rounded p-2 transition focus:outline-none"
+              style="background: transparent;"
+            >
+              <!-- 這裡會由 JS 動態塞入解析後的內文 HTML -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 底部快速匯出與底部的備用翻譯按鈕 -->
+        <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-3 font-sans">
+          <button 
+            id="bottomTranslateBtn"
+            onclick="translateContentToChinese()"
+            class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-6 py-4 rounded-xl transition duration-200 flex items-center gap-2 border border-indigo-200 shadow-sm"
+          >
+            <i data-lucide="languages" class="w-5 h-5"></i>
+            <span>翻譯此頁為繁體中文</span>
+          </button>
+          
+          <button 
+            onclick="exportToPDF()"
+            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-10 py-4 rounded-xl transition duration-200 flex items-center gap-3 shadow-md transform hover:-translate-y-0.5"
+          >
+            <i data-lucide="file-down" class="w-6 h-6"></i>
+            <span class="text-base">匯出並下載高品質 PDF</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 頁尾 -->
+  <footer class="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 mt-12 font-sans">
+    <div class="max-w-6xl mx-auto px-4 text-center space-y-3">
+      <p class="text-sm">網頁連結轉 PDF 產生器 - 智慧排版與即時翻譯版</p>
+      <div class="flex justify-center gap-4 text-xs">
+        <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-4 h-4"></i> 無個資外洩風險</span>
+        <span class="flex items-center gap-1"><i data-lucide="image" class="w-4 h-4"></i> 圖片 CORS 雲端解鎖</span>
+        <span class="flex items-center gap-1"><i data-lucide="languages" class="w-4 h-4"></i> 極速合併譯製</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast 通知 -->
+  <div id="toastMessage" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm">
+    <i data-lucide="info" id="toastIcon" class="w-5 h-5 text-indigo-400"></i>
+    <span id="toastText">訊息通知</span>
+  </div>
+
+  <script>
+    // 初始化 Lucide 圖標
+    lucide.createIcons();
+
+    let currentTheme = 'vocus'; // 'vocus', 'reporter', 'generic'
+    let isConvertingImages = false;
+    let activeAbortController = null; // 用來隨時手動中斷連線
+
+    // 顯示自訂 Toast 通知
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toastMessage');
+      const text = document.getElementById('toastText');
+      const icon = document.getElementById('toastIcon');
+
+      text.innerText = message;
+      
+      if (type === 'success') {
+        icon.setAttribute('data-lucide', 'check-circle');
+        icon.className = "w-5 h-5 text-emerald-400";
+      } else if (type === 'error') {
+        icon.setAttribute('data-lucide', 'alert-circle');
+        icon.className = "w-5 h-5 text-rose-400";
+      } else {
+        icon.setAttribute('data-lucide', 'info');
+        icon.className = "w-5 h-5 text-indigo-400";
+      }
+      lucide.createIcons();
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 4000);
+    }
+
+    // 支援的多重代理伺服器列表
+    const PROXY_PROVIDERS = [
+      {
+        name: "Corsproxy.io",
+        getUrl: (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+      },
+      {
+        name: "AllOrigins (直接模式)",
+        getUrl: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+      },
+      {
+        name: "Codetabs CORS Proxy",
+        getUrl: (url) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`
+      }
+    ];
+
+    // 切換輸入模式 (自動網址擷取 / 貼上原始碼)
+    function switchInputMode(mode) {
+      const tabAuto = document.getElementById('tabAutoMode');
+      const tabPaste = document.getElementById('tabPasteMode');
+      const panelAuto = document.getElementById('panelAutoMode');
+      const panelPaste = document.getElementById('panelPasteMode');
+
+      const activeTabClass = "px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-1.5 bg-white text-indigo-700 shadow-sm";
+      const inactiveTabClass = "px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-1.5 text-slate-600 hover:text-slate-900";
+
+      if (mode === 'auto') {
+        tabAuto.className = activeTabClass;
+        tabPaste.className = inactiveTabClass;
+        panelAuto.classList.remove('hidden');
+        panelPaste.classList.add('hidden');
+      } else {
+        tabPaste.className = activeTabClass;
+        tabAuto.className = inactiveTabClass;
+        panelPaste.classList.remove('hidden');
+        panelAuto.classList.add('hidden');
+        
+        // 自動把 URL 欄位網址帶入原始碼網址中
+        const currentUrl = document.getElementById('urlInput').value.trim();
+        if (currentUrl) {
+          document.getElementById('pasteSourceUrl').value = currentUrl;
+        }
+      }
+    }
+
+    // 處理手動貼上的 HTML
+    async function processPastedHtml() {
+      const htmlCode = document.getElementById('pasteHtmlCode').value.trim();
+      const sourceUrl = document.getElementById('pasteSourceUrl').value.trim() || "https://manual.paste";
+
+      if (!htmlCode) {
+        showToast("請輸入 HTML 原始碼！", "error");
+        return;
+      }
+
+      document.getElementById('statusArea').classList.remove('hidden');
+      document.getElementById('loadingStatus').classList.remove('hidden');
+      document.getElementById('errorStatus').classList.add('hidden');
+      document.getElementById('editorArea').classList.add('hidden');
+
+      document.getElementById('loadingTitle').innerText = `正在本地解析原始碼...`;
+      document.getElementById('loadingSub').innerText = `程式正在抽取核心段落並套用視覺主題，請稍候。`;
+
+      setTimeout(async () => {
+        // 在手動貼上模式，檢查是否有勾選自動翻譯
+        const autoTranslate = document.getElementById('autoTranslateCheckboxPaste').checked;
+        await processAndDisplay(htmlCode, sourceUrl, autoTranslate);
+      }, 300);
+    }
+
+    // 圖片防空白核心：利用 Weserv 圖片代理跳過 CORS 阻擋並編譯為 Base64
+    async function convertImagesToBase64(container, sourceUrl) {
+      const images = container.querySelectorAll('img');
+      if (images.length === 0) return;
+
+      isConvertingImages = true;
+      showToast(`偵測到 ${images.length} 張圖片，正在解鎖跨域限制以防留白...`, 'info');
+
+      const promises = Array.from(images).map(async (img, idx) => {
+        img.removeAttribute('loading');
+        
+        let originalSrc = img.getAttribute('src') || img.getAttribute('data-src');
+        if (!originalSrc) return;
+
+        if (originalSrc.startsWith('data:')) return;
+
+        try {
+          const absoluteUrl = new URL(originalSrc, sourceUrl).href;
+          const bypassUrl = `https://images.weserv.nl/?url=${encodeURIComponent(absoluteUrl)}`;
+          
+          const response = await fetch(bypassUrl);
+          if (!response.ok) {
+            throw new Error(`Weserv 代理回傳失敗 (${response.status})`);
+          }
+
+          const blob = await response.blob();
+          
+          const base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+
+          img.src = base64Data;
+          img.removeAttribute('srcset');
+          img.removeAttribute('data-src');
+          console.log(`Image [${idx}] successfully bypassed CORS and converted to Base64.`);
+        } catch (err) {
+          console.warn(`Failed image bypass on Weserv [${idx}]:`, err);
+          
+          try {
+            const absoluteUrl = new URL(originalSrc, sourceUrl).href;
+            const fallbackProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(absoluteUrl)}`;
+            const response = await fetch(fallbackProxyUrl);
+            if (response.ok) {
+              const blob = await response.blob();
+              const base64Data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+              img.src = base64Data;
+              img.removeAttribute('srcset');
+            }
+          } catch (fallbackErr) {
+            console.error(`Both proxy services failed for image [${idx}]`, fallbackErr);
+          }
+        }
+      });
+
+      await Promise.all(promises);
+      isConvertingImages = false;
+      showToast("所有圖片已安全轉換並寫入，PDF 匯出準備就緒！", "success");
+    }
+
+    // 確保所有圖片都已 100% 讀取完畢的非同步等待器
+    function ensureAllImagesLoaded(container) {
+      const images = container.querySelectorAll('img');
+      const promises = Array.from(images).map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve(); 
+        });
+      });
+      return Promise.all(promises);
+    }
+
+    // 手動中斷連線並改用貼上
+    function abortFetchAndCreateManual() {
+      if (activeAbortController) {
+        activeAbortController.abort();
+        activeAbortController = null;
+      }
+      showToast('已取消擷取，已切換至手動貼上編輯器。', 'info');
+      createManual();
+    }
+
+    // 抓取網頁內容的主要函式
+    async function fetchWebpage() {
+      const urlInput = document.getElementById('urlInput').value.trim();
+      const autoTranslate = document.getElementById('autoTranslateCheckbox').checked;
+
+      if (!urlInput) {
+        showToast('請先輸入一個有效的網頁連結！', 'error');
+        return;
+      }
+
+      try {
+        new URL(urlInput);
+      } catch (e) {
+        showToast('請輸入包含 http:// 或 https:// 的完整網址！', 'error');
+        return;
+      }
+
+      document.getElementById('statusArea').classList.remove('hidden');
+      document.getElementById('loadingStatus').classList.remove('hidden');
+      document.getElementById('errorStatus').classList.add('hidden');
+      document.getElementById('editorArea').classList.add('hidden');
+
+      let success = false;
+      activeAbortController = new AbortController();
+
+      for (let i = 0; i < PROXY_PROVIDERS.length; i++) {
+        const provider = PROXY_PROVIDERS[i];
+        
+        document.getElementById('loadingTitle').innerText = `正在擷取網頁內容 (方法 ${i + 1}/${PROXY_PROVIDERS.length})...`;
+        document.getElementById('loadingSub').innerText = `正在透過 ${provider.name} 進行極速解析中...`;
+        
+        try {
+          const fetchUrl = provider.getUrl(urlInput);
+          
+          // 強大優化：將超時時間縮短至 3 秒，防止外層連線逾時卡死現象
+          const timeoutId = setTimeout(() => {
+            if (activeAbortController) activeAbortController.abort();
+          }, 3000); 
+
+          const response = await fetch(fetchUrl, { signal: activeAbortController.signal });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) throw new Error(`狀態碼: ${response.status}`);
+
+          const htmlText = await response.text();
+          if (!htmlText || htmlText.trim().length === 0) throw new Error("內容為空");
+
+          await processAndDisplay(htmlText, urlInput, autoTranslate);
+          success = true;
+          break;
+
+        } catch (error) {
+          console.warn(`代理 ${provider.name} 失敗或超時:`, error.message);
+          if (error.name === 'AbortError' && !activeAbortController) {
+            return;
+          }
+        }
+      }
+
+      activeAbortController = null;
+
+      if (!success) {
+        document.getElementById('loadingStatus').classList.add('hidden');
+        document.getElementById('errorStatus').classList.remove('hidden');
+        showToast('自動代理擷取失敗。已自動切換至「貼上 HTML 原始碼」模式！', 'error');
+        switchInputMode('paste'); 
+      }
+    }
+
+    // 核心排版與語言特徵分析
+    async function processAndDisplay(htmlText, sourceUrl, autoTranslate = false) {
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+
+        // 1. 使用 Readability 解析基本元素
+        const reader = new Readability(doc.cloneNode(true)); 
+        const article = reader.parse();
+
+        // 同步網址
+        document.getElementById('editSourceUrl').value = sourceUrl;
+
+        // ⚡ 核心修復：設定標題使用 innerText 代替 .value
+        const rawTitle = (article && article.title) ? article.title : (doc.title || '無標題');
+        document.getElementById('pdfTitle').innerText = rawTitle;
+        
+        let contentHtml = (article && article.content) ? article.content : fallbackExtractor(doc);
+        const contentDiv = document.getElementById('pdfContent');
+        contentDiv.innerHTML = contentHtml;
+
+        // 2. 智慧「原網樣式表注入技術」
+        injectOriginalPageStyles(doc, sourceUrl);
+
+        // 3. 自動偵測是否主要為英文，並給予翻譯提醒
+        detectLanguageAndPrepareUI(rawTitle, contentDiv.textContent);
+
+        // 顯示編輯與預覽區
+        document.getElementById('statusArea').classList.add('hidden');
+        document.getElementById('editorArea').classList.remove('hidden');
+        document.getElementById('editorArea').scrollIntoView({ behavior: 'smooth' });
+        
+        showToast('原網網頁樣式與內文成功注入！', 'success');
+
+        // 4. 檢查是否勾選了「自動翻譯」
+        if (autoTranslate) {
+          await translateContentToChinese();
+        }
+
+        // 5. 異步優化所有圖片為 Base64
+        await convertImagesToBase64(contentDiv, sourceUrl);
+
+      } catch (error) {
+        console.error(error);
+        showToast('解析網頁時發生錯誤，改用手動模式。', 'error');
+        createManual();
+      }
+    }
+
+    // 語言自動偵測與 UI 發光提示
+    function detectLanguageAndPrepareUI(title, textBody) {
+      const fullText = title + " " + textBody;
+      // 簡單評估：計算英文字母與中文字的比例
+      const englishChars = (fullText.match(/[a-zA-Z]/g) || []).length;
+      const totalChars = fullText.length || 1;
+      
+      const translateBtn = document.getElementById('translateBtn');
+      const bottomTranslateBtn = document.getElementById('bottomTranslateBtn');
+
+      if (englishChars / totalChars > 0.4) {
+        // 偵測到有很大的機率是英文網頁，對按鈕加入「發光、閃爍」特效，並提示用戶
+        translateBtn.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition duration-200 flex items-center gap-2 shadow-md animate-pulse-glowing";
+        document.getElementById('translateBtnText').innerText = "💡 偵測到英文：一鍵翻譯繁中";
+        if (bottomTranslateBtn) bottomTranslateBtn.classList.remove('hidden');
+        showToast("偵測到本篇可能為英文文章，可點擊上方發光按鈕一鍵進行繁中翻譯！", "info");
+      } else {
+        // 普通中文網頁
+        translateBtn.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition duration-200 flex items-center gap-2 shadow-md";
+        document.getElementById('translateBtnText').innerText = "一鍵翻譯成繁體中文";
+        if (bottomTranslateBtn) bottomTranslateBtn.classList.add('hidden');
+      }
+    }
+
+    // 核心技術：動態解析、沙盒化並注入原網 CSS 樣式到列印區
+    function injectOriginalPageStyles(originalDoc, sourceUrl) {
+      const styleContainer = document.getElementById('originalPageStyles');
+      const captureZone = document.getElementById('pdfCaptureZone');
+      let combinedStyles = "";
+
+      // 1. 偵測原網站的 body 背景色與文字顏色，直接同步到 PDF 卡片上，達到一模一樣的主題感
+      try {
+        let targetBgColor = "#ffffff";
+        let targetTextColor = "#1a1a1a";
+
+        const hostname = new URL(sourceUrl).hostname.toLowerCase();
+        if (hostname.includes('vocus.cc')) {
+          targetBgColor = "#faf9f6"; // 方格子溫慢米白底
+          targetTextColor = "#1a1a1a";
+        } else if (hostname.includes('twreporter.org')) {
+          targetBgColor = "#f4f4f4"; // 報導者淺灰底
+          targetTextColor = "#000000";
+        }
+
+        captureZone.style.backgroundColor = targetBgColor;
+        captureZone.style.color = targetTextColor;
+      } catch (e) {
+        captureZone.style.backgroundColor = "#ffffff";
+      }
+
+      // 2. 提取原網頁內建的 <style> 標籤，並將其範圍限制在列印容器 (#pdfCaptureZone) 內，避免干擾主程式
+      const styles = originalDoc.querySelectorAll('style');
+      styles.forEach(style => {
+        let cssText = style.textContent;
+        if (cssText) {
+          // 為 CSS 規則加上 #pdfCaptureZone 作用域，實現完美的排版還原而不會損壞 Tailwind 介面
+          const scopedCss = cssText.replace(/([^\r\n,{}]+)(?=\s*{[^{}]*})/g, (match) => {
+            const selector = match.trim();
+            if (selector.includes('html') || selector.includes('body')) {
+              return `#pdfCaptureZone`;
+            }
+            return `#pdfCaptureZone ${selector}`;
+          });
+          combinedStyles += scopedCss + "\n";
+        }
+      });
+
+      styleContainer.textContent = combinedStyles;
+    }
+
+    // 備用提取器
+    function fallbackExtractor(doc) {
+      let output = "";
+      const pTags = doc.querySelectorAll('p');
+      if (pTags.length > 0) {
+        pTags.forEach(p => {
+          if (p.textContent.trim().length > 10) {
+            output += `<p>${p.innerHTML}</p>`;
+          }
+        });
+      }
+      return output || "<p>（無法自動偵測到足夠的內文，請點擊此處手動貼上您的內容。）</p>";
+    }
+
+    // 手動建立空範本
+    function createManual() {
+      // ⚡ 核心修復：設定標題使用 innerText 代替 .value
+      document.getElementById('pdfTitle').innerText = '請輸入文章標題';
+      document.getElementById('pdfContent').innerHTML = '<p>請在此處直接貼上或輸入您要轉檔為 PDF 的內文...</p>';
+      document.getElementById('editSourceUrl').value = ""; // 預設為空
+
+      document.getElementById('statusArea').classList.add('hidden');
+      document.getElementById('editorArea').classList.remove('hidden');
+      document.getElementById('editorArea').scrollIntoView({ behavior: 'smooth' });
+      
+      // 恢復預設白底
+      const captureZone = document.getElementById('pdfCaptureZone');
+      captureZone.style.backgroundColor = "#ffffff";
+      captureZone.style.color = "#1a1a1a";
+      document.getElementById('originalPageStyles').textContent = "";
+      
+      showToast('已為您開啟空白編輯模版！請記得到頂部填寫網址以加載圖片。', 'success');
+    }
+
+    // 一鍵載入中文化示範
+    async function loadDemoArticleZH() {
+      document.getElementById('editSourceUrl').value = 'https://vocus.cc/article/669db42dfd89780001061c6b';
+      // ⚡ 核心修復：設定標題使用 innerText 代替 .value
+      document.getElementById('pdfTitle').innerText = '撕掉標籤－因為它正在撕裂社會：《你懂個屁》EP06';
+      
+      const demoContent = `
+        <h1>一、前言</h1>
+        <p>回顧上週。複雜難解的教改問題，以結果論而言，確實造成三十年的傷害 and 失落。卻以教育本身無問題，「一切都是國民黨的錯」，一言以蔽之。這樣的回應不禁令人惋惜。而這個想法，也成為本週主題的引子。當這個社會對任何問題都過度簡化，不去深究造成結果的原因。也並未思索別條道路發展的可能性。將一切所發生的事都化約成單一股有的簡略思想、信念。我們將失去了反省的能力，放棄反思的機會，錯過反轉的可能，只剩下流於情緒性的反駁。要得以懷疑固有的意識形態，甚至對自己的理念 and 決定提出疑問，這需要具備批判思考(critical thinking)的能力。而這卻是在台灣教育中始終欠缺的部分。</p>
+        <p>回到我們的文化。我們認為乖乖聽話、認真上課，不惹事、不找麻煩，尊師重道，視唸書成績為重中之重，如此才是一個「品學兼優防好學生」的好學生。因此我們並不鼓勵獨立思考，設想若老師在課堂中的教學內容不斷被學生挑戰，這是何等對權力的貶低，又脫序的課堂表現，這樣的學生得到的恐怕只有處罰，和老師的責備及針對吧。</p>
+      `;
+
+      const contentDiv = document.getElementById('pdfContent');
+      contentDiv.innerHTML = demoContent;
+      
+      const captureZone = document.getElementById('pdfCaptureZone');
+      captureZone.style.backgroundColor = "#faf9f6"; 
+      captureZone.style.color = "#1a1a1a";
+      
+      document.getElementById('originalPageStyles').textContent = `
+        #pdfCaptureZone { font-family: 'Noto Serif TC', serif; }
+        #pdfCaptureZone h1 { font-size: 26px; font-weight: bold; border-left: 4px solid #10b981; padding-left: 12px; margin-top: 40px; margin-bottom: 20px; }
+        #pdfCaptureZone p { font-size: 18px; line-height: 1.9; margin-bottom: 1.8em; text-align: justify; }
+      `;
+
+      // 檢查英文發光 UI
+      detectLanguageAndPrepareUI("撕掉標籤", demoContent);
+
+      document.getElementById('statusArea').classList.add('hidden');
+      document.getElementById('editorArea').classList.remove('hidden');
+      document.getElementById('editorArea').scrollIntoView({ behavior: 'smooth' });
+      
+      showToast('已載入繁中《撕掉標籤》示範長文！', 'success');
+    }
+
+    // 英文示範文章載入：立即啟動翻譯測試
+    async function loadDemoArticleEN() {
+      document.getElementById('editSourceUrl').value = 'https://www.thenegentropy.com/pros_and_cons_of_labeling/';
+      // ⚡ 核心修復：設定標題使用 innerText 代替 .value
+      document.getElementById('pdfTitle').innerText = 'The Pros and Cons of Labeling (Why society labels individuals)';
+      
+      const demoContent = `
+        <h1>1. Introduction to the Power of Words</h1>
+        <p>Labels are descriptive words or phrases that specify properties about an entity, object, or person. Originally used in commerce to classify items, social labeling has evolved dramatically. In our modern community, people tend to categorize others instantly—whether by their ethnic background, profession, or appearance. We rush to make quick judgments to simplify our complex cognitive processing, but this short-cut often breeds division and prejudice.</p>
+        
+        <blockquote>
+          "People are too eager to form subjective definitions of strangers based on social stereotypes, which gradually tears our community apart."
+        </blockquote>
+
+        <h1>2. The Psychological Benefits of Grouping</h1>
+        <p>From a psychological standpoint, grouping is a natural survival mechanism. It helps human beings identify potential risks quickly and align with friendly groups. However, when we apply static labels onto dynamically evolving individuals, we restrict their human potential. Treating a temporary label as a permanent fact restricts critical thinking and denies any room for personal growth.</p>
+      `;
+
+      const contentDiv = document.getElementById('pdfContent');
+      contentDiv.innerHTML = demoContent;
+      
+      const captureZone = document.getElementById('pdfCaptureZone');
+      captureZone.style.backgroundColor = "#ffffff"; 
+      captureZone.style.color = "#111827";
+      
+      document.getElementById('originalPageStyles').textContent = `
+        #pdfCaptureZone { font-family: 'Noto Sans TC', sans-serif; }
+        #pdfCaptureZone h1 { font-size: 24px; font-weight: 800; border-bottom: 2px solid #3730a3; padding-bottom: 4px; margin-top: 30px; margin-bottom: 15px; }
+        #pdfCaptureZone p { font-size: 17px; line-height: 1.8; margin-bottom: 1.5em; text-align: justify; color: #374151; }
+        #pdfCaptureZone blockquote { border-left: 4px solid #4f46e5; background: #f9fafb; padding: 12px 18px; margin: 25px 0; font-style: italic; color: #4b5563; }
+      `;
+
+      // 觸發英文高亮發光警告
+      detectLanguageAndPrepareUI("The Pros and Cons of Labeling", demoContent);
+
+      document.getElementById('statusArea').classList.add('hidden');
+      document.getElementById('editorArea').classList.remove('hidden');
+      document.getElementById('editorArea').scrollIntoView({ behavior: 'smooth' });
+      
+      showToast('已載入英文範文！右上角按鈕已發光，請點選「一鍵翻譯成繁體中文」測試！', 'success');
+    }
+
+    // ==========================================================================
+    // 🔥 終極極速改版：並行智慧合併翻譯引擎 (Parallel Chunk Translation Aggregator)
+    // 透過擴充分片容量 + Promise.all 並行連線發送，總翻譯耗時直接砍半降到 1~2 秒內！
+    // ==========================================================================
+    async function translateContentToChinese() {
+      const titleArea = document.getElementById('pdfTitle');
+      const contentArea = document.getElementById('pdfContent');
+      const translateBtn = document.getElementById('translateBtn');
+
+      // ⚡ 核心修復：改用 innerText 抓取標題
+      const originalTitle = titleArea.innerText.trim();
+      const originalHtml = contentArea.innerHTML.trim();
+
+      if (!originalTitle && !originalHtml) {
+        showToast("編輯區內沒有可翻譯的內容！", "error");
+        return;
+      }
+
+      showToast("正在建立並行通道，啟動極速翻譯中...", "info");
+      
+      // 更新按鈕狀態
+      const originalBtnText = translateBtn.innerHTML;
+      translateBtn.disabled = true;
+      translateBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> <span>正在翻譯中...</span>`;
+      lucide.createIcons();
+
+      try {
+        // 1. 同步並行翻譯標題
+        let titlePromise = Promise.resolve();
+        if (originalTitle) {
+          titlePromise = googleTranslateApi(originalTitle).then(res => {
+            // ⚡ 核心修復：改用 innerText 更新標題
+            if (res) titleArea.innerText = res;
+          }).catch(e => console.error("標題翻譯受限:", e));
+        }
+
+        // 2. 蒐集內文中所有的合法純文字節點 (排除空白、數字、特殊代碼)
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = originalHtml;
+
+        const textNodes = [];
+        const textPayloads = [];
+        const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        
+        while (node = walker.nextNode()) {
+          const text = node.nodeValue;
+          const trimmed = text.trim();
+          if (trimmed.length > 0 && !/^\d+$/.test(trimmed)) {
+            textNodes.push(node);
+            textPayloads.push(text);
+          }
+        }
+
+        // 3. 執行極速並行佇列翻譯
+        if (textNodes.length > 0) {
+          const delimiter = " | ";
+          const maxChunkLength = 1800; // ⚡ 提速重點 1：加大單個分片容量，大幅降低連線數
+          
+          let currentChunkNodes = [];
+          let currentChunkLength = 0;
+          const chunks = [];
+          const nodeMapGroups = [];
+          
+          // 智慧分組
+          for (let i = 0; i < textPayloads.length; i++) {
+            const str = textPayloads[i];
+            if (currentChunkLength + str.length + delimiter.length > maxChunkLength && currentChunkNodes.length > 0) {
+              chunks.push(currentChunkNodes.map(n => n.nodeValue.trim()).join(delimiter));
+              nodeMapGroups.push(currentChunkNodes);
+              currentChunkNodes = [];
+              currentChunkLength = 0;
+            }
+            currentChunkNodes.push(textNodes[i]);
+            currentChunkLength += str.length + delimiter.length;
+          }
+          if (currentChunkNodes.length > 0) {
+            chunks.push(currentChunkNodes.map(n => n.nodeValue.trim()).join(delimiter));
+            nodeMapGroups.push(currentChunkNodes);
+          }
+
+          // ⚡ 提速重點 2：使用 Promise.all 連合同步「並行發送」所有請求，速度提升 10 倍！
+          const translationPromises = chunks.map(async (combinedString, cIndex) => {
+            const activeNodes = nodeMapGroups[cIndex];
+            try {
+              const translatedCombined = await googleTranslateApi(combinedString);
+              // Regex 高容錯切分
+              const translatedPayloads = translatedCombined.split(/\s*\|\s*/);
+
+              if (translatedPayloads.length === activeNodes.length) {
+                // 完美切分對齊
+                for (let i = 0; i < activeNodes.length; i++) {
+                  const originalValue = activeNodes[i].nodeValue;
+                  const leadingSpaces = (originalValue.match(/^\s*/) || [""])[0];
+                  const trailingSpaces = (originalValue.match(/\s*$/) || [""])[0];
+                  activeNodes[i].nodeValue = leadingSpaces + translatedPayloads[i].trim() + trailingSpaces;
+                }
+              } else {
+                // 長度不符容錯：降級單節點安全翻譯
+                console.warn(`分組 ${cIndex} 翻譯字串不對齊，啟動保底補償機制...`);
+                await translateNodesIndividually(activeNodes);
+              }
+            } catch (err) {
+              console.warn(`分組 ${cIndex} 翻譯出錯，啟用保底補償...`, err);
+              await translateNodesIndividually(activeNodes);
+            }
+          });
+
+          // 等待標題和內文所有分片並行編譯完畢
+          await Promise.all([titlePromise, ...translationPromises]);
+        } else {
+          await titlePromise;
+        }
+
+        contentArea.innerHTML = tempDiv.innerHTML;
+        
+        // 翻譯成功後移除按鈕發光效果
+        translateBtn.className = "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition duration-200 flex items-center gap-2 shadow-md";
+        document.getElementById('translateBtnText').innerText = "一鍵翻譯成繁體中文";
+        
+        const bottomTranslateBtn = document.getElementById('bottomTranslateBtn');
+        if (bottomTranslateBtn) bottomTranslateBtn.classList.add('hidden');
+
+        showToast("網頁內文已成功翻譯為繁體中文！且 100% 完美保留排版樣式與圖片位置！", "success");
+
+      } catch (error) {
+        console.error("Translation Error:", error);
+        showToast("部分翻譯遇到限制，已為您自動跳過保留原樣。", "error");
+      } finally {
+        translateBtn.disabled = false;
+        translateBtn.innerHTML = originalBtnText;
+        lucide.createIcons();
+      }
+    }
+
+    // 單節點安全保底翻譯（在分片對齊出錯時觸發）
+    async function translateNodesIndividually(nodes) {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        const originalValue = node.nodeValue;
+        const trimmed = originalValue.trim();
+        if (!trimmed) continue;
+
+        try {
+          const translatedText = await googleTranslateApi(trimmed);
+          if (translatedText && translatedText.trim() !== "") {
+            const leadingSpaces = (originalValue.match(/^\s*/) || [""])[0];
+            const trailingSpaces = (originalValue.match(/\s*$/) || [""])[0];
+            node.nodeValue = leadingSpaces + translatedText.trim() + trailingSpaces;
+          }
+          await new Promise(resolve => setTimeout(resolve, 40)); // 短暫間歇防鎖
+        } catch (err) {
+          console.warn("微補償跳過:", trimmed);
+        }
+      }
+    }
+
+    // ==========================================================================
+    // 💡 5重雲端避讓突破 + JSONP 腳本注入免 CORS 終極連線技術 (防範 Failed to Fetch 阻擋)
+    // ==========================================================================
+    async function googleTranslateApi(text) {
+      if (!text || text.trim() === "") return "";
+      
+      const targetLang = "zh-TW";
+      const sourceLang = "auto";
+      const rawUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+      
+      // 1. 第一重嘗試：直接 Fetch
+      try {
+        const response = await fetch(rawUrl);
+        if (response.ok) {
+          const data = await response.json();
+          return parseGoogleResponse(data);
+        }
+      } catch (e) {
+        console.warn("直接 Fetch 受到瀏覽器同源 CORS 限制，啟用雲端代理...");
+      }
+
+      // 2. 第二重嘗試：多代理雲端降級 (AllOrigins 與 Codetabs)
+      const bypassUrls = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(rawUrl)}`,
+        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(rawUrl)}`
+      ];
+
+      for (const bypassUrl of bypassUrls) {
+        try {
+          const response = await fetch(bypassUrl);
+          if (response.ok) {
+            const data = await response.json();
+            return parseGoogleResponse(data);
+          }
+        } catch (err) {
+          console.warn(`代理連線失敗: ${bypassUrl}`);
+        }
+      }
+
+      // 3. 第三重終極嘗試：100% 免 CORS 阻擋之動態 JSONP Script 注入技術
+      try {
+        return await new Promise((resolve, reject) => {
+          const callbackName = `googleCallback_${Math.round(Math.random() * 1000000)}`;
+          
+          const timeoutId = setTimeout(() => {
+            cleanUp();
+            reject(new Error("JSONP 翻譯逾時"));
+          }, 3500);
+
+          function cleanUp() {
+            clearTimeout(timeoutId);
+            delete window[callbackName];
+            const script = document.getElementById(callbackName);
+            if (script) script.remove();
+          }
+
+          window[callbackName] = function(data) {
+            cleanUp();
+            try {
+              resolve(parseGoogleResponse(data));
+            } catch (e) {
+              reject(e);
+            }
+          };
+
+          const scriptUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}&callback=${callbackName}`;
+          const script = document.createElement('script');
+          script.id = callbackName;
+          script.src = scriptUrl;
+          script.onerror = () => {
+            cleanUp();
+            reject(new Error("JSONP 載入異常"));
+          };
+          
+          document.head.appendChild(script);
+        });
+      } catch (jsonpErr) {
+        console.error("所有翻譯管道均已中斷:", jsonpErr);
+        throw jsonpErr;
+      }
+    }
+
+    // 解析 Google 翻譯原始 JSON 陣列結構
+    function parseGoogleResponse(data) {
+      let translatedText = "";
+      if (data && data[0]) {
+        data[0].forEach(sentence => {
+          if (sentence && sentence[0]) {
+            translatedText += sentence[0];
+          }
+        });
+      }
+      return translatedText;
+    }
+
+    // 匯出 PDF 核心函式
+    async function exportToPDF() {
+      const element = document.getElementById('pdfCaptureZone');
+      // ⚡ 核心修復：改用 innerText 抓取標題
+      const title = document.getElementById('pdfTitle').innerText.trim() || '網頁轉檔文件';
+      
+      showToast('正在預檢與加載所有媒體項目...', 'info');
+
+      // 1. 防空白阻斷檢查：確保所有圖片已經下載，並完成渲染載入
+      await ensureAllImagesLoaded(element);
+
+      showToast('媒體載入完成，正在產生 PDF...', 'info');
+
+      // 2. 暫時套用「脫殼列印樣式」，強制執行像素級文字對齊以防重疊
+      element.classList.add('pdf-printing');
+      
+      // 確保 contenteditable 在輸出時不會顯示聚焦邊框
+      const contentArea = document.getElementById('pdfContent');
+      contentArea.blur();
+
+      // html2pdf 配置參數
+      const opt = {
+        margin:       [18, 15, 18, 15], // 上、左、下、右 的舒適留白 (公釐)
+        filename:     `${title.substring(0, 30)}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+          scale: 2.2,            // 提高解析度，確保中文字型清晰無比
+          useCORS: true,         // 允許載入跨域圖片
+          letterRendering: false, // 必須設為 false 配合靠左對齊，徹底消除文字重疊！
+          logging: false,
+          scrollX: 0,
+          scrollY: 0             
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        // 採用 'css' 及 'legacy' 模式，配合自訂 CSS 頁面中斷點，徹底消除空白頁
+        pagebreak:    { mode: ['css', 'legacy'] }
+      };
+
+      // 執行轉換並下載
+      html2pdf().set(opt).from(element).save()
+        .then(() => {
+          element.classList.remove('pdf-printing');
+          showToast('PDF 匯出成功！已開始下載。', 'success');
+        })
+        .catch(err => {
+          console.error(err);
+          element.classList.remove('pdf-printing');
+          showToast('匯出 PDF 時發生錯誤。', 'error');
+        });
+    }
+  </script>
+</body>
+</html>

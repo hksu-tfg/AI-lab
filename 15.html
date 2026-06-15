@@ -1,0 +1,2309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暖心讀書小幫手 ☕</title>
+    <!-- Tailwind CSS for rich utilities -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playful & Soft Font for aesthetic feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for cute icon designs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        cozy: {
+                            50: '#FAF6EE',   /* Creamy warm white */
+                            100: '#F5ECE1',  /* Warm oatmeal light */
+                            200: '#EADBC8',  /* Soft sand */
+                            300: '#DAC0A3',  /* Cozy tan */
+                            400: '#C79A73',  /* Milk tea brown */
+                            500: '#B07D54',  /* Warm amber wood */
+                            600: '#965E39',  /* Medium brown */
+                            700: '#7B4527',  /* Deep terracotta */
+                            850: '#4E2413',  /* Dark coffee */
+                            900: '#431C10',  /* Deep dark coffee */
+                        },
+                        tomato: {
+                            light: '#FCA5A5',
+                            DEFAULT: '#EF4444',
+                            dark: '#B91C1C'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Fredoka', sans-serif;
+            background-color: #FAF6EE;
+            background-image: radial-gradient(#F5ECE1 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+        }
+        
+        /* Smooth hover transition effects */
+        .cozy-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #EADBC8;
+            box-shadow: 0 4px 20px -2px rgba(123, 69, 39, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .cozy-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px -2px rgba(123, 69, 39, 0.1);
+        }
+
+        /* Custom scrollbar to keep layout cute and cozy */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FAF6EE;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #DAC0A3;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #B07D54;
+        }
+
+        /* Ring Progress Transition */
+        #progress-ring {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Breathing Circle Pulse Animation */
+        .breath-expand {
+            transform: scale(1.45);
+            background-color: #DAC0A3;
+            box-shadow: 0 0 35px #C79A73;
+        }
+        .breath-shrink {
+            transform: scale(0.85);
+            background-color: #EADBC8;
+            box-shadow: 0 0 10px rgba(176, 125, 84, 0.2);
+        }
+
+        /* Tomato Fall Curve Animation */
+        @keyframes tomatoFall {
+            0% {
+                transform: translate(0px, 0px) scale(0.4) rotate(0deg);
+                opacity: 0;
+            }
+            30% {
+                opacity: 1;
+                transform: translate(-30px, -60px) scale(1.4) rotate(-45deg);
+            }
+            100% {
+                transform: translate(-75px, 215px) scale(0.8) rotate(360deg);
+                opacity: 0.1;
+            }
+        }
+        
+        .falling-tomato {
+            animation: tomatoFall 1.1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        /* Q-Bounce Jiggle effect for harvest basket */
+        @keyframes basketJiggle {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.25) rotate(-8deg); }
+            50% { transform: scale(0.95) rotate(6deg); }
+            75% { transform: scale(1.1) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        .basket-bounce {
+            animation: basketJiggle 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Equalizer Animation for Sound */
+        .eq-bar {
+            width: 3px;
+            height: 15px;
+            background-color: #C79A73;
+            animation: bounce 0.8s ease-in-out infinite alternate;
+            transform-origin: bottom;
+        }
+        @keyframes bounce {
+            0% { transform: scaleY(0.2); }
+            100% { transform: scaleY(1); }
+        }
+        .eq-bar-1 { animation-delay: 0.1s; }
+        .eq-bar-2 { animation-delay: 0.3s; }
+        .eq-bar-3 { animation-delay: 0.2s; }
+        .eq-bar-4 { animation-delay: 0.4s; }
+
+        /* Battery pulsing animation */
+        @keyframes batteryPulse {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.08); opacity: 0.9; }
+        }
+        .battery-core-pulse {
+            animation: batteryPulse 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-cozy-900 pb-12">
+
+    <!-- Bottom-Left Floating Vertical Tool Belt (Request 4: History button removed) -->
+    <div class="fixed left-4 bottom-4 md:left-6 md:bottom-6 flex flex-col gap-3 z-40">
+        <!-- Website Tour button -->
+        <button onclick="toggleTourModal(true)" title="網站導覽與說明" class="w-12 h-12 rounded-full bg-cozy-500 hover:bg-cozy-600 text-white flex items-center justify-center shadow-lg transition duration-200 hover:scale-105 active:scale-95 border border-cozy-450">
+            <i class="fa-solid fa-circle-question text-lg"></i>
+        </button>
+        <!-- Custom Account / Companion management button -->
+        <button onclick="toggleAccountModal(true)" title="專屬讀伴與帳戶" class="w-12 h-12 rounded-full bg-cozy-500 hover:bg-cozy-600 text-white flex items-center justify-center shadow-lg transition duration-200 hover:scale-105 active:scale-95 border border-cozy-450">
+            <i class="fa-solid fa-user-gear text-lg"></i>
+        </button>
+    </div>
+
+    <!-- Top Warm Header Bar with Relocated Quotes Card -->
+    <header class="max-w-6xl mx-auto px-4 pt-8 pb-4 flex flex-col md:flex-row justify-between items-center gap-6">
+        <!-- Header Left: Brand info with custom Companion Profile integration -->
+        <div class="flex items-center gap-3">
+            <div id="user-avatar-display" class="w-12 h-12 rounded-full bg-cozy-300 flex items-center justify-center text-cozy-800 text-2xl shadow-inner animate-pulse">
+                ☕
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-wide text-cozy-800 flex items-center gap-2">
+                    <span id="display-nickname">暖心讀書小幫手</span>
+                </h1>
+                <p id="assistant-description-tag" class="text-xs text-cozy-500">一杯茶，一首歌，今天也是專注的一天 ✨</p>
+            </div>
+        </div>
+        
+        <!-- Header Right: Motto as main hero, clock & statistics (Request 3: Weighted motto) -->
+        <div class="cozy-card rounded-2xl p-4 w-full md:w-[440px] bg-gradient-to-br from-amber-50/50 to-white text-xs flex flex-col justify-between shadow-sm border border-cozy-200">
+            <div class="flex items-center justify-between mb-1 border-b border-cozy-100 pb-1">
+                <span class="font-bold text-cozy-850 flex items-center gap-1">
+                    💡 暖心勉勵 / 座右銘
+                </span>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="getRandomQuote()" title="換一句勉勵" class="text-cozy-400 hover:text-cozy-600 transition-colors">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                </div>
+            </div>
+            <!-- Display Area of Quote (Weightier & Larger font size for mottos - Request 3) -->
+            <p id="quote-display" class="font-extrabold text-cozy-800 leading-relaxed font-serif py-1.5 text-sm md:text-base min-h-[44px]">「萬事起頭難，但只要你跨出第一步，你就已經超越昨天的自己。」</p>
+            
+            <!-- Combined Stats & Live Clock Line with visual level indicator -->
+            <div class="pt-1.5 border-t border-cozy-100 flex flex-wrap justify-between items-center text-[10px] text-cozy-500 gap-2">
+                <span id="header-clock" class="font-semibold text-cozy-600">正在獲取時間...</span>
+                <div class="flex flex-wrap items-center gap-2 font-bold text-cozy-700">
+                    <!-- Level System Badge display (Color & Icon ONLY - Request 4) -->
+                    <span id="level-badge" class="w-6 h-6 rounded-full border flex items-center justify-center text-xs shadow-sm transition-all duration-300" title="當前級數徽章 (每累積5顆番茄升級，詳細說明請看導覽)">
+                        🌱
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- View Switcher Tabs (Distraction-free focus mode) -->
+    <div class="max-w-6xl mx-auto px-4 mb-6">
+        <div class="bg-cozy-100/80 backdrop-blur border border-cozy-200 rounded-2xl p-1.5 flex justify-center gap-2 max-w-md mx-auto shadow-sm">
+            <button id="nav-tab-timer" onclick="switchMainTab('timer')" class="flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm bg-cozy-500 text-white">
+                🧘‍♀️ 專注番茄鐘
+            </button>
+            <button id="nav-tab-todo" onclick="switchMainTab('todo')" class="flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 hover:bg-cozy-200 text-cozy-700">
+                📝 學習備忘錄
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Containers -->
+    <main class="max-w-6xl mx-auto px-4 mt-2">
+        
+        <!-- ================= MODE 1: FOCUS TIMER PANEL (Distraction-Free) ================= -->
+        <div id="panel-timer" class="max-w-2xl mx-auto flex flex-col gap-6">
+            
+            <!-- TIMER MAIN CARD (Style Theme Color Adjusted - Request 2) -->
+            <section id="timer-card" class="cozy-card rounded-3xl p-6 relative overflow-hidden transition-all duration-500">
+                <!-- Cute background element -->
+                <div class="absolute -right-12 -top-12 w-32 h-32 rounded-full bg-cozy-100 opacity-40 pointer-events-none"></div>
+                
+                <!-- Overlay container for dynamic falling tomato particle animations -->
+                <div id="tomato-animation-container" class="absolute inset-0 pointer-events-none z-30"></div>
+                
+                <!-- Tab Buttons for Timer Modes -->
+                <div class="flex flex-wrap gap-2 justify-center mb-6 relative z-10">
+                    <button id="btn-small-pomo" onclick="setTimerMode('small')" title="小番茄 (25+5 分鐘)" class="px-5 py-2.5 rounded-xl font-bold transition-all duration-300 bg-cozy-300 text-cozy-900 shadow-sm hover:bg-cozy-400 flex items-center gap-1.5">
+                        🍅 <span class="text-xs">25</span>
+                    </button>
+                    <button id="btn-big-pomo" onclick="setTimerMode('big')" title="大番茄 (50+10 分鐘)" class="px-5 py-2.5 rounded-xl font-bold transition-all duration-300 bg-white border border-cozy-200 text-cozy-600 hover:bg-cozy-100 flex items-center gap-1.5">
+                        🌟 <span class="text-xs">50</span>
+                    </button>
+                    <button id="btn-custom-pomo" onclick="setTimerMode('custom')" title="自訂時間模式" class="px-5 py-2.5 rounded-xl font-bold transition-all duration-300 bg-white border border-cozy-200 text-cozy-600 hover:bg-cozy-100 flex items-center">
+                        ⚙️
+                    </button>
+                </div>
+
+                <!-- Custom Mode Duration Inputs (Initially Hidden) -->
+                <div id="custom-inputs" class="hidden transition-all duration-300 bg-cozy-50 p-3 rounded-2xl mb-6 border border-cozy-100 text-center">
+                    <p class="text-xs font-semibold text-cozy-600 mb-2">請設定自訂時長 (分鐘)：</p>
+                    <div class="flex items-center justify-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-cozy-700">專注：</label>
+                            <input type="number" id="input-focus-time" min="1" max="180" value="25" class="w-14 px-2 py-1 text-center bg-white border border-cozy-300 rounded-lg text-sm text-cozy-800 font-bold focus:outline-none focus:ring-2 focus:ring-cozy-400">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-cozy-700">休息：</label>
+                            <input type="number" id="input-break-time" min="1" max="60" value="5" class="w-14 px-2 py-1 text-center bg-white border border-cozy-300 rounded-lg text-sm text-cozy-800 font-bold focus:outline-none focus:ring-2 focus:ring-cozy-400">
+                        </div>
+                        <button onclick="applyCustomTimes()" title="套用設定" class="w-8 h-8 bg-cozy-500 text-white rounded-lg flex items-center justify-center hover:bg-cozy-600 transition shadow active:scale-95">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Big Timer Clock Display -->
+                <div class="flex flex-col items-center justify-center my-4 relative">
+                    <!-- Progress Circle container -->
+                    <div class="relative w-64 h-64 flex items-center justify-center">
+                        <svg class="w-full h-full">
+                            <!-- Background track ring -->
+                            <circle class="text-cozy-100" stroke-width="8" stroke="currentColor" fill="transparent" r="110" cx="128" cy="128" />
+                            <!-- Active progress ring (Class is updated dynamically in JS) -->
+                            <circle id="progress-ring" stroke-width="10" stroke-linecap="round" stroke="currentColor" fill="transparent" r="110" cx="128" cy="128" />
+                        </svg>
+                        
+                        <!-- Internal content -->
+                        <div class="absolute flex flex-col items-center justify-center text-center">
+                            <!-- Active Phase Tag -->
+                            <span id="timer-phase-badge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-amber-100 text-amber-800 shadow-sm border border-amber-200 mb-2 transition-all duration-300">
+                                專注時間
+                            </span>
+                            <!-- Time numerical read out -->
+                            <span id="timer-display" class="text-5xl font-extrabold font-mono text-cozy-800 tracking-tight">25:00</span>
+                            <!-- Estimated status subtext -->
+                            <span id="timer-total-stat" class="text-xs text-cozy-500 mt-2 font-medium">即將開始美好的一堂課</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer Action Buttons -->
+                <div class="flex justify-center items-center gap-4 mt-2">
+                    <!-- Play / Pause Button -->
+                    <button id="btn-play-pause" onclick="toggleTimer()" class="w-16 h-16 rounded-full bg-cozy-500 hover:bg-cozy-600 active:scale-95 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:shadow-cozy-500/20 transition-all duration-200">
+                        <i id="play-icon" class="fa-solid fa-play text-2xl ml-1"></i>
+                    </button>
+                    
+                    <!-- Reset Button -->
+                    <button onclick="requestResetTimer()" title="重置計時器" class="w-12 h-12 rounded-full bg-white border border-cozy-200 hover:bg-cozy-100 active:scale-95 text-cozy-600 flex items-center justify-center shadow-md transition-all duration-200">
+                        <i class="fa-solid fa-arrow-rotate-left text-lg"></i>
+                    </button>
+
+                    <!-- Skip / Force Complete Button -->
+                    <button onclick="requestSkipPhase()" title="跳過此階段" class="w-12 h-12 rounded-full bg-white border border-cozy-200 hover:bg-cozy-100 active:scale-95 text-cozy-600 flex items-center justify-center shadow-md transition-all duration-200">
+                        <i class="fa-solid fa-forward text-lg"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- AMBIENT NOISE & RECHARGER PANELS (Request 1: Beautified proportional shapes, Omitted texts) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- White Noise Synthesizer Panel -->
+                <div class="cozy-card rounded-2xl p-5 flex flex-col justify-between text-center min-h-[140px]">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-cozy-800 text-sm flex items-center gap-2">
+                                🎧 擬真白噪音
+                            </h3>
+                            <span id="noise-status-badge" class="text-[10px] px-2 py-0.5 bg-cozy-200 text-cozy-700 rounded font-bold">已靜音</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-center gap-3 bg-cozy-50 p-2 rounded-xl border border-cozy-100">
+                            <!-- Equalizer Visualizer Bars -->
+                            <div class="flex items-end gap-1 px-2 h-5">
+                                <div id="eq-bar-1" class="eq-bar eq-bar-1 opacity-0"></div>
+                                <div id="eq-bar-2" class="eq-bar eq-bar-2 opacity-0"></div>
+                                <div id="eq-bar-3" class="eq-bar eq-bar-3 opacity-0"></div>
+                                <div id="eq-bar-4" class="eq-bar eq-bar-4 opacity-0"></div>
+                            </div>
+
+                            <button id="btn-ambient-play" onclick="toggleAmbientNoise()" title="播放/暫停擬真雨聲" class="w-12 h-12 rounded-full bg-cozy-400 hover:bg-cozy-500 text-white flex items-center justify-center shadow-sm transition active:scale-95 hover:scale-105">
+                                <i id="ambient-btn-icon" class="fa-solid fa-play text-lg"></i>
+                                <span id="ambient-btn-text" class="sr-only">播放擬真雨聲</span>
+                            </button>
+
+                            <div class="flex items-end gap-1 px-2 h-5">
+                                <div id="eq-bar-5" class="eq-bar eq-bar-4 opacity-0"></div>
+                                <div id="eq-bar-6" class="eq-bar eq-bar-3 opacity-0"></div>
+                                <div id="eq-bar-7" class="eq-bar eq-bar-2 opacity-0"></div>
+                                <div id="eq-bar-8" class="eq-bar eq-bar-1 opacity-0"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Volume Slider -->
+                        <div class="flex items-center gap-2 px-1">
+                            <i class="fa-solid fa-volume-low text-xs text-cozy-500"></i>
+                            <input type="range" id="ambient-volume" min="0" max="1" step="0.05" value="0.3" oninput="changeAmbientVolume(this.value)" class="w-full accent-cozy-500 h-1 bg-cozy-200 rounded-lg cursor-pointer">
+                            <i class="fa-solid fa-volume-high text-xs text-cozy-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOCUS RECHARGER -->
+                <div class="cozy-card rounded-2xl p-5 flex flex-col justify-between text-center bg-gradient-to-br from-amber-50/40 to-cozy-50 min-h-[140px]">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-cozy-800 text-sm flex items-center gap-1.5">
+                                🔋 專注充電站
+                            </h3>
+                            <span class="text-xs animate-pulse">⚡</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Beautiful 微光呼吸電池艙 -->
+                    <div class="flex items-center justify-center gap-6 pt-3">
+                        <div class="w-14 h-7 border-2 border-cozy-400 rounded-lg relative p-0.5 flex items-center">
+                            <div class="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-md w-[85%] battery-core-pulse"></div>
+                            <div class="w-1.5 h-3 bg-cozy-400 absolute -right-2 top-1.5 rounded-r"></div>
+                        </div>
+
+                        <button onclick="toggleRechargerModal(true)" title="開啟大腦專注恢復秘笈" class="w-12 h-12 rounded-full bg-cozy-500 hover:bg-cozy-600 active:scale-95 text-white flex items-center justify-center shadow-md transition hover:scale-105">
+                            <i class="fa-solid fa-battery-three-quarters text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= MODE 2: TO-DO MEMO PANEL (Task Manager View) ================= -->
+        <div id="panel-todo" class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 hidden">
+            
+            <!-- Left Side: Task Manager Card (Spans 2 columns on wide layouts) -->
+            <section class="cozy-card rounded-3xl p-6 flex flex-col min-h-[480px] md:col-span-2">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-cozy-200">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">📝</span>
+                        <h2 class="font-bold text-lg text-cozy-800">學習備忘錄</h2>
+                    </div>
+                    <span id="task-count" class="text-xs px-2.5 py-1 bg-cozy-200 text-cozy-800 rounded-full font-bold">
+                        剩餘 0 項
+                    </span>
+                </div>
+
+                <!-- Input to add a new task -->
+                <div class="mb-4 bg-cozy-50/50 p-4 rounded-2xl border border-cozy-200">
+                    <form id="todo-form" onsubmit="addTask(event)" class="space-y-3">
+                        <div class="flex gap-2">
+                            <input type="text" id="todo-input" placeholder="今天想做點什麼？(例：寫英文單字)" required class="flex-grow px-4 py-2.5 text-sm bg-white border border-cozy-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cozy-300 placeholder-cozy-400 text-cozy-800 shadow-sm">
+                            <button type="submit" title="新增備忘任務" class="w-11 h-11 shrink-0 bg-cozy-500 hover:bg-cozy-600 text-white rounded-xl flex items-center justify-center shadow hover:shadow-md transition duration-200 active:scale-95">
+                                <i class="fa-solid fa-plus text-base"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Tomato estimation when adding -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 px-1 pt-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-cozy-600 font-bold flex items-center gap-1">
+                                    🍅 預估：
+                                </span>
+                                <div class="flex items-center gap-1" id="pomo-est-selector">
+                                    <button type="button" onclick="setEstPomo(1)" class="est-pomo-btn w-6 h-6 rounded bg-cozy-300 text-xs flex items-center justify-center hover:bg-cozy-400 text-amber-900 font-bold border border-cozy-300">1</button>
+                                    <button type="button" onclick="setEstPomo(2)" class="est-pomo-btn w-6 h-6 rounded bg-white text-xs flex items-center justify-center hover:bg-cozy-200 text-cozy-500 font-bold border border-cozy-200">2</button>
+                                    <button type="button" onclick="setEstPomo(3)" class="est-pomo-btn w-6 h-6 rounded bg-white text-xs flex items-center justify-center hover:bg-cozy-200 text-cozy-500 font-bold border border-cozy-200">3</button>
+                                    <button type="button" onclick="setEstPomo(4)" class="est-pomo-btn w-6 h-6 rounded bg-white text-xs flex items-center justify-center hover:bg-cozy-200 text-cozy-500 font-bold border border-cozy-200">4</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Filter Tabs -->
+                            <div class="flex gap-1 bg-cozy-150 p-0.5 rounded-lg text-xs font-bold border border-cozy-200">
+                                <button type="button" onclick="filterTasks('all')" id="filter-all" title="全部任務" class="px-2.5 py-1.5 rounded bg-white text-cozy-800 shadow-sm flex items-center justify-center">
+                                    <i class="fa-solid fa-list text-xs"></i>
+                                </button>
+                                <button type="button" onclick="filterTasks('active')" id="filter-active" title="進行中任務" class="px-2.5 py-1.5 rounded text-cozy-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-hourglass-half text-xs"></i>
+                                </button>
+                                <button type="button" onclick="filterTasks('done')" id="filter-done" title="已完成任務" class="px-2.5 py-1.5 rounded text-cozy-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-circle-check text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- The Task List container -->
+                <div class="flex-grow overflow-y-auto max-h-[400px] pr-1" id="task-list-container">
+                    <div id="empty-state" class="py-12 flex flex-col items-center justify-center text-center opacity-60">
+                        <span class="text-4xl mb-2">🎈</span>
+                        <p class="text-xs text-cozy-600 font-bold">目前沒有任何備忘事項</p>
+                        <p class="text-[10px] text-cozy-400 mt-1">寫下任務，設定專注番茄來累積今天的學習足跡！</p>
+                    </div>
+                    
+                    <ul id="task-list" class="space-y-2.5 hidden">
+                        <!-- Tasks listing will be generated here -->
+                    </ul>
+                </div>
+
+                <!-- Clear Completed tasks helper -->
+                <div class="mt-4 pt-3 border-t border-cozy-200 flex justify-between items-center text-xs">
+                    <button onclick="clearCompletedTasks()" title="清除所有已完成的備忘任務" class="w-8 h-8 rounded-lg bg-cozy-100 hover:bg-cozy-200 text-cozy-600 flex items-center justify-center transition active:scale-95">
+                        <i class="fa-solid fa-broom"></i>
+                    </button>
+                    <span class="text-[10px] text-cozy-400">系統會自動保存並同步您的紀錄</span>
+                </div>
+            </section>
+
+            <!-- Right Side Column: Harvest Basket side widget (Request 4) -->
+            <div class="md:col-span-1 flex flex-col gap-4">
+                <!-- Today's Harvest Basket Card Component (Clickable to open results) -->
+                <div onclick="openHarvestModal()" title="點擊檢視今日專注成果分析" class="bg-gradient-to-br from-amber-50 to-orange-50 border border-cozy-200 hover:border-cozy-300 rounded-3xl p-5 flex flex-col items-center justify-between text-center shadow-sm cursor-pointer hover:shadow-md transition-all duration-300 active:scale-98 min-h-[160px]">
+                    <div class="w-14 h-14 bg-white border border-cozy-200 rounded-2xl flex items-center justify-center shadow-inner mt-2">
+                        <span id="basket-icon" class="text-4xl select-none inline-block">🧺</span>
+                    </div>
+                    
+                    <div class="my-3">
+                        <h3 class="text-sm font-bold text-cozy-800 flex items-center justify-center gap-1">今日收穫籃 <i class="fa-solid fa-chart-pie text-[10px] text-cozy-400"></i></h3>
+                    </div>
+                    
+                    <span id="harvest-count-badge" class="text-xs font-extrabold text-amber-800 bg-amber-100 border border-amber-200 px-4 py-2 rounded-full inline-block">
+                        今天已收穫 0 顆 🍅
+                    </span>
+                </div>
+                
+                <!-- Cozy Study Companion Tips Badge -->
+                <div class="cozy-card rounded-3xl p-5 border border-cozy-200 text-xs text-cozy-600 leading-relaxed bg-white">
+                    <h4 class="font-bold text-cozy-800 mb-2 flex items-center gap-1">💡 讀書小秘訣</h4>
+                    <p>善用待辦清單旁的 <strong>預估番茄 🍅</strong> 進行時間管理。專注結束後，果實會叮咚一聲自動掉入右側收穫籃中喔！</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ================= MODAL: FOCUS RECHARGER STATION ================= -->
+    <div id="recharger-modal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-cozy-50 border border-cozy-200 rounded-3xl p-6 max-w-lg w-11/12 max-h-[85vh] overflow-y-auto shadow-2xl relative transform scale-95 transition-all duration-300" id="recharger-modal-content">
+            <button onclick="toggleRechargerModal(false)" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white hover:bg-cozy-100 text-cozy-600 flex items-center justify-center border border-cozy-200 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+
+            <div class="flex items-center gap-2 mb-4 border-b border-cozy-200 pb-3">
+                <span class="text-2xl">🔋</span>
+                <div>
+                    <h2 class="font-bold text-lg text-cozy-800">大腦修復與專注充電站</h2>
+                    <p class="text-xs text-cozy-500">科學放鬆心靈，幫您再次找回閱讀動力！</p>
+                </div>
+            </div>
+
+            <!-- Modal Tabs -->
+            <div class="flex gap-1.5 bg-cozy-100 p-1 rounded-xl mb-5 text-xs font-bold">
+                <button onclick="switchRechargeTab('breath')" id="tab-btn-breath" class="flex-1 py-2 rounded-lg bg-white text-cozy-800 shadow-sm">
+                    🧘‍♀️ 箱式呼吸引導
+                </button>
+                <button onclick="switchRechargeTab('physical')" id="tab-btn-physical" class="flex-1 py-2 rounded-lg text-cozy-500 hover:text-cozy-700">
+                    👁️ 身體消除疲勞
+                </button>
+                <button onclick="switchRechargeTab('mental')" id="tab-btn-mental" class="flex-1 py-2 rounded-lg text-cozy-500 hover:text-cozy-700">
+                    🧠 快速召喚動力
+                </button>
+            </div>
+
+            <!-- Tab Content 1: Breathing Guide -->
+            <div id="tab-content-breath" class="space-y-4">
+                <p class="text-xs text-cozy-600 leading-relaxed text-center font-medium">
+                    **箱式呼吸法 (Box Breathing)**：特種部隊使用的減壓專注術。跟著中央的呼吸球膨脹時吸氣、停止時憋氣、收縮時呼氣，兩分鐘內就能降低焦慮。
+                </p>
+
+                <div class="bg-white/80 border border-cozy-200 rounded-2xl p-6 flex flex-col items-center justify-center min-h-[220px]">
+                    <div id="breathing-circle" class="w-24 h-24 rounded-full bg-cozy-200 flex items-center justify-center text-cozy-800 font-bold text-sm transform transition-all duration-[4000ms] ease-in-out">
+                        <span id="breathing-text">點擊開始</span>
+                    </div>
+                    <div id="breathing-phase" class="text-xs font-extrabold text-cozy-800 mt-6 tracking-wide uppercase bg-cozy-100 px-3 py-1 rounded-full border border-cozy-200">
+                        等待引導啟動
+                    </div>
+                    
+                    <button id="btn-toggle-breath" onclick="toggleBreathingGuide()" class="mt-4 px-4 py-1.5 bg-cozy-500 hover:bg-cozy-600 text-white rounded-lg text-xs font-bold shadow-sm transition">
+                        開始呼吸練習
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content 2: Physical Recovery -->
+            <div id="tab-content-physical" class="space-y-3.5 hidden">
+                <div class="space-y-3">
+                    <div class="bg-white p-3.5 rounded-xl border border-cozy-200 flex gap-3">
+                        <span class="text-xl shrink-0">🟢</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-cozy-800">20-20-20 護眼放鬆</h4>
+                            <p class="text-[11px] text-cozy-500 mt-1 leading-relaxed">
+                                每閱讀 20 分鐘，請將目光移開書本，眺望 **20 英尺（約 6 公尺）**以外的遠處物體至少 **20 秒**。讓睫狀肌獲得完整放鬆，消除疲累。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-cozy-200 flex gap-3">
+                        <span class="text-xl shrink-0">🟢</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-cozy-800">漸進式肩頸肌肉釋壓</h4>
+                            <p class="text-[11px] text-cozy-500 mt-1 leading-relaxed">
+                                將雙肩盡可能往耳朵聳起，憋氣並維持緊繃 **5 秒鐘**，然後隨著大口呼氣**瞬間將肩膀放下來**。重複 3 次，能迅速釋放因讀書緊繃的乳酸堆積。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-cozy-200 flex gap-3">
+                        <span class="text-xl shrink-0">🟢</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-cozy-800">喝下一杯溫水 (物理回血)</h4>
+                            <p class="text-[11px] text-cozy-500 mt-1 leading-relaxed">
+                                大腦有 75% 是水。輕微的脫水會直接降低專注力。每當昏沉時，先暫停讀書，慢慢喝下 250ml 溫水，能讓血液循環運氧更流暢。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content 3: Mental Motivation Hacks -->
+            <div id="tab-content-mental" class="space-y-3.5 hidden">
+                <div class="space-y-3">
+                    <div class="bg-white p-3.5 rounded-xl border border-cozy-200 flex gap-3">
+                        <span class="text-xl shrink-0">🔥</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-cozy-800">無壓力「5 秒法則」</h4>
+                            <p class="text-[11px] text-cozy-500 mt-1 leading-relaxed">
+                                當你在猶豫要不要讀書時，請大聲在心中倒數 **5... 4... 3... 2... 1...，然後「立刻動手打開課本」**。這能在您大腦想出藉口拖延之前，搶先建立行動慣性。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-cozy-200 flex gap-3">
+                        <span class="text-xl shrink-0">🔥</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-cozy-800">5-4-3-2-1 五感接地（防胡思亂想）</h4>
+                            <p class="text-[11px] text-cozy-500 mt-1 leading-relaxed">
+                                思緒亂飛時，深呼吸並在四周找出：**5 個看得到的東西、4 個摸得到的觸覺、3 個聽得到的聲音、2 個聞得到的氣味、1 個嚐得到的味道**。把心思強行拉回當前。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-cozy-200 flex gap-3">
+                        <span class="text-xl shrink-0">🔥</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-cozy-800">起跑熱身降難度 (2分鐘切入)</h4>
+                            <p class="text-[11px] text-cozy-500 mt-1 leading-relaxed">
+                                告訴自己：「我只讀裝備兩分鐘就好，兩分鐘一到想不讀就可以不讀。」只要你降低心智門檻開始熱身，大腦的「工作興奮機制」就會被啟動，自然而然讀下去。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: TODAY'S HARVEST成果分析 (Request 3: Replaced history modal) ================= -->
+    <div id="harvest-modal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-cozy-50 border border-cozy-200 rounded-3xl p-6 max-w-lg w-11/12 max-h-[85vh] overflow-y-auto shadow-2xl relative transform scale-95 transition-all duration-300" id="harvest-modal-content">
+            <button onclick="toggleHarvestModal(false)" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white hover:bg-cozy-100 text-cozy-600 flex items-center justify-center border border-cozy-200 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+
+            <div class="flex items-center gap-2 mb-4 border-b border-cozy-200 pb-3">
+                <span class="text-2xl">🧺</span>
+                <div>
+                    <h2 class="font-bold text-lg text-cozy-800">今日收穫與成果檢視</h2>
+                    <p class="text-xs text-cozy-500">檢視您今天的學習果實，與專屬讀伴的溫心評語 🌟</p>
+                </div>
+            </div>
+
+            <!-- Big Stats Indicators -->
+            <div class="grid grid-cols-2 gap-4 mb-5">
+                <div class="bg-white p-4 border border-cozy-200 rounded-2xl text-center shadow-sm">
+                    <span class="text-xs font-bold text-cozy-500">今日已收穫番茄</span>
+                    <p class="text-3xl font-extrabold text-rose-500 mt-1" id="harvest-modal-pomo">0 🍅</p>
+                </div>
+                <div class="bg-white p-4 border border-cozy-200 rounded-2xl text-center shadow-sm">
+                    <span class="text-xs font-bold text-cozy-500">今日累計專注</span>
+                    <p class="text-3xl font-extrabold text-amber-700 mt-1" id="harvest-modal-minutes">0 分</p>
+                </div>
+            </div>
+
+            <!-- Companion customized feedback card -->
+            <div class="bg-gradient-to-br from-amber-50 to-cozy-100/50 border border-cozy-200 rounded-2xl p-4 mb-5 shadow-inner">
+                <div class="flex items-center gap-2 mb-2">
+                    <span id="harvest-companion-avatar" class="text-xl">☕</span>
+                    <span class="text-xs font-extrabold text-cozy-850" id="harvest-companion-name">溫柔讀伴 說：</span>
+                </div>
+                <p id="harvest-companion-comment" class="text-xs font-bold text-cozy-800 leading-relaxed italic pl-1"></p>
+            </div>
+
+            <!-- List of Completed Tasks today -->
+            <h3 class="font-bold text-xs text-cozy-700 mb-2.5 flex items-center gap-1.5 border-b border-cozy-100 pb-1.5">
+                <i class="fa-solid fa-clipboard-check text-emerald-600"></i> 今日已完成/有專注的任務：
+            </h3>
+            <div class="space-y-2.5 max-h-[30vh] overflow-y-auto pr-1" id="harvest-completed-list">
+                <!-- Loaded dynamically -->
+            </div>
+            
+            <div class="mt-5 pt-3 border-t border-cozy-200 text-center">
+                <p class="text-[10px] text-cozy-400">每天午夜 12 點，收穫籃將會自動擦乾淨並歸零重新累積。今天也要快樂前進！</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: ACCOUNTS & PERSONAL COMPANION MANAGER ================= -->
+    <div id="account-modal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-cozy-50 border border-cozy-200 rounded-3xl p-6 max-w-lg w-11/12 max-h-[85vh] overflow-y-auto shadow-2xl relative transform scale-95 transition-all duration-300" id="account-modal-content">
+            <button onclick="toggleAccountModal(false)" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white hover:bg-cozy-100 text-cozy-600 flex items-center justify-center border border-cozy-200 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+
+            <div class="flex items-center gap-2 mb-4 border-b border-cozy-200 pb-3">
+                <span class="text-2xl">👤</span>
+                <div>
+                    <h2 class="font-bold text-lg text-cozy-800">個人專屬帳戶與讀書讀伴</h2>
+                    <p class="text-xs text-cozy-500">自訂帳號暱稱、讀伴個性，切換屬於您的獨立書房 📖</p>
+                </div>
+            </div>
+
+            <!-- Section 1: Switch or Create Account -->
+            <div class="bg-white p-4 border border-cozy-200 rounded-2xl mb-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="block font-bold text-xs text-cozy-800">📖 當前帳戶切換</label>
+                    <button onclick="createNewAccountPrompt()" title="建立全新讀伴帳戶" class="w-8 h-8 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg flex items-center justify-center transition shadow-sm">
+                        <i class="fa-solid fa-user-plus text-xs"></i>
+                    </button>
+                </div>
+                <select id="account-select-dropdown" onchange="switchActiveAccount(this.value)" class="w-full p-2 bg-cozy-50 border border-cozy-200 rounded-xl text-xs text-cozy-800 font-bold focus:outline-none focus:ring-1 focus:ring-cozy-400">
+                    <!-- Loaded dynamically -->
+                </select>
+            </div>
+
+            <!-- Section 2: Personalize Companion Form -->
+            <div class="space-y-4">
+                <h3 class="font-bold text-xs text-cozy-700 pb-1 border-b border-cozy-100">⚙️ 專屬讀伴個性與暱稱自訂</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-cozy-700 mb-1.5">您的暱稱：</label>
+                        <input type="text" id="input-profile-nickname" maxlength="15" placeholder="例如：萌芽小書蟲" class="w-full px-3 py-2 bg-white border border-cozy-200 rounded-xl text-xs text-cozy-800 font-bold focus:outline-none focus:ring-1 focus:ring-cozy-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-cozy-700 mb-1.5">讀伴頭像：</label>
+                        <select id="select-profile-avatar" class="w-full px-3 py-2 bg-white border border-cozy-200 rounded-xl text-xs text-cozy-800 font-bold focus:outline-none focus:ring-1 focus:ring-cozy-400">
+                            <option value="☕">☕ 溫馨熱咖啡</option>
+                            <option value="🐱">🐱 慵懶文青貓</option>
+                            <option value="🐶">🐶 忠厚柴犬</option>
+                            <option value="🦉">🦉 博學貓頭鷹</option>
+                            <option value="🦊">🦊 聰慧小狐狸</option>
+                            <option value="🦁">🦁 雄心小獅王</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-cozy-700 mb-1.5">您的座右銘 (將固定顯示於上方)：</label>
+                    <input type="text" id="input-profile-motto" maxlength="50" placeholder="一杯茶，一首歌，今天也是專注的一天 ✨" class="w-full px-3 py-2 bg-white border border-cozy-200 rounded-xl text-xs text-cozy-800 focus:outline-none focus:ring-1 focus:ring-cozy-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-cozy-700 mb-1.5">讀伴風格：</label>
+                    <select id="select-profile-style" class="w-full px-3 py-2 bg-white border border-cozy-200 rounded-xl text-xs text-cozy-800 font-bold focus:outline-none focus:ring-1 focus:ring-cozy-400">
+                        <option value="gentle">🌸 溫柔鼓勵派 (話語和藹溫和，陪伴您讀書)</option>
+                        <option value="strict">🔥 熱血嚴格派 (嚴厲督導，不准您偷懶分心)</option>
+                        <option value="zen">🍃 佛系隨緣派 (隨順自然，安詳專注地過每一天)</option>
+                    </select>
+                </div>
+
+                <div class="pt-3">
+                    <button onclick="saveAssistantProfile()" title="儲存設定" class="w-full py-2.5 bg-cozy-500 hover:bg-cozy-600 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-user-check text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: WEBSITE TOUR (網站導覽) ================= -->
+    <div id="tour-modal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-cozy-50 border border-cozy-200 rounded-3xl p-6 max-w-xl w-11/12 max-h-[85vh] overflow-y-auto shadow-2xl relative transform scale-95 transition-all duration-300" id="tour-modal-content">
+            <button onclick="toggleTourModal(false)" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white hover:bg-cozy-100 text-cozy-600 flex items-center justify-center border border-cozy-200 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+
+            <div class="flex items-center gap-2 mb-4 border-b border-cozy-200 pb-3">
+                <span class="text-2xl">🗺️</span>
+                <div>
+                    <h2 class="font-bold text-lg text-cozy-800">網站導覽與說明手冊</h2>
+                    <p class="text-xs text-cozy-500">協助您快速了解本站的各項極簡功能與操作小技巧</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 text-xs leading-relaxed text-cozy-700">
+                <p class="font-semibold text-cozy-800 text-[13px]">歡迎使用暖心讀書小幫手！我們重新精簡了介面，將大部分的繁複文字轉化為極簡圖標。以下為各區域按鈕與功能的詳細解說：</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <div class="bg-white p-3 rounded-xl border border-cozy-200">
+                        <h4 class="font-bold text-cozy-900 flex items-center gap-1.5 mb-1 text-[12px]">
+                            <span class="text-base">🧭</span> 左下角功能列
+                        </h4>
+                        <p class="text-[11px] text-cozy-600">
+                            <strong>❔ 網站導覽</strong>：即當前引導說明。<br>
+                            <strong>👤 專屬讀伴</strong>：管理多帳戶、設定暱稱與座右銘，選擇您喜愛的讀伴風格（溫柔、嚴格或佛系）。
+                        </p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-cozy-200">
+                        <h4 class="font-bold text-cozy-900 flex items-center gap-1.5 mb-1 text-[12px]">
+                            <span class="text-base">⏱️</span> 番茄鐘切換鈕
+                        </h4>
+                        <p class="text-[11px] text-cozy-600">
+                            <strong>🍅 25</strong>：切換至預設 25 分鐘專注、5 分鐘休息的小番茄模式。<br>
+                            <strong>🌟 50</strong>：切換至預設 50 分鐘專注、10 分鐘休息的大番茄模式。<br>
+                            <strong>⚙️ 自訂模式</strong>：展開時間輸入格，可自行指定專注與休息的分鐘數並點擊打勾套用。
+                        </p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-cozy-200">
+                        <h4 class="font-bold text-cozy-900 flex items-center gap-1.5 mb-1 text-[12px]">
+                            <span class="text-base">🧺</span> 收穫籃與成果檢視
+                        </h4>
+                        <p class="text-[11px] text-cozy-600">
+                            倒數結束時，番茄會動態掉入<strong>收穫籃</strong>。點選今日收穫籃，可以立即打開「今日成果檢視」檢視本日完成清單與統計數據。系統每累積 5 顆番茄即會將頂端的<strong>等級徽章 🏅</strong>升級，並變換對應色系：
+                            <br>• 🌱 (0+ 顆): 萌芽嫩芽
+                            <br>• 🍀 (5+ 顆): 雙葉青綠
+                            <br>• 🌿 (10+ 顆): 繁茂枝葉
+                            <br>• 🌼 (15+ 顆): 開花希望
+                            <br>• 👑 (20+ 顆): 皇家紅寶番茄
+                        </p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-cozy-200">
+                        <h4 class="font-bold text-cozy-900 flex items-center gap-1.5 mb-1 text-[12px]">
+                            <span class="text-base">📝</span> 備忘錄與篩選
+                        </h4>
+                        <p class="text-[11px] text-cozy-600">
+                            <strong>➕ 新增</strong>：填寫任務後點擊加號送出。<br>
+                            <strong>預估/已完 🍅 調整鈕</strong>：直接按 `+` 或 `-` 微調任務番茄數。<br>
+                            <strong>圖示篩選</strong>：分別代表「全部清單 📋」、「進行中 ⏳」及「已完成 ✅」。<br>
+                            <strong>🧹 掃帚鈕</strong>：一鍵清除所有標示已完成的任務。
+                        </p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-cozy-200">
+                        <h4 class="font-bold text-cozy-900 flex items-center gap-1.5 mb-1 text-[12px]">
+                            <span class="text-base">🎧</span> 擬真雨聲
+                        </h4>
+                        <p class="text-[11px] text-cozy-600">
+                            <strong>播放/暫停圓鈕</strong>：播放純代碼動態合成的大自然落雨與窗台滴水音效。下方拖曳條可細緻調整雨聲音量。
+                        </p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-cozy-200">
+                        <h4 class="font-bold text-cozy-900 flex items-center gap-1.5 mb-1 text-[12px]">
+                            <span class="text-base">🔋</span> 大腦充電站
+                        </h4>
+                        <p class="text-[11px] text-cozy-600">
+                            <strong>綠色電池按鈕</strong>：點擊開啟「箱式呼吸」動態球引導、20-20-20護眼放鬆技巧、以及擊退拖延症的5秒起跑動力科學。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50/50 p-3 rounded-xl border border-cozy-200 mt-2 text-center text-[11px] text-cozy-600">
+                    💡 <strong>備註說明：</strong>本站的待辦事項、專注時數、已收穫番茄以及多套讀伴帳戶設定均會自動保存在您的瀏覽器中，您可以安心進行重整、離線或關閉，學習成果永不丟失！
+                </div>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-cozy-200 text-right">
+                <button onclick="toggleTourModal(false)" title="關閉導覽" class="px-5 py-2.5 bg-cozy-500 hover:bg-cozy-600 text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95">
+                    <i class="fa-solid fa-check text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: CUSTOM ACCOUNT CREATION IN-MODAL DIALOG ================= -->
+    <div id="new-account-dialog" class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-cozy-50 border border-cozy-300 rounded-3xl p-6 max-w-sm w-11/12 shadow-2xl relative">
+            <h3 class="font-bold text-base text-cozy-800 mb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-plus-circle text-emerald-600"></i> 建立全新帳戶
+            </h3>
+            <p class="text-xs text-cozy-500 mb-4 leading-relaxed">請輸入此帳戶的名稱。建立後您將擁有一套完全獨立的番茄計時器、任務備忘錄 and 歷史紀錄系統！</p>
+            
+            <div class="space-y-3 mb-4">
+                <input type="text" id="input-new-account-name" placeholder="例如：英文檢定備考帳戶" class="w-full px-3 py-2 bg-white border border-cozy-200 rounded-xl text-xs font-bold text-cozy-800 focus:outline-none focus:ring-1 focus:ring-cozy-400">
+            </div>
+
+            <div class="flex gap-2 justify-end text-xs font-bold">
+                <button onclick="closeNewAccountDialog(false)" class="px-4 py-2 bg-white border border-cozy-200 text-cozy-600 rounded-xl hover:bg-cozy-100 transition">取消</button>
+                <button onclick="closeNewAccountDialog(true)" class="px-4 py-2 bg-cozy-500 text-white rounded-xl hover:bg-cozy-600 transition">確定建立</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: CUSTOM CONFIRM DIALOGUE (No alert/confirm Compliant) ================= -->
+    <div id="custom-confirm-modal" class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-cozy-50 border border-cozy-300 rounded-3xl p-6 max-w-sm w-11/12 shadow-2xl relative text-center">
+            <div class="text-3xl mb-2" id="confirm-modal-emoji">⚠️</div>
+            <h3 class="font-bold text-base text-cozy-800 mb-2" id="confirm-modal-title">請確認您的操作</h3>
+            <p class="text-xs text-cozy-600 leading-relaxed mb-5" id="confirm-modal-message">確認訊息載入中...</p>
+
+            <div class="flex gap-2 justify-center text-xs font-bold">
+                <button onclick="closeCustomConfirm(false)" class="px-5 py-2 bg-white border border-cozy-200 text-cozy-600 rounded-xl hover:bg-cozy-100 transition min-w-[80px]">取消</button>
+                <button onclick="closeCustomConfirm(true)" class="px-5 py-2 bg-cozy-550 text-white rounded-xl hover:bg-cozy-600 transition bg-cozy-500 min-w-[80px]">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cozy Custom Toast Notification Popup -->
+    <div id="toast-notification" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-stone-900/90 text-cozy-50 px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-300 translate-y-24 opacity-0 z-50 max-w-sm w-11/12 border border-stone-800">
+        <div class="text-xl" id="toast-emoji">🎉</div>
+        <div>
+            <p id="toast-title" class="font-bold text-xs text-amber-300">通知消息</p>
+            <p id="toast-message" class="text-xs text-stone-300 mt-0.5">內容載入中...</p>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        /* ---------------- STATE & DB STORAGE (Account Integrated) ---------------- */
+        const STORAGE_KEY_ACCOUNTS_V2 = 'study_helper_accounts_v3';
+        const STORAGE_KEY_ACTIVE_ID = 'study_helper_active_id_v3';
+        
+        let accounts = {};
+        let currentAccountId = 'default';
+
+        // Local copy bound to active account
+        let tasks = [];
+        let stats = { completedPomos: 0, totalFocusTime: 0 };
+        let harvestStats = { lastResetDate: '', todayHarvestCount: 0 };
+        let historyLogs = {};
+
+        // Active View State
+        let currentActiveTab = 'timer'; // 'timer' | 'todo'
+
+        // Timer related state
+        let timerInterval = null;
+        let isRunning = false;
+        let currentMode = 'small'; // 'small' | 'big' | 'custom'
+        let currentPhase = 'focus'; // 'focus' | 'break'
+        
+        // Time configs (stored in minutes)
+        let configTime = {
+            small: { focus: 25, break: 5 },
+            big: { focus: 50, break: 10 },
+            custom: { focus: 25, break: 5 }
+        };
+
+        let timeLeft = configTime.small.focus * 60; // default in seconds
+        let initialTimeSet = configTime.small.focus * 60;
+        let currentEstPomoSelected = 1;
+        let currentFilter = 'all';
+
+        // Audio related state
+        let audioCtx = null;
+        let noiseSource = null;
+        let noiseGainNode = null;
+        let isNoisePlaying = false;
+
+        // Interactive breathing cycle variables
+        let breathingTimer = null;
+        let isBreathingActive = false;
+        let breathingStep = 0; // 0: inhale, 1: hold, 2: exhale, 3: hold
+        let breathingSecondsLeft = 4;
+
+        // Level Configuration Palette (Strictly Emoji and Color badges only - Request 4)
+        const levels = [
+            { threshold: 0, emoji: "🌱", class: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+            { threshold: 5, emoji: "🍀", class: "bg-green-100 text-green-700 border-green-300 animate-bounce" },
+            { threshold: 10, emoji: "🌿", class: "bg-teal-50 text-teal-700 border-teal-200" },
+            { threshold: 15, emoji: "🌼", class: "bg-amber-50 text-amber-700 border-amber-200" },
+            { threshold: 20, emoji: "👑", class: "bg-rose-50 text-rose-700 border-rose-200 font-extrabold animate-pulse" }
+        ];
+
+        // Custom Confirm modal tracking callback
+        let customConfirmCallback = null;
+
+        /* ---------------- ON WINDOW LOAD ---------------- */
+        window.onload = function() {
+            initAccountSystem();
+            checkDailyReset();
+
+            renderTasks();
+            updateTimerDisplay();
+            updateStatsUI();
+            updateLevelBadge();
+            updateHarvestUI();
+
+            // Run Header Clock updating
+            setInterval(updateHeaderClock, 1000);
+            updateHeaderClock();
+            
+            // Event listener setup for spacebar handling (only when outside input boxes)
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    toggleTimer();
+                }
+            });
+        };
+
+        function getTodayString() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function updateHeaderClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('header-clock').innerText = `現在時間 ${hours}:${minutes}:${seconds}`;
+        }
+
+        /* ---------------- MULTI-ACCOUNT PROFILE SYSTEM ---------------- */
+        function initAccountSystem() {
+            const savedAccounts = localStorage.getItem(STORAGE_KEY_ACCOUNTS_V2);
+            const savedActiveId = localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
+
+            if (savedAccounts) {
+                try {
+                    accounts = JSON.parse(savedAccounts);
+                    currentAccountId = savedActiveId || 'default';
+                } catch(e) {
+                    console.error("Account parsing error", e);
+                    createDefaultAccountStructure();
+                }
+            } else {
+                createDefaultAccountStructure();
+            }
+
+            loadAccountData(currentAccountId);
+            populateAccountDropdown();
+        }
+
+        function createDefaultAccountStructure() {
+            const legacyTasks = localStorage.getItem('study_helper_tasks');
+            const legacyStats = localStorage.getItem('study_helper_stats');
+            const legacyHarvest = localStorage.getItem('study_helper_harvest');
+            const legacyHistory = localStorage.getItem('study_helper_history');
+
+            accounts = {
+                'default': {
+                    id: 'default',
+                    accountName: '預設個人讀伴房',
+                    nickname: '萌芽小書蟲',
+                    motto: '一杯茶，一首歌，今天也是專注的一天 ✨',
+                    avatar: '☕',
+                    style: 'gentle', // 'gentle' | 'strict' | 'zen'
+                    tasks: legacyTasks ? JSON.parse(legacyTasks) : [
+                        { id: 1, text: '📖 閱讀一本書的章節', completed: false, estPomo: 2, compPomo: 0 },
+                        { id: 2, text: '✍️ 完成明天的讀書計畫表', completed: true, estPomo: 1, compPomo: 1 }
+                    ],
+                    stats: legacyStats ? JSON.parse(legacyStats) : { completedPomos: 0, totalFocusTime: 0 },
+                    harvestStats: legacyHarvest ? JSON.parse(legacyHarvest) : { lastResetDate: '', todayHarvestCount: 0 },
+                    historyLogs: legacyHistory ? JSON.parse(legacyHistory) : {}
+                }
+            };
+            currentAccountId = 'default';
+            saveAccountsToStorage();
+        }
+
+        function saveAccountsToStorage() {
+            localStorage.setItem(STORAGE_KEY_ACCOUNTS_V2, JSON.stringify(accounts));
+            localStorage.setItem(STORAGE_KEY_ACTIVE_ID, currentAccountId);
+        }
+
+        function loadAccountData(accId) {
+            if (!accounts[accId]) accId = 'default';
+            currentAccountId = accId;
+
+            const acc = accounts[currentAccountId];
+            tasks = acc.tasks || [];
+            stats = acc.stats || { completedPomos: 0, totalFocusTime: 0 };
+            harvestStats = acc.harvestStats || { lastResetDate: '', todayHarvestCount: 0 };
+            historyLogs = acc.historyLogs || {};
+
+            // Refresh UI personalization
+            document.getElementById('display-nickname').innerText = acc.nickname || '暖心讀書小幫手';
+            document.getElementById('user-avatar-display').innerText = acc.avatar || '☕';
+            
+            // Adjust Companion style subtag description text
+            const styleLabel = acc.style === 'strict' ? '🔥 熱血嚴格讀伴 | 不准偷懶喔！' : (acc.style === 'zen' ? '🍃 佛系隨緣讀伴 | 萬物皆有時。' : '🌸 溫柔暖心讀伴 | 陪您一起出發 ✨');
+            document.getElementById('assistant-description-tag').innerText = styleLabel;
+
+            // Display customized motto or fallback to random quotes (Weightier styling - Request 3)
+            if (acc.motto && acc.motto.trim() !== '') {
+                document.getElementById('quote-display').innerText = `「 ${acc.motto} 」`;
+            } else {
+                getRandomQuote();
+            }
+
+            // Sync values to forms inside profile modal
+            document.getElementById('input-profile-nickname').value = acc.nickname || '萌芽小書蟲';
+            document.getElementById('input-profile-motto').value = acc.motto || '';
+            document.getElementById('select-profile-avatar').value = acc.avatar || '☕';
+            document.getElementById('select-profile-style').value = acc.style || 'gentle';
+
+            // Dynamically adjust theme based on active account companion style (Request 2 & 3)
+            updateCompanionTheme(acc.style);
+        }
+
+        // Request 2 & 3: Adapt color scheme across the ENTIRE middle section including mode buttons!
+        function updateCompanionTheme(style) {
+            const timerCard = document.getElementById('timer-card');
+            const progressRing = document.getElementById('progress-ring');
+            const playBtn = document.getElementById('btn-play-pause');
+            const phaseBadge = document.getElementById('timer-phase-badge');
+
+            // Reset baseline transition styles
+            timerCard.className = "cozy-card rounded-3xl p-6 relative overflow-hidden transition-all duration-500 ";
+            progressRing.className.baseVal = "transition-all duration-500 ";
+
+            if (style === 'strict') {
+                // Energetic strict style (Vibrant High-Saturation Reds/Orange gradients)
+                timerCard.classList.add('bg-gradient-to-br', 'from-orange-100/90', 'to-orange-50/80', 'border-orange-300', 'shadow-orange-150/30');
+                progressRing.className.baseVal += "text-orange-600";
+                playBtn.className = "w-16 h-16 rounded-full bg-orange-600 hover:bg-orange-700 active:scale-95 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:shadow-orange-600/20 transition-all duration-300";
+                if (currentPhase === 'focus') {
+                    phaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-orange-200 text-orange-950 shadow-sm border border-orange-300 mb-2 transition-all duration-300";
+                }
+            } else if (style === 'zen') {
+                // Calm Slate Greyish-Blue (随缘派改成更灰的灰藍色 - Request 3)
+                timerCard.classList.add('bg-gradient-to-br', 'from-slate-200/90', 'to-slate-100/80', 'border-slate-350', 'shadow-slate-150/25');
+                progressRing.className.baseVal += "text-slate-500";
+                playBtn.className = "w-16 h-16 rounded-full bg-slate-500 hover:bg-slate-600 active:scale-95 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:shadow-slate-500/20 transition-all duration-300";
+                if (currentPhase === 'focus') {
+                    phaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-slate-300 text-slate-900 shadow-sm border border-slate-400 mb-2 transition-all duration-300";
+                }
+            } else {
+                // Classic warm creamy styling
+                timerCard.classList.add('bg-gradient-to-br', 'from-amber-50/50', 'to-white', 'border-cozy-200', 'shadow-cozy-100/20');
+                progressRing.className.baseVal += "text-cozy-500";
+                playBtn.className = "w-16 h-16 rounded-full bg-cozy-500 hover:bg-cozy-600 active:scale-95 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:shadow-cozy-500/20 transition-all duration-300";
+                if (currentPhase === 'focus') {
+                    phaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-amber-100 text-amber-800 shadow-sm border border-amber-200 mb-2 transition-all duration-300";
+                }
+            }
+
+            // Sync color values of Small/Big/Custom buttons (Request 2)
+            updateTimerButtonsColors(style);
+        }
+
+        // Dynamically colorize Mode switcher buttons to keep the entire middle cohesive
+        function updateTimerButtonsColors(style) {
+            const btnSmall = document.getElementById('btn-small-pomo');
+            const btnBig = document.getElementById('btn-big-pomo');
+            const btnCustom = document.getElementById('btn-custom-pomo');
+
+            const buttons = [
+                { el: btnSmall, id: 'small', text: '🍅 25' },
+                { el: btnBig, id: 'big', text: '🌟 50' },
+                { el: btnCustom, id: 'custom', text: '⚙️' }
+            ];
+
+            buttons.forEach(item => {
+                const isSelected = (currentMode === item.id);
+                // Clear state classes
+                item.el.className = "px-5 py-2.5 rounded-xl font-bold transition-all duration-300 flex items-center gap-1.5 shadow-sm border ";
+                
+                if (isSelected) {
+                    if (style === 'strict') {
+                        item.el.classList.add('bg-orange-500', 'text-white', 'border-transparent');
+                    } else if (style === 'zen') {
+                        item.el.classList.add('bg-slate-500', 'text-white', 'border-transparent');
+                    } else {
+                        item.el.classList.add('bg-cozy-300', 'text-cozy-900', 'border-transparent');
+                    }
+                } else {
+                    item.el.classList.add('bg-white', 'text-cozy-600', 'hover:bg-cozy-100');
+                    if (style === 'strict') {
+                        item.el.classList.add('border-orange-200', 'hover:bg-orange-50');
+                    } else if (style === 'zen') {
+                        item.el.classList.add('border-slate-200', 'hover:bg-slate-50');
+                    } else {
+                        item.el.classList.add('border-cozy-200', 'hover:bg-cozy-100');
+                    }
+                }
+            });
+        }
+
+        function populateAccountDropdown() {
+            const select = document.getElementById('account-select-dropdown');
+            select.innerHTML = '';
+            Object.keys(accounts).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = `${accounts[id].avatar} ${accounts[id].accountName} (${accounts[id].nickname})`;
+                if (id === currentAccountId) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function saveAssistantProfile() {
+            const nickname = document.getElementById('input-profile-nickname').value.trim() || '萌芽小書蟲';
+            const motto = document.getElementById('input-profile-motto').value.trim();
+            const avatar = document.getElementById('select-profile-avatar').value || '☕';
+            const style = document.getElementById('select-profile-style').value || 'gentle';
+
+            accounts[currentAccountId].nickname = nickname;
+            accounts[currentAccountId].motto = motto;
+            accounts[currentAccountId].avatar = avatar;
+            accounts[currentAccountId].style = style;
+
+            saveAccountsToStorage();
+            loadAccountData(currentAccountId);
+            populateAccountDropdown();
+
+            toggleAccountModal(false);
+            showCozyToast("讀伴設定更新", `自訂資料已儲存成功，主人好！`, "👤");
+        }
+
+        function createNewAccountPrompt() {
+            document.getElementById('input-new-account-name').value = '';
+            const modal = document.getElementById('new-account-dialog');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closeNewAccountDialog(shouldCreate) {
+            const modal = document.getElementById('new-account-dialog');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+
+            if (shouldCreate) {
+                const rawName = document.getElementById('input-new-account-name').value.trim();
+                const accName = rawName || `新書房學室 #${Object.keys(accounts).length + 1}`;
+                const newId = 'acc_' + Date.now();
+
+                // Build pristine independent data structures for new account
+                accounts[newId] = {
+                    id: newId,
+                    accountName: accName,
+                    nickname: '萌芽小書蟲',
+                    motto: '',
+                    avatar: '📖',
+                    style: 'gentle',
+                    tasks: [
+                        { id: 1, text: '📖 開始這個新帳戶的第一個專注計畫', completed: false, estPomo: 1, compPomo: 0 }
+                    ],
+                    stats: { completedPomos: 0, totalFocusTime: 0 },
+                    harvestStats: { lastResetDate: getTodayString(), todayHarvestCount: 0 },
+                    historyLogs: {}
+                };
+
+                saveAccountsToStorage();
+                currentAccountId = newId;
+                loadAccountData(currentAccountId);
+                populateAccountDropdown();
+                
+                renderTasks();
+                updateTimerDisplay();
+                updateStatsUI();
+                updateLevelBadge();
+                updateHarvestUI();
+
+                showCozyToast("新書房已建立", `歡迎來到全新的「${accName}」，即刻開啟新計畫吧！`, "🎉");
+            }
+        }
+
+        function switchActiveAccount(accId) {
+            if (isRunning) {
+                showCustomConfirm("切換帳戶會將目前正在計時的番茄鐘重設，確定嗎？", () => {
+                    executeAccountSwitch(accId);
+                });
+            } else {
+                executeAccountSwitch(accId);
+            }
+        }
+
+        function executeAccountSwitch(accId) {
+            pauseTimer();
+            currentAccountId = accId;
+            loadAccountData(accId);
+            
+            renderTasks();
+            resetTimer();
+            updateStatsUI();
+            updateLevelBadge();
+            updateHarvestUI();
+
+            showCozyToast("帳戶已切換", `已載入「${accounts[accId].accountName}」讀書數據`, "🚪");
+        }
+
+        function syncActiveAccountDataState() {
+            accounts[currentAccountId].tasks = tasks;
+            accounts[currentAccountId].stats = stats;
+            accounts[currentAccountId].harvestStats = harvestStats;
+            accounts[currentAccountId].historyLogs = historyLogs;
+            saveAccountsToStorage();
+        }
+
+        /* ---------------- VIEW SWITCHER PORTAL ---------------- */
+        function switchMainTab(tabName) {
+            currentActiveTab = tabName;
+            
+            const btnTimer = document.getElementById('nav-tab-timer');
+            const btnTodo = document.getElementById('nav-tab-todo');
+            const panelTimer = document.getElementById('panel-timer');
+            const panelTodo = document.getElementById('panel-todo');
+
+            if (tabName === 'timer') {
+                btnTimer.className = "flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm bg-cozy-500 text-white";
+                btnTodo.className = "flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 hover:bg-cozy-200 text-cozy-700";
+                
+                panelTimer.classList.remove('hidden');
+                panelTodo.classList.add('hidden');
+            } else {
+                btnTodo.className = "flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm bg-cozy-500 text-white";
+                btnTimer.className = "flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 hover:bg-cozy-200 text-cozy-700";
+                
+                panelTodo.classList.remove('hidden');
+                panelTimer.classList.add('hidden');
+            }
+        }
+
+        /* ---------------- TOAST SYSTEM (Custom alerts) ---------------- */
+        function showCozyToast(title, message, emoji = '✨') {
+            const toast = document.getElementById('toast-notification');
+            const tTitle = document.getElementById('toast-title');
+            const tMsg = document.getElementById('toast-message');
+            const tEmoji = document.getElementById('toast-emoji');
+
+            tTitle.innerText = title;
+            tMsg.innerText = message;
+            tEmoji.innerText = emoji;
+
+            toast.style.transform = 'translate(-50%, -24px)';
+            toast.style.opacity = '1';
+
+            setTimeout(() => {
+                toast.style.transform = 'translate(-50%, 96px)';
+                toast.style.opacity = '0';
+            }, 3500);
+        }
+
+        /* ---------------- CUSTOM COMPLIANT CONFIRM DIALOGUE ---------------- */
+        function showCustomConfirm(message, onConfirm) {
+            document.getElementById('confirm-modal-message').innerText = message;
+            const modal = document.getElementById('custom-confirm-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            customConfirmCallback = onConfirm;
+        }
+
+        function closeCustomConfirm(approved) {
+            const modal = document.getElementById('custom-confirm-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+
+            if (approved && customConfirmCallback) {
+                customConfirmCallback();
+            }
+            customConfirmCallback = null;
+        }
+
+        /* ---------------- QUOTES FUNCTIONALITY ---------------- */
+        function getRandomQuote() {
+            // Check if current account has a personal motto first
+            const activeAcc = accounts[currentAccountId];
+            if (activeAcc && activeAcc.motto && activeAcc.motto.trim() !== '') {
+                document.getElementById('quote-display').innerText = `「 ${activeAcc.motto} 」`;
+                return;
+            }
+
+            const quotes = [
+                "「萬事起頭難，但只要你跨出第一步，你就已經超越昨天的自己。」",
+                "「不要去羨慕別人的成就，在自己的時區裡，你依然在準時前行。」",
+                "「學問不是死的，你的專注與熱情，能賦予它全新的靈魂。」",
+                "「給自己一點掌聲，你正一步一腳印地靠近你想去的地方。」",
+                "「專注在這一刻，此時此刻的累積，就是明天的底氣。」",
+                "「休息是為了走更長遠的路，倒數結束後，我們再攜手出發。」",
+                "「學習就像泡茶，需要適當的溫度與時間，香氣才會自然溢出。」",
+                "「每一次克服分心的努力，都是大腦在變得強壯的過程。」"
+            ];
+            const randIndex = Math.floor(Math.random() * quotes.length);
+            document.getElementById('quote-display').innerText = quotes[randIndex];
+        }
+
+        /* ---------------- LEVEL SYSTEM ---------------- */
+        function updateStatsUI() {
+            // Stats are saved in variables but no longer displayed on the motto bar except the level badge
+        }
+
+        function updateLevelBadge() {
+            const totalPomos = stats.completedPomos || 0;
+            const currentLvlIdx = Math.floor(totalPomos / 5);
+            const activeLevel = levels[Math.min(currentLvlIdx, levels.length - 1)];
+            
+            const badge = document.getElementById('level-badge');
+            // Simplified badge (Circle, Emoji only - Request 4)
+            badge.className = `w-7 h-7 rounded-full border flex items-center justify-center text-xs shadow-sm transition-all duration-300 ${activeLevel.class}`;
+            badge.innerHTML = activeLevel.emoji;
+        }
+
+        /* ---------------- HARVEST SYSTEM ---------------- */
+        function updateHarvestUI() {
+            document.getElementById('harvest-count-badge').innerHTML = `今天已收穫 <strong class="text-rose-600 font-extrabold">${harvestStats.todayHarvestCount}</strong> 顆 🍅`;
+        }
+
+        function checkDailyReset() {
+            const todayStr = getTodayString();
+            if (harvestStats.lastResetDate !== todayStr) {
+                // Clear today's cache, prepare for fresh harvest
+                harvestStats.todayHarvestCount = 0;
+                harvestStats.lastResetDate = todayStr;
+                syncActiveAccountDataState();
+                updateHarvestUI();
+            }
+        }
+
+        function logPomoInHistory(minutesCount, pomosEarned) {
+            const todayStr = getTodayString();
+            if (!historyLogs[todayStr]) {
+                historyLogs[todayStr] = { pomos: 0, minutes: 0, tasks: [] };
+            }
+            historyLogs[todayStr].pomos += pomosEarned;
+            historyLogs[todayStr].minutes += minutesCount;
+            syncActiveAccountDataState();
+        }
+
+        function logTaskInHistory(taskText) {
+            const todayStr = getTodayString();
+            if (!historyLogs[todayStr]) {
+                historyLogs[todayStr] = { pomos: 0, minutes: 0, tasks: [] };
+            }
+            if (!historyLogs[todayStr].tasks.includes(taskText)) {
+                historyLogs[todayStr].tasks.push(taskText);
+            }
+            syncActiveAccountDataState();
+        }
+
+        /* ---------------- TO-DO LIST FUNCTIONS ---------------- */
+        function setEstPomo(num) {
+            currentEstPomoSelected = num;
+            const buttons = document.querySelectorAll('.est-pomo-btn');
+            buttons.forEach((btn, idx) => {
+                if (idx + 1 === num) {
+                    btn.classList.remove('bg-white', 'text-cozy-500', 'border-cozy-200');
+                    btn.classList.add('bg-cozy-300', 'text-amber-900', 'border-cozy-300');
+                } else {
+                    btn.classList.remove('bg-cozy-300', 'text-amber-900', 'border-cozy-300');
+                    btn.classList.add('bg-white', 'text-cozy-500', 'border-cozy-200');
+                }
+            });
+        }
+
+        function addTask(event) {
+            event.preventDefault();
+            const input = document.getElementById('todo-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const newTask = {
+                id: Date.now(),
+                text: text,
+                completed: false,
+                estPomo: currentEstPomoSelected,
+                compPomo: 0
+            };
+
+            tasks.unshift(newTask);
+            syncActiveAccountDataState();
+            renderTasks();
+            input.value = '';
+            
+            setEstPomo(1);
+            showCozyToast("新增備忘", `已成功新增任務，預計需要 ${newTask.estPomo} 個番茄鐘 🍅`, "📝");
+        }
+
+        /* ---------------- TACTILE ADJUSTER TOOLS FOR ESTIMATION & PROGRESS ---------------- */
+        function adjustEst(id, amount) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    const newEst = Math.max(1, task.estPomo + amount);
+                    return { ...task, estPomo: newEst };
+                }
+                return task;
+            });
+            syncActiveAccountDataState();
+            renderTasks();
+            showCozyToast("調整預估", "已更新該任務的預期番茄數 🍅", "⚙️");
+        }
+
+        function adjustComp(id, amount) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    const newComp = Math.max(0, task.compPomo + amount);
+                    return { ...task, compPomo: newComp };
+                }
+                return task;
+            });
+            syncActiveAccountDataState();
+            renderTasks();
+            showCozyToast("調整進度", "已更新該任務實際完成的番茄數 🍅", "🎯");
+        }
+
+        function toggleTaskComplete(id) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    const nextState = !task.completed;
+                    if (nextState) {
+                        showCozyToast("太棒了！", `您完成了「${task.text.substring(0,10)}...」🌟`, "🎉");
+                        logTaskInHistory(task.text);
+                    }
+                    return { ...task, completed: nextState };
+                }
+                return task;
+            });
+            syncActiveAccountDataState();
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            syncActiveAccountDataState();
+            renderTasks();
+            showCozyToast("刪除任務", "該備忘事項已成功移除", "🗑️");
+        }
+
+        function clearCompletedTasks() {
+            const completedCount = tasks.filter(t => t.completed).length;
+            if (completedCount === 0) {
+                showCozyToast("提示", "目前沒有已完成的備忘項目喔", "🧸");
+                return;
+            }
+            tasks = tasks.filter(t => !t.completed);
+            syncActiveAccountDataState();
+            renderTasks();
+            showCozyToast("清掃乾淨", `已清除 ${completedCount} 項已完成備忘任務`, "🧹");
+        }
+
+        function filterTasks(filter) {
+            currentFilter = filter;
+            const filters = ['all', 'active', 'done'];
+            filters.forEach(f => {
+                const el = document.getElementById(`filter-${f}`);
+                if (f === filter) {
+                    el.classList.add('bg-white', 'text-cozy-800', 'shadow-sm');
+                    el.classList.remove('text-cozy-500');
+                } else {
+                    el.classList.remove('bg-white', 'text-cozy-800', 'shadow-sm');
+                    el.classList.add('text-cozy-500');
+                }
+            });
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('task-list-container');
+            const list = document.getElementById('task-list');
+            const emptyState = document.getElementById('empty-state');
+            const countBadge = document.getElementById('task-count');
+
+            let filtered = tasks;
+            if (currentFilter === 'active') {
+                filtered = tasks.filter(t => !t.completed);
+            } else if (currentFilter === 'done') {
+                filtered = tasks.filter(t => t.completed);
+            }
+
+            const uncompletedCount = tasks.filter(t => !t.completed).length;
+            countBadge.innerText = `剩餘 ${uncompletedCount} 項`;
+
+            if (filtered.length === 0) {
+                list.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            list.classList.remove('hidden');
+            list.innerHTML = '';
+
+            filtered.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border transition-all duration-200 ${
+                    task.completed 
+                    ? 'bg-cozy-100/60 border-cozy-200 opacity-60' 
+                    : 'bg-white border-cozy-200 hover:border-cozy-300'
+                }`;
+
+                // Left element: Checkbox + Content Text
+                const leftSide = document.createElement('div');
+                leftSide.className = "flex items-center gap-3 flex-grow min-w-0";
+
+                const checkbox = document.createElement('button');
+                checkbox.type = "button";
+                checkbox.onclick = () => toggleTaskComplete(task.id);
+                checkbox.className = `w-6 h-6 shrink-0 rounded-full flex items-center justify-center border-2 transition-colors ${
+                    task.completed 
+                    ? 'bg-cozy-500 border-cozy-500 text-white' 
+                    : 'border-cozy-300 hover:border-cozy-500 text-transparent bg-transparent'
+                }`;
+                checkbox.innerHTML = `<i class="fa-solid fa-check text-xs pointer-events-none"></i>`;
+
+                const label = document.createElement('span');
+                label.className = `text-sm font-medium break-words text-cozy-800 ${
+                    task.completed ? 'line-through text-cozy-500' : ''
+                }`;
+                label.innerText = task.text;
+
+                leftSide.appendChild(checkbox);
+                leftSide.appendChild(label);
+
+                // Right element: Clear + / - Adjusters for Tomatoes and Delete Button
+                const rightSide = document.createElement('div');
+                rightSide.className = "flex flex-wrap items-center gap-2 shrink-0 justify-end";
+
+                // Tool 1: Estimate Adjuster Block (Est. Tomatoes)
+                const estBlock = document.createElement('div');
+                estBlock.className = "flex items-center gap-1.5 bg-amber-50 px-2 py-1 rounded-xl border border-amber-100 text-[11px] shadow-sm";
+                estBlock.innerHTML = `
+                    <span class="text-cozy-500 font-bold">預估:</span>
+                    <button onclick="adjustEst(${task.id}, -1)" ${task.completed ? 'disabled' : ''} class="w-5 h-5 bg-white border border-cozy-200 rounded-md flex items-center justify-center font-extrabold text-cozy-700 hover:bg-cozy-100 disabled:opacity-50">-</button>
+                    <span class="font-bold text-amber-900 w-4 text-center">${task.estPomo}</span>
+                    <button onclick="adjustEst(${task.id}, 1)" ${task.completed ? 'disabled' : ''} class="w-5 h-5 bg-white border border-cozy-200 rounded-md flex items-center justify-center font-extrabold text-cozy-700 hover:bg-cozy-100 disabled:opacity-50">+</button>
+                    <span class="text-xs">🍅</span>
+                `;
+
+                // Tool 2: Actual Adjuster Block (Completed Tomatoes)
+                const compBlock = document.createElement('div');
+                compBlock.className = "flex items-center gap-1.5 bg-emerald-50 px-2 py-1 rounded-xl border border-emerald-100 text-[11px] shadow-sm";
+                compBlock.innerHTML = `
+                    <span class="text-cozy-500 font-bold">已完:</span>
+                    <button onclick="adjustComp(${task.id}, -1)" ${task.completed ? 'disabled' : ''} class="w-5 h-5 bg-white border border-cozy-200 rounded-md flex items-center justify-center font-extrabold text-cozy-700 hover:bg-cozy-100 disabled:opacity-50">-</button>
+                    <span class="font-bold text-emerald-800 w-4 text-center">${task.compPomo}</span>
+                    <button onclick="adjustComp(${task.id}, 1)" ${task.completed ? 'disabled' : ''} class="w-5 h-5 bg-white border border-cozy-200 rounded-md flex items-center justify-center font-extrabold text-cozy-700 hover:bg-cozy-100 disabled:opacity-50">+</button>
+                    <span class="text-xs">🍅</span>
+                `;
+
+                // Delete Button
+                const delBtn = document.createElement('button');
+                delBtn.onclick = () => deleteTask(task.id);
+                delBtn.className = "w-8 h-8 rounded-lg text-cozy-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition border border-transparent hover:border-rose-100";
+                delBtn.innerHTML = `<i class="fa-solid fa-trash text-xs"></i>`;
+
+                rightSide.appendChild(estBlock);
+                rightSide.appendChild(compBlock);
+                rightSide.appendChild(delBtn);
+
+                li.appendChild(leftSide);
+                li.appendChild(rightSide);
+                list.appendChild(li);
+            });
+        }
+
+        /* ---------------- POMODORO TIMER CORE LOGIC ---------------- */
+        function getPhaseDuration() {
+            const config = configTime[currentMode];
+            return currentPhase === 'focus' ? config.focus : config.break;
+        }
+
+        function setTimerMode(mode) {
+            if (isRunning) {
+                showCustomConfirm("更換模式將會重設正在計時的番茄鐘，確定嗎？", () => {
+                    executeSetTimerMode(mode);
+                });
+            } else {
+                executeSetTimerMode(mode);
+            }
+        }
+
+        function executeSetTimerMode(mode) {
+            pauseTimer();
+            currentMode = mode;
+            currentPhase = 'focus';
+
+            // Adapt button and card styles based on companion profile selections
+            const style = accounts[currentAccountId].style || 'gentle';
+            updateCompanionTheme(style);
+
+            const customInputs = document.getElementById('custom-inputs');
+            if (mode === 'custom') {
+                customInputs.classList.remove('hidden');
+            } else {
+                customInputs.classList.add('hidden');
+            }
+
+            resetTimer();
+        }
+
+        function applyCustomTimes() {
+            const focusVal = parseInt(document.getElementById('input-focus-time').value) || 25;
+            const breakVal = parseInt(document.getElementById('input-break-time').value) || 5;
+
+            configTime.custom.focus = Math.max(1, focusVal);
+            configTime.custom.break = Math.max(1, breakVal);
+
+            showCozyToast("設定成功", `自訂時間更新為：專注 ${configTime.custom.focus}分 / 休息 ${configTime.custom.break}分`, "⚙️");
+            resetTimer();
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            document.getElementById('timer-display').innerText = formattedTime;
+
+            const phaseLabel = currentPhase === 'focus' ? '📖 專注中' : '☕ 休息中';
+            document.title = `[${formattedTime}] ${phaseLabel} | 暖心讀書小幫手`;
+
+            const progressRing = document.getElementById('progress-ring');
+            const radius = progressRing.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            
+            progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+            
+            const elapsedPercent = (timeLeft / initialTimeSet) * 100;
+            const offset = circumference - (elapsedPercent / 100) * circumference;
+            progressRing.style.strokeDashoffset = offset;
+
+            const phaseBadge = document.getElementById('timer-phase-badge');
+            const totalStatText = document.getElementById('timer-total-stat');
+
+            const companionStyle = accounts[currentAccountId].style || 'gentle';
+
+            if (currentPhase === 'focus') {
+                phaseBadge.innerText = "專注時間";
+                totalStatText.innerText = `加油！正在為夢想而累積 ${configTime[currentMode].focus} 分鐘`;
+                
+                // Color badges matching chosen style context
+                if (companionStyle === 'strict') {
+                    phaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-orange-200 text-orange-950 shadow-sm border border-orange-300 mb-2";
+                } else if (companionStyle === 'zen') {
+                    phaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-slate-300 text-slate-900 shadow-sm border border-slate-400 mb-2";
+                } else {
+                    phaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-amber-100 text-amber-800 shadow-sm border border-amber-200 mb-2";
+                }
+            } else {
+                phaseBadge.innerText = "放鬆休息";
+                phaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-emerald-100 text-emerald-800 shadow-sm border border-emerald-200 mb-2";
+                totalStatText.innerText = `伸個懶腰、喝杯水，休息 ${configTime[currentMode].break} 分鐘吧`;
+            }
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            document.getElementById('play-icon').className = 'fa-solid fa-pause text-2xl';
+            
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                } else {
+                    handlePhaseEnd();
+                }
+            }, 1000);
+
+            // Adapt message style to selected companion style
+            const style = accounts[currentAccountId].style || 'gentle';
+            let msg = "沉浸於知識中，相信你可以專心致志的 ✨";
+            if (currentPhase === 'break') {
+                msg = style === 'strict' ? "不要偷看手機，深呼吸放空，休息結束立刻開工！😠" : "閉上眼，讓呼吸慢下來 🍃";
+            } else {
+                if (style === 'strict') msg = "讀書時段啟動！不要分心，專心讀書，不然要落後了！🔥";
+                else if (style === 'zen') msg = "緣起專注，不憂不懼。專心做眼前的功課吧 🕯️";
+            }
+
+            showCozyToast("開始倒數", msg, "⏱️");
+        }
+
+        function pauseTimer() {
+            if (!isRunning) return;
+            isRunning = false;
+            clearInterval(timerInterval);
+            timerInterval = null;
+            document.getElementById('play-icon').className = 'fa-solid fa-play text-2xl ml-1';
+            showCozyToast("計時暫停", "隨時點擊播放鍵，繼續您的小宇宙！", "⏸️");
+        }
+
+        function requestResetTimer() {
+            showCustomConfirm("確定要重設計時器嗎？這將會重設當前階段的倒數時間。", () => {
+                resetTimer();
+            });
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            const minutes = getPhaseDuration();
+            timeLeft = minutes * 60;
+            initialTimeSet = timeLeft;
+            updateTimerDisplay();
+        }
+
+        function requestSkipPhase() {
+            showCustomConfirm("確定要略過目前的計時階段嗎？", () => {
+                handlePhaseEnd(true);
+            });
+        }
+
+        /* Sound A: Ascending major chord for Focus -> Break (Relaxation) */
+        function playFocusToBreakSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+                const frequencies = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5 major chord
+                frequencies.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+                    gainNode.gain.setValueAtTime(0, now + idx * 0.12);
+                    gainNode.gain.linearRampToValueAtTime(0.12, now + idx * 0.12 + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 1.2);
+                    osc.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    osc.start(now + idx * 0.12);
+                    osc.stop(now + idx * 0.12 + 1.5);
+                });
+            } catch (err) {
+                console.warn("Web Audio limit reached", err);
+            }
+        }
+
+        /* Sound B: Crisp double chime for Break -> Focus (Attention) */
+        function playBreakToFocusSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+                const frequencies = [880.00, 1318.51]; // A5, E6 crisp chimes
+                frequencies.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gainNode.gain.setValueAtTime(0, now + idx * 0.08);
+                    gainNode.gain.linearRampToValueAtTime(0.18, now + idx * 0.08 + 0.02);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.5);
+                    osc.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.6);
+                });
+            } catch (err) {
+                console.warn("Web Audio limit reached", err);
+            }
+        }
+
+        function handlePhaseEnd(skipped = false) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+            document.getElementById('play-icon').className = 'fa-solid fa-play text-2xl ml-1';
+
+            // Distinct notification sound triggers based on the ending phase - Request 2
+            if (currentPhase === 'focus') {
+                playFocusToBreakSound(); // Transitioning into Relaxation
+            } else {
+                playBreakToFocusSound(); // Transitioning into Focus
+            }
+
+            const style = accounts[currentAccountId].style || 'gentle';
+
+            if (currentPhase === 'focus') {
+                const pomosEarned = currentMode === 'big' ? 2 : 1;
+                const focusMins = configTime[currentMode].focus;
+
+                if (!skipped) {
+                    stats.completedPomos += pomosEarned;
+                    stats.totalFocusTime += focusMins;
+
+                    harvestStats.todayHarvestCount += pomosEarned;
+
+                    logPomoInHistory(focusMins, pomosEarned);
+                    triggerTomatoFall(pomosEarned);
+                    autoUpdateActiveTaskPomodoro();
+                }
+
+                let endFocusMsg = `做得好！本次收穫了 ${pomosEarned} 顆番茄 🍅`;
+                if (style === 'strict') endFocusMsg = `好樣的！完成了專注，不准驕傲，休息後繼續拼搏！🔥`;
+                else if (style === 'zen') endFocusMsg = `專注圓滿。安享這份福至心靈的收穫 🌸`;
+
+                showCozyToast("專注完成", endFocusMsg, "🏆");
+                currentPhase = 'break';
+            } else {
+                let endBreakMsg = "身體重新充好電！讓我們回到書本中吧 💪";
+                if (style === 'strict') endBreakMsg = "休息時間結束了！快點開工，一秒都不要拖延！😠";
+                else if (style === 'zen') endBreakMsg = "動靜得宜。該是繼續前行修業的時候了 📚";
+
+                showCozyToast("休息結束", endBreakMsg, "📚");
+                currentPhase = 'focus';
+            }
+
+            syncActiveAccountDataState();
+            updateStatsUI();
+            updateLevelBadge();
+            updateHarvestUI();
+
+            // Prepare next phase timing
+            const minutes = getPhaseDuration();
+            timeLeft = minutes * 60;
+            initialTimeSet = timeLeft;
+            updateTimerDisplay();
+
+            // Auto-advance mechanism: Start the timer automatically for the next phase! - Request 1
+            setTimeout(() => {
+                startTimer();
+            }, 1200); // Tiny smooth gap for the toast to present itself beautifully
+        }
+
+        function triggerTomatoFall(pomoCount) {
+            const container = document.getElementById('tomato-animation-container');
+            const basket = document.getElementById('basket-icon');
+            
+            for (let i = 0; i < pomoCount; i++) {
+                setTimeout(() => {
+                    const tomato = document.createElement('span');
+                    tomato.innerText = '🍅';
+                    tomato.className = 'absolute text-3xl select-none falling-tomato';
+                    tomato.style.left = '112px';
+                    tomato.style.top = '112px';
+                    
+                    container.appendChild(tomato);
+                    
+                    setTimeout(() => {
+                        tomato.remove();
+                        basket.classList.remove('basket-bounce');
+                        void basket.offsetWidth;
+                        basket.classList.add('basket-bounce');
+                    }, 1100);
+                    
+                }, i * 350);
+            }
+        }
+
+        function autoUpdateActiveTaskPomodoro() {
+            const activeTask = tasks.find(t => !t.completed);
+            if (activeTask) {
+                adjustComp(activeTask.id, 1);
+                showCozyToast("番茄鐘自動累計", `已將番茄 🍅 記錄於任務「${activeTask.text.substring(0,8)}...」`, "🎯");
+            }
+        }
+
+        /* Cute Procedural Chime / Bowl Gong Sound using Web Audio API */
+        function playProceduralChime() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const frequencies = [440, 554.37, 659.25, 880];
+                const now = ctx.currentTime;
+                
+                frequencies.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    
+                    osc.type = idx === 0 ? 'sine' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+                    
+                    gainNode.gain.setValueAtTime(0.0, now);
+                    gainNode.gain.linearRampToValueAtTime(0.25 / frequencies.length, now + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.8 + (idx * 0.2));
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    
+                    osc.start(now);
+                    osc.stop(now + 2.5);
+                });
+            } catch (err) {
+                console.warn("Web Audio restrictions active.", err);
+            }
+        }
+
+        /* ---------------- NATURAL AMBIENT NOISE ENGINE ---------------- */
+        function toggleAmbientNoise() {
+            if (isNoisePlaying) {
+                stopAmbientNoise();
+            } else {
+                startAmbientNoise();
+            }
+        }
+
+        function startAmbientNoise() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const bufferSize = 4 * audioCtx.sampleRate;
+                const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                
+                let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+                let dropTimeLeft = 0;
+                let dropFreq = 1500;
+
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    
+                    // Pink noise filter algorithm
+                    b0 = 0.99886 * b0 + white * 0.0555179;
+                    b1 = 0.99332 * b1 + white * 0.0750759;
+                    b2 = 0.96900 * b2 + white * 0.1538520;
+                    b3 = 0.86650 * b3 + white * 0.3104856;
+                    b4 = 0.55000 * b4 + white * 0.5329522;
+                    b5 = -0.7616 * b5 - white * 0.0168980;
+                    let pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                    b6 = white * 0.115926;
+                    
+                    pink *= 0.09;
+                    
+                    // Wave swells (Wind Gust Modulation)
+                    const lfo = 0.75 + 0.25 * Math.sin(2 * Math.PI * 0.05 * (i / audioCtx.sampleRate));
+                    let rainSample = pink * lfo;
+                    
+                    // Procedural window pane raindrops
+                    if (Math.random() < 0.00035) {
+                        dropTimeLeft = Math.floor(audioCtx.sampleRate * 0.04);
+                        dropFreq = 1200 + Math.random() * 1600;
+                    }
+
+                    if (dropTimeLeft > 0) {
+                        const totalDropDuration = audioCtx.sampleRate * 0.04;
+                        const progress = (totalDropDuration - dropTimeLeft) / totalDropDuration;
+                        const envelope = Math.exp(-progress * 9); 
+                        const dropWave = Math.sin(2 * Math.PI * dropFreq * (dropTimeLeft / audioCtx.sampleRate));
+                        
+                        rainSample += dropWave * envelope * 0.085;
+                        dropTimeLeft--;
+                    }
+                    
+                    output[i] = rainSample;
+                }
+
+                noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = noiseBuffer;
+                noiseSource.loop = true;
+
+                noiseGainNode = audioCtx.createGain();
+                const initialVol = parseFloat(document.getElementById('ambient-volume').value);
+                noiseGainNode.gain.setValueAtTime(initialVol, audioCtx.currentTime);
+
+                noiseSource.connect(noiseGainNode);
+                noiseGainNode.connect(audioCtx.destination);
+                
+                noiseSource.start(0);
+                isNoisePlaying = true;
+
+                // Animate equalizer bars - Request 1
+                for (let i = 1; i <= 8; i++) {
+                    const bar = document.getElementById(`eq-bar-${i}`);
+                    if (bar) bar.classList.remove('opacity-0');
+                }
+
+                document.getElementById('btn-ambient-play').classList.remove('bg-cozy-400', 'hover:bg-cozy-500');
+                document.getElementById('btn-ambient-play').classList.add('bg-rose-500', 'hover:bg-rose-600');
+                document.getElementById('ambient-btn-icon').className = 'fa-solid fa-pause text-lg';
+                document.getElementById('ambient-btn-text').innerText = '暫停擬真雨聲';
+                document.getElementById('noise-status-badge').innerText = '播放中 🌧️';
+                document.getElementById('noise-status-badge').className = 'text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold';
+                
+                showCozyToast("大自然雨聲已播", "音效含有慢速起伏與細雨敲窗音，為您極大化專注腦波。", "🌧️");
+
+            } catch (err) {
+                console.error("Synthesizer error: ", err);
+                showCozyToast("音訊錯誤", "您的瀏覽器不支援本機合成音效，或請再點擊一次。", "⚠️");
+            }
+        }
+
+        function stopAmbientNoise() {
+            if (noiseSource) {
+                try {
+                    noiseSource.stop();
+                } catch(e){}
+                noiseSource.disconnect();
+                noiseSource = null;
+            }
+            isNoisePlaying = false;
+
+            // Stop equalizer bars - Request 1
+            for (let i = 1; i <= 8; i++) {
+                const bar = document.getElementById(`eq-bar-${i}`);
+                if (bar) bar.classList.add('opacity-0');
+            }
+
+            document.getElementById('btn-ambient-play').classList.remove('bg-rose-500', 'hover:bg-rose-600');
+            document.getElementById('btn-ambient-play').classList.add('bg-cozy-400', 'hover:bg-cozy-500');
+            document.getElementById('ambient-btn-icon').className = 'fa-solid fa-play text-lg';
+            document.getElementById('ambient-btn-text').innerText = '播放擬真雨聲';
+            document.getElementById('noise-status-badge').innerText = '已靜音';
+            document.getElementById('noise-status-badge').className = 'text-[10px] px-2 py-0.5 bg-cozy-200 text-cozy-700 rounded font-bold';
+        }
+
+        function changeAmbientVolume(val) {
+            const vol = parseFloat(val);
+            if (noiseGainNode && isNoisePlaying) {
+                noiseGainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            }
+        }
+
+        /* ---------------- RECHARGER STATION FUNCTIONALITY ---------------- */
+        function toggleRechargerModal(show) {
+            const modal = document.getElementById('recharger-modal');
+            const content = document.getElementById('recharger-modal-content');
+            
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } else {
+                if (isBreathingActive) {
+                    toggleBreathingGuide();
+                }
+                modal.classList.add('opacity-0');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function switchRechargeTab(tabName) {
+            const tabs = ['breath', 'physical', 'mental'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const content = document.getElementById(`tab-content-${t}`);
+                
+                if (t === tabName) {
+                    btn.className = "flex-1 py-2 rounded-lg bg-white text-cozy-800 shadow-sm";
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = "flex-1 py-2 rounded-lg text-cozy-500 hover:text-cozy-700";
+                    content.classList.add('hidden');
+                }
+            });
+        }
+
+        /* Dynamic Box Breathing Interactive Loop Handler */
+        function toggleBreathingGuide() {
+            const circle = document.getElementById('breathing-circle');
+            const text = document.getElementById('breathing-text');
+            const phaseLabel = document.getElementById('breathing-phase');
+            const toggleBtn = document.getElementById('btn-toggle-breath');
+
+            if (isBreathingActive) {
+                clearInterval(breathingTimer);
+                breathingTimer = null;
+                isBreathingActive = false;
+                
+                circle.classList.remove('breath-expand', 'breath-shrink');
+                circle.style.transform = '';
+                text.innerText = "點擊開始";
+                phaseLabel.innerText = "等待引導啟動";
+                phaseLabel.className = "text-xs font-extrabold text-cozy-800 mt-6 tracking-wide uppercase bg-cozy-100 px-3 py-1 rounded-full border border-cozy-200";
+                toggleBtn.innerText = "開始呼吸練習";
+                toggleBtn.classList.remove('bg-rose-500', 'hover:bg-rose-600');
+                toggleBtn.classList.add('bg-cozy-500', 'hover:bg-cozy-600');
+            } else {
+                isBreathingActive = true;
+                breathingStep = 0;
+                breathingSecondsLeft = 4;
+                
+                toggleBtn.innerText = "停止練習";
+                toggleBtn.classList.remove('bg-cozy-500', 'hover:bg-cozy-600');
+                toggleBtn.classList.add('bg-rose-500', 'hover:bg-rose-600');
+
+                runBreathingCycleStep();
+                breathingTimer = setInterval(() => {
+                    breathingSecondsLeft--;
+                    if (breathingSecondsLeft <= 0) {
+                        breathingStep = (breathingStep + 1) % 4;
+                        breathingSecondsLeft = 4;
+                        runBreathingCycleStep();
+                    } else {
+                        text.innerText = `${breathingSecondsLeft} 秒`;
+                    }
+                }, 1000);
+            }
+        }
+
+        function runBreathingCycleStep() {
+            const circle = document.getElementById('breathing-circle');
+            const text = document.getElementById('breathing-text');
+            const phaseLabel = document.getElementById('breathing-phase');
+            
+            text.innerText = `${breathingSecondsLeft} 秒`;
+
+            if (breathingStep === 0) {
+                circle.className = "w-24 h-24 rounded-full flex items-center justify-center text-cozy-850 font-bold text-sm transform transition-all duration-[4000ms] ease-in-out breath-expand";
+                phaseLabel.innerText = "吸氣 🧘‍♀️";
+                phaseLabel.className = "text-xs font-extrabold text-amber-800 mt-6 tracking-wide uppercase bg-amber-100 px-3 py-1 rounded-full border border-amber-200";
+            } else if (breathingStep === 1) {
+                phaseLabel.innerText = "憋氣 🍃";
+                phaseLabel.className = "text-xs font-extrabold text-teal-800 mt-6 tracking-wide uppercase bg-teal-100 px-3 py-1 rounded-full border border-teal-200";
+            } else if (breathingStep === 2) {
+                circle.className = "w-24 h-24 rounded-full flex items-center justify-center text-cozy-850 font-bold text-sm transform transition-all duration-[4000ms] ease-in-out breath-shrink";
+                phaseLabel.innerText = "呼氣 🌬️";
+                phaseLabel.className = "text-xs font-extrabold text-blue-800 mt-6 tracking-wide uppercase bg-blue-100 px-3 py-1 rounded-full border border-blue-200";
+            } else if (breathingStep === 3) {
+                phaseLabel.innerText = "憋氣 🌸";
+                phaseLabel.className = "text-xs font-extrabold text-rose-800 mt-6 tracking-wide uppercase bg-rose-100 px-3 py-1 rounded-full border border-rose-200";
+            }
+        }
+
+        /* ---------------- TODAY'S HARVEST RESULTS MODAL (Request 3) ---------------- */
+        function toggleHarvestModal(show) {
+            const modal = document.getElementById('harvest-modal');
+            const content = document.getElementById('harvest-modal-content');
+            
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function openHarvestModal() {
+            // Render basic stats
+            const todayPomo = harvestStats.todayHarvestCount || 0;
+            const todayMinutes = todayPomo * 25; // Approximate focus time calculation
+            
+            document.getElementById('harvest-modal-pomo').innerText = `${todayPomo} 🍅`;
+            document.getElementById('harvest-modal-minutes').innerText = `${todayMinutes} 分`;
+
+            // Setup customized Companion Personality comment based on performance - Request 3
+            const activeAcc = accounts[currentAccountId];
+            const companionStyle = activeAcc.style || 'gentle';
+            const companionAvatar = activeAcc.avatar || '☕';
+            const companionNickname = activeAcc.nickname || '讀伴';
+
+            document.getElementById('harvest-companion-avatar').innerText = companionAvatar;
+            document.getElementById('harvest-companion-name').innerText = `${companionNickname} (${companionStyle === 'strict' ? '熱血派' : (companionStyle === 'zen' ? '佛系派' : '溫柔派')}) 說：`;
+
+            let comment = "";
+            if (todayPomo === 0) {
+                if (companionStyle === 'strict') {
+                    comment = "「今天一顆番茄都沒有收穫！不准再發呆找藉口了，立刻翻開書本，動手做出成果給我看！🔥」";
+                } else if (companionStyle === 'zen') {
+                    comment = "「無欲無求，安步當車。專注隨緣而至，準備好了隨時可以開始 🍃」";
+                } else {
+                    comment = "「今天才剛開始，沒關係的。累的話先喝杯水，待會我們一起翻開書頁，踏出第一步吧 ☕」";
+                }
+            } else if (todayPomo > 0 && todayPomo < 4) {
+                if (companionStyle === 'strict') {
+                    comment = "「哼，算你今天稍微動了一下。但這種進度還差得遠呢，休息完了就趕快抓緊時間繼續拼！💪」";
+                } else if (companionStyle === 'zen') {
+                    comment = "「種瓜得瓜，耕耘已有定數。心不隨風亂，專注自然生慧 🌾」";
+                } else {
+                    comment = "「太好了！看見你累積了 ${todayPomo} 顆番茄，有在向前進就是最棒的！繼續保持溫和的步調喔 ✨」";
+                }
+            } else {
+                if (companionStyle === 'strict') {
+                    comment = "「幹得太漂亮了！這才是我們該有的戰鬥姿態！今天簡真是效率狂飆，明天繼續給我保持這股衝勁！🔥」";
+                } else if (companionStyle === 'zen') {
+                    comment = "「功德圓滿，心神俱安。今天的專注如甘露灌溉，收穫已然極佳，隨緣安歇 🌾」";
+                } else {
+                    comment = "「你今天真的超級努力！收穫了這麼多果實，我都看在眼裡喔。快給自己鼓鼓掌，今天辛苦了，你真的太棒了 🌸」";
+                }
+            }
+            document.getElementById('harvest-companion-comment').innerText = comment.replace('${todayPomo}', todayPomo);
+
+            // Render checklist tasks that are completed or have compPomo > 0
+            const completedList = document.getElementById('harvest-completed-list');
+            completedList.innerHTML = '';
+
+            const activeTasksToday = tasks.filter(t => t.completed || t.compPomo > 0);
+            
+            if (activeTasksToday.length === 0) {
+                completedList.innerHTML = `
+                    <p class="text-[11px] text-cozy-500 italic text-center py-4">今天尚未完成或累積備忘任務。寫下新任務，並啟動番茄鐘來挑戰吧！</p>
+                `;
+            } else {
+                activeTasksToday.forEach(task => {
+                    const div = document.createElement('div');
+                    div.className = "bg-white border border-cozy-200 rounded-xl p-3 flex justify-between items-center text-xs shadow-sm";
+                    
+                    const textLabel = document.createElement('span');
+                    textLabel.className = `font-bold break-all max-w-[70%] ${task.completed ? 'line-through text-cozy-400' : 'text-cozy-800'}`;
+                    textLabel.innerText = task.text;
+
+                    const statusBadge = document.createElement('span');
+                    statusBadge.className = "text-[10px] font-extrabold bg-cozy-100 text-cozy-800 px-2 py-1 rounded-md shrink-0";
+                    statusBadge.innerHTML = `預估: ${task.estPomo} 🍅 | 實際: ${task.compPomo} 🍅`;
+
+                    div.appendChild(textLabel);
+                    div.appendChild(statusBadge);
+                    completedList.appendChild(div);
+                });
+            }
+
+            toggleHarvestModal(true);
+        }
+
+        function toggleAccountModal(show) {
+            const modal = document.getElementById('account-modal');
+            const content = document.getElementById('account-modal-content');
+
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        /* New Tour Modal Toggle Controller */
+        function toggleTourModal(show) {
+            const modal = document.getElementById('tour-modal');
+            const content = document.getElementById('tour-modal-content');
+
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>

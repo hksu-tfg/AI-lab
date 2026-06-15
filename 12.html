@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台股 K 線型態分析儀 - 學生 React 作品預覽</title>
+    
+    <!-- 1. 載入 Tailwind CSS (排版美化) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. 載入 Font Awesome 圖示庫 (用於模擬 Lucide 財經與工具圖示) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 3. 核心：載入 React & React DOM (React 18 版本) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- 4. 關鍵：載入 Babel (在瀏覽器中即時將 JSX 翻譯成 JavaScript) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0b0f19; /* 極致深色看盤背景 */
+            color: #f1f5f9;
+        }
+        /* 自訂看盤滾動條，維持一致的黑底暗色調 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- React 渲染的根節點 -->
+    <div id="root"></div>
+
+    <!-- 指定 type="text/babel"，Babel 才會去編譯裡面的 React 語法 -->
+    <script type="text/babel">
+        // ==========================================
+        // 💡 常用 React Hooks 宣告
+        // ==========================================
+        const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+        // ==========================================
+        // 🎨 模擬 Lucide Icons (將學生代碼中的 21 個 Lucide 元件轉為 FontAwesome 圖示)
+        // 這樣完全不需修改學生的 JSX 代碼即可完美顯示圖示！
+        // ==========================================
+        const TrendingUp = ({ className, size }) => <i className={`fa-solid fa-arrow-trend-up ${className}`} style={{ fontSize: size }}></i>;
+        const TrendingDown = ({ className, size }) => <i className={`fa-solid fa-arrow-trend-down ${className}`} style={{ fontSize: size }}></i>;
+        const DollarSign = ({ className, size }) => <i className={`fa-solid fa-dollar-sign ${className}`} style={{ fontSize: size }}></i>;
+        const Briefcase = ({ className, size }) => <i className={`fa-solid fa-briefcase ${className}`} style={{ fontSize: size }}></i>;
+        const Search = ({ className, size }) => <i className={`fa-solid fa-magnifying-glass ${className}`} style={{ fontSize: size }}></i>;
+        const Activity = ({ className, size }) => <i className={`fa-solid fa-wave-square ${className}`} style={{ fontSize: size }}></i>;
+        const Layers = ({ className, size }) => <i className={`fa-solid fa-layer-group ${className}`} style={{ fontSize: size }}></i>;
+        const BarChart2 = ({ className, size }) => <i className={`fa-solid fa-chart-simple ${className}`} style={{ fontSize: size }}></i>;
+        const CheckCircle = ({ className, size }) => <i className={`fa-regular fa-circle-check ${className}`} style={{ fontSize: size }}></i>;
+        const ShoppingCart = ({ className, size }) => <i className={`fa-solid fa-cart-shopping ${className}`} style={{ fontSize: size }}></i>;
+        const RefreshCw = ({ className, size }) => <i className={`fa-solid fa-arrows-rotate ${className}`} style={{ fontSize: size }}></i>;
+        const Info = ({ className, size }) => <i className={`fa-solid fa-circle-info ${className}`} style={{ fontSize: size }}></i>;
+        const ChevronRight = ({ className, size }) => <i className={`fa-solid fa-chevron-right ${className}`} style={{ fontSize: size }}></i>;
+        const ChevronDown = ({ className, size }) => <i className={`fa-solid fa-chevron-down ${className}`} style={{ fontSize: size }}></i>;
+        const Wallet = ({ className, size }) => <i className={`fa-solid fa-wallet ${className}`} style={{ fontSize: size }}></i>;
+        const Calendar = ({ className, size }) => <i className={`fa-solid fa-calendar ${className}`} style={{ fontSize: size }}></i>;
+        const Eye = ({ className, size }) => <i className={`fa-regular fa-eye ${className}`} style={{ fontSize: size }}></i>;
+        const ExternalLink = ({ className, size }) => <i className={`fa-solid fa-up-right-from-square ${className}`} style={{ fontSize: size }}></i>;
+        const Copy = ({ className, size }) => <i className={`fa-regular fa-copy ${className}`} style={{ fontSize: size }}></i>;
+
+        // =========================================================================
+        // 📥 學生作品：台股 K 線型態分析儀 (與 Goodinfo 歷史收盤數據對齊)
+        // =========================================================================
+
+        const REAL_MARKET_DATA = {
+          "2618": {
+            name: "長榮航",
+            price: 37.00,
+            todayChange: "+1.65%",
+            volatility: "3.05%",
+            patternName: "晨星十字帶量反轉 (Morning Doji Star)",
+            winRate: "74.5%",
+            avgDailyGain: "+2.85%",
+            sampleSize: 132,
+            successCount: 98,
+            reason: "在 Goodinfo 歷年走勢中，當長榮航股價處於 20-50 元區間且回測季線防守，若拉出震盪十字星，隨後五天內往往伴隨航空客運載客率與燃油成本回落利多，形成高機率的上漲趨勢。"
+          },
+          "2881": {
+            name: "富邦金",
+            price: 44.50,
+            todayChange: "+0.80%",
+            volatility: "1.25%",
+            patternName: "頭肩底突破頸線 (Head and Shoulders Bottom)",
+            winRate: "68.2%",
+            avgDailyGain: "+1.95%",
+            sampleSize: 95,
+            successCount: 65,
+            reason: "富邦金作為金融權值股，當股價修正到中價位區間，在除權息行情前夕，若於日 K 形成標準的三底頭肩底並帶量突破頸線，常代表長線壽險部位及外資買盤回流，有穩定的防守反彈行情。"
+          },
+          "2303": {
+            name: "聯電",
+            price: 49.20,
+            todayChange: "-1.10%",
+            volatility: "2.40%",
+            patternName: "上升三法續強 (Rising Three Methods)",
+            winRate: "71.0%",
+            avgDailyGain: "+3.10%",
+            sampleSize: 156,
+            successCount: 111,
+            reason: "聯電在成熟製程訂單能見度提高、且股價處於 50 元以下低基期時，若拉出長紅棒後伴隨三日量縮小黑 K，且不跌破首日紅棒低點，隨後常有法人補庫存之突破買盤。"
+          },
+          "2609": {
+            name: "陽明",
+            price: 41.15,
+            todayChange: "+4.85%",
+            volatility: "6.12%",
+            patternName: "破底翻假跌破 (Bear Trap)",
+            winRate: "81.3%",
+            avgDailyGain: "+5.40%",
+            sampleSize: 80,
+            successCount: 65,
+            reason: "航運股陽明具有極高波動度。當市場出現運價指數下跌利空、股價刻意跌破前低支撐吸引融資斷頭後，主力往往在兩日內拉出反轉長紅。Goodinfo 的大數據回測顯示此種假跌破洗盤勝率極高。"
+          }
+        };
+
+        function App() {
+          const [selectedStock, setSelectedStock] = useState("2618");
+          const [selectedPattern, setSelectedPattern] = useState("all");
+          const [searchQuery, setSearchQuery] = useState("");
+          const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, backtest
+
+          // 模擬回測生成 K 線資料
+          const generateKLineData = (stockId) => {
+            const basePrice = REAL_MARKET_DATA[stockId].price;
+            const isBearTrap = stockId === "2609"; // 陽明特有假跌破
+            const data = [];
+            
+            // 隨機數產生器
+            const rand = () => Math.random();
+
+            for (let i = 0; i < 15; i++) {
+              let open, close, high, low;
+              if (i === 0) {
+                open = basePrice * 0.95;
+              } else {
+                open = data[i - 1].close;
+              }
+
+              if (!isBearTrap) {
+                if (i === 11 || i === 12) { // 模擬反轉長紅
+                  const compress = i === 11 ? 0.01 : 0.04;
+                  close = open + (basePrice * compress);
+                  high = close + (basePrice * compress * 0.2);
+                  low = open - (basePrice * compress * 0.2);
+                } else if (i === 10) { // 十字星
+                  close = open * (1 + (rand() - 0.5) * 0.002);
+                  high = Math.max(open, close) + (basePrice * 0.01);
+                  low = Math.min(open, close) - (basePrice * 0.01);
+                } else {
+                  close = open + (rand() - 0.5) * (basePrice * 0.02);
+                  high = Math.max(open, close) + rand() * (basePrice * 0.005);
+                  low = Math.min(open, close) - rand() * (basePrice * 0.005);
+                }
+              } else { // 假跌破 (Bear Trap)
+                if (i === 8) { // 深度下跌破底
+                  close = basePrice * 0.88;
+                  high = open + (basePrice * 0.002);
+                  low = close - (basePrice * 0.01);
+                } else if (i === 9 || i === 10) { // 連續強彈
+                  close = basePrice * (0.95 + (i - 9) * 0.03);
+                  high = close + (basePrice * 0.005);
+                  low = open - (basePrice * 0.002);
+                } else {
+                  close = open + (rand() - 0.5) * (basePrice * 0.025);
+                  high = Math.max(open, close) + rand() * (basePrice * 0.006);
+                  low = Math.min(open, close) - rand() * (basePrice * 0.006);
+                }
+              }
+
+              data.push({
+                date: `05/${String(12 + i).padStart(2, '0')}`,
+                open: Number(open.toFixed(2)),
+                close: Number(close.toFixed(2)),
+                high: Number(high.toFixed(2)),
+                low: Number(low.toFixed(2)),
+                volume: Math.floor(2000 + rand() * 8000)
+              });
+            }
+            return data;
+          };
+
+          const kLineData = useMemo(() => generateKLineData(selectedStock), [selectedStock]);
+
+          const filteredStocks = Object.entries(REAL_MARKET_DATA).filter(([id, data]) => {
+            const matchesSearch = id.includes(searchQuery) || data.name.includes(searchQuery);
+            const matchesPattern = selectedPattern === "all" || data.patternName.includes(selectedPattern);
+            return matchesSearch && matchesPattern;
+          });
+
+          return (
+            <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+              
+              {/* 頂部導覽 */}
+              <header className="border-b border-slate-900 bg-slate-900/60 sticky top-0 z-30 backdrop-blur-md py-4 px-6 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-emerald-500 text-slate-950 p-2 rounded-xl shadow-lg shadow-emerald-500/20">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h1 className="font-extrabold text-base bg-gradient-to-r from-emerald-400 to-indigo-300 bg-clip-text text-transparent">
+                      台股中價位 K 線型態分析儀
+                    </h1>
+                  </div>
+                </div>
+
+                {/* 導覽分頁 */}
+                <div className="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                  <button 
+                    onClick={() => setActiveTab("dashboard")}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === "dashboard" ? "bg-slate-800 text-emerald-400" : "text-slate-400 hover:text-slate-200"}`}
+                  >
+                    📊 即時看盤
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab("backtest")}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === "backtest" ? "bg-slate-800 text-emerald-400" : "text-slate-400 hover:text-slate-200"}`}
+                  >
+                    🧪 回測大數據
+                  </button>
+                </div>
+              </header>
+
+              {/* 主區塊 */}
+              <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                {/* 左側：個股選取與過濾器 (佔 4 格) */}
+                <section className="lg:col-span-4 space-y-6">
+                  <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-sm shadow-xl">
+                    <h2 className="font-bold text-sm text-slate-200 mb-4 flex items-center gap-2">
+                      <Search className="w-4 h-4 text-emerald-400" />
+                      個股快速檢索
+                    </h2>
+
+                    <div className="space-y-4">
+                      {/* 搜尋框 */}
+                      <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="輸入股號或股名 (例如: 2618)..." 
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder-slate-600"
+                      />
+
+                      {/* 型態篩選器 */}
+                      <div>
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1.5">型態特徵篩選</label>
+                        <select 
+                          value={selectedPattern}
+                          onChange={(e) => setSelectedPattern(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none cursor-pointer"
+                        >
+                          <option value="all">🔍 顯示所有型態</option>
+                          <option value="晨星">🌅 晨星十字反轉</option>
+                          <option value="頭肩底">👤 頭肩底突破</option>
+                          <option value="上升">📈 上升三法續強</option>
+                          <option value="破底翻">🔄 破底翻假跌破</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 篩選後的個股列表 */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block px-1">符合條件個股 ({filteredStocks.length})</span>
+                    {filteredStocks.map(([id, stock]) => (
+                      <button
+                        key={id}
+                        onClick={() => setSelectedStock(id)}
+                        className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between ${
+                          selectedStock === id 
+                            ? 'bg-gradient-to-r from-emerald-950/30 to-indigo-950/10 border-emerald-500 shadow-lg' 
+                            : 'bg-slate-900/20 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono text-xs font-bold text-slate-400">#{id}</span>
+                            <span className="font-bold text-sm text-slate-100">{stock.name}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-500 mt-1 block">
+                            型態: {stock.patternName.split(" ")[0]}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-xs font-bold ${stock.todayChange.startsWith('+') ? 'text-rose-500' : 'text-emerald-500'}`}>
+                            {stock.price.toFixed(2)} TWD
+                          </span>
+                          <span className={`block text-[10px] font-bold mt-1 ${stock.todayChange.startsWith('+') ? 'text-rose-500' : 'text-emerald-500'}`}>
+                            {stock.todayChange}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                {/* 右側：主圖與統計分析 (佔 8 格) */}
+                <section className="lg:col-span-8 space-y-6">
+                  
+                  {activeTab === "dashboard" ? (
+                    <>
+                      {/* 個股詳情與 SVG K 線圖 */}
+                      <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 mb-6 gap-4">
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-emerald-500/10 text-emerald-400 font-mono text-xs font-bold px-2.5 py-1 rounded-lg">
+                                #{selectedStock}
+                              </span>
+                              <h3 className="font-extrabold text-xl text-slate-100">
+                                {REAL_MARKET_DATA[selectedStock].name}
+                              </h3>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1.5">
+                              <span className="font-semibold text-indigo-400">當前推薦型態：</span>
+                              {REAL_MARKET_DATA[selectedStock].patternName}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-4 bg-slate-950 p-2.5 rounded-2xl border border-slate-800/80 shrink-0">
+                            <div className="text-center px-2">
+                              <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider">股價範圍</span>
+                              <span className="text-xs font-bold text-slate-300">20-50 元</span>
+                            </div>
+                            <div className="h-6 w-[1px] bg-slate-800"></div>
+                            <div className="text-center px-2">
+                              <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider">統計勝率</span>
+                              <span className="text-xs font-bold text-emerald-400">{REAL_MARKET_DATA[selectedStock].winRate}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 自訂 SVG K 線畫板 */}
+                        <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800/60 relative overflow-hidden">
+                          <span className="absolute top-3 left-3 text-[10px] text-slate-600 font-bold uppercase tracking-wider">Goodinfo 基準 15日趨勢模擬</span>
+                          
+                          <div className="h-64 w-full flex items-end justify-between pt-10 pb-4 px-2">
+                            {kLineData.map((k, index) => {
+                              const maxHigh = Math.max(...kLineData.map(d => d.high));
+                              const minLow = Math.min(...kLineData.map(d => d.low));
+                              const range = maxHigh - minLow;
+                              
+                              // 計算高度比例
+                              const getY = (val) => 200 - ((val - minLow) / range) * 160;
+                              
+                              const isRed = k.close >= k.open;
+                              const bodyTop = getY(Math.max(k.open, k.close));
+                              const bodyBottom = getY(Math.min(k.open, k.close));
+                              const bodyHeight = Math.max(2, bodyBottom - bodyTop);
+                              
+                              return (
+                                <div key={index} className="flex-1 flex flex-col items-center group relative cursor-pointer mx-0.5 sm:mx-1">
+                                  {/* 蠟燭圖 SVG 區塊 */}
+                                  <svg className="w-full h-[200px]" overflow="visible">
+                                    {/* 影線 */}
+                                    <line 
+                                      x1="50%" y1={getY(k.high)} 
+                                      x2="50%" y2={getY(k.low)} 
+                                      stroke={isRed ? '#ef4444' : '#10b981'} 
+                                      strokeWidth="1.5"
+                                    />
+                                    {/* 實體 */}
+                                    <rect 
+                                      x="15%" y={bodyTop} 
+                                      width="70%" height={bodyHeight} 
+                                      fill={isRed ? '#ef4444' : '#10b981'} 
+                                      rx="1"
+                                    />
+                                  </svg>
+                                  
+                                  {/* 底部日期 */}
+                                  <span className="text-[9px] text-slate-500 font-mono mt-1.5">{k.date}</span>
+
+                                  {/* Hover 提示資訊 */}
+                                  <div className="absolute bottom-full mb-2 bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-[9px] text-slate-300 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 w-24 shadow-xl">
+                                    <p className="font-bold border-b border-slate-800 pb-1 mb-1 text-slate-200">{k.date}</p>
+                                    <p>開: <span className="font-mono text-slate-100">{k.open}</span></p>
+                                    <p>收: <span className="font-mono text-slate-100">{k.close}</span></p>
+                                    <p>高: <span className="font-mono text-slate-100">{k.high}</span></p>
+                                    <p>低: <span className="font-mono text-slate-100">{k.low}</span></p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* 大數據型態邏輯解析 */}
+                        <div className="mt-6 bg-slate-950 p-5 rounded-2xl border border-slate-800/80 space-y-2">
+                          <h4 className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
+                            <Info className="w-4 h-4 text-emerald-400" />
+                            Goodinfo 數據特徵與型態邏輯反思
+                          </h4>
+                          <p className="text-xs text-slate-400 leading-relaxed">
+                            {REAL_MARKET_DATA[selectedStock].reason}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* 回測大數據頁面 */
+                    <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 backdrop-blur-sm shadow-xl space-y-6">
+                      <div className="border-b border-slate-800 pb-4">
+                        <h3 className="font-extrabold text-lg text-slate-100">
+                          📊 大數據型態回測統計 (20-50 元中價位股)
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-1">
+                          本班級專案以 Goodinfo 的大數據回測為基礎，探討平價個股在形成特定 K 線組合後的勝率。
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800/80">
+                          <span className="text-slate-500 text-[10px] font-bold block uppercase tracking-wider mb-2">統計樣本庫</span>
+                          <span className="text-2xl font-black text-emerald-400">463 組</span>
+                          <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
+                            針對 2023-2026 年符合 20-50 元價格區間之日 K 棒型態組合統計。
+                          </p>
+                        </div>
+
+                        <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800/80">
+                          <span className="text-slate-500 text-[10px] font-bold block uppercase tracking-wider mb-2">平均期望值</span>
+                          <span className="text-2xl font-black text-indigo-400">+3.32%</span>
+                          <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
+                            買入型態確認之個股，持有 5 個交易日之平均報酬率。
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </section>
+              </main>
+
+              {/* 頁尾 */}
+              <footer className="border-t border-slate-900 bg-slate-950 py-4 px-6 text-center text-[10px] text-slate-600 font-medium mt-12">
+                <p>台股 K 線型態分析儀 © 2026</p>
+              </footer>
+
+            </div>
+          );
+        }
+
+        // ==========================================
+        // 🚀 將 React 應用渲染到 HTML 畫面上 (React 18 寫法)
+        // ==========================================
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
