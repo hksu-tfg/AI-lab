@@ -1,0 +1,236 @@
+[
+            {
+                seatNo: "01",
+                name: "宋沛築",
+                title: "高中生英文單字學習網頁 App",
+                type: "web",
+                link: "01.html"
+            },
+            {
+                seatNo: "02",
+                name: "李玟靚",
+                title: "CosmoQuery Pro - 智能星表檢索與多維演化模型",
+                type: "web",
+                link: "02.html"
+            },
+            {
+                seatNo: "03",
+                name: "李綺珍",
+                title: "萌芽記帳 Sprout Budget - 智慧理財與趣味動畫",
+                type: "web",
+                link: "03.html"
+            },
+            {
+                seatNo: "04",
+                name: "周沐晴",
+                title: "",
+                type: "web",
+                link: "04.html"
+            },
+            {
+                seatNo: "05",
+                name: "胡佩晴",
+                title: "AI 背默書助手",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/1irwZeZvkyhgrP7h0oKgOYGY09oQUriWf?ts=6a27d9af"
+            },
+            {
+                seatNo: "06",
+                name: "胡芸芃",
+                title: "免費仔退散ProjectHero",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/1gOWcsfo21MWonS1N9-OqbFS8jJle7ZzQ?ts=6a27d798"
+            },
+            {
+                seatNo: "07",
+                name: "涂文綺",
+                title: "專治選擇困難症",
+                type: "web",
+                link: "07.html"
+            },
+            {
+                seatNo: "08",
+                name: "張妤婕",
+                title: "TimeFlow Studio 4.0 萬能天藍時空秘書",
+                type: "web",
+                link: "https://11431508.github.io/-/"
+            },
+            {
+                seatNo: "09",
+                name: "張崴涵",
+                title: "MathSolver AI",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/1ZO3J3MgJTsHkzWICD2tlXJrsiwGsxoMZ?ts=6a27d392"
+            },
+            {
+                seatNo: "10",
+                name: "許亦甯",
+                title: "FocusFlow 專注空間",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/1K5_b71AG8rfeDvk4xhLoqbegHTC-MpP4?usp=sharing"
+            },
+            {
+                seatNo: "11",
+                name: "許爾津",
+                title: "Aethelgard多模態協同進化自我修正系統",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/1ar5NqAEhYFpvnhXsUsjN4WF6XJYTGMWR?ts=6a2e631c"
+            },
+            {
+                seatNo: "12",
+                name: "陳弘恩",
+                title: "Goodinfo+",
+                type: "canvas",
+                link: "12.html"
+            },
+            {
+                seatNo: "13",
+                name: "陳芊云",
+                title: "FocusFlow Pro",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/1Dsa8XyLjA1wuM7VhiKkdz-rNty9BLzpT?ts=6a27d876"
+            },
+            {
+                seatNo: "14",
+                name: "陳品瑄",
+                title: "網頁連結轉 PDF 產生器 - 高還原原網排版",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/19uXJVBUIokO0VvSd3uGSP7tAmGDRKAoW?ts=6a27d631"
+            },
+            {
+                seatNo: "15",
+                name: "陳奕妡",
+                title: "暖心讀書小幫手 ☕",
+                type: "web",
+                link: "15.html"
+            },
+            {
+                seatNo: "16",
+                name: "陳璿恩",
+                title: "魔法卡通化身產生器 - Magic Avatar Generator",
+                type: "web",
+                link: "https://gemini.google.com/share/d/1RgrRpj-cpltLayCBsxuKP_oSkAS5a2xX?ts=6a30cc37"
+            },
+            {
+                seatNo: "17",
+                name: "彭毓蓁",
+                title: "",
+                type: "extension",
+                link: "17.zip"
+            },
+            {
+                seatNo: "18",
+                name: "黃怡涵",
+                title: "冰箱靈感大師 - AI 剩食救星與創意料理",
+                type: "web",
+                link: "18.html"
+            },
+            {
+                seatNo: "19",
+                name: "黃芷妍",
+                title: "吉娃娃存錢記 - 個人/多人協作雙效記帳",
+                type: "web",
+                link: "https://gemini.google.com/share/d/1oKa2sySqArM34mO2CC1sJqfg0Q6zGUix?ts=6a30aead"
+            },
+            {
+                seatNo: "20",
+                name: "黃郁玹",
+                title: "今天可以請假嗎？— 高中生歐趴/被當機率算命大師",
+                type: "web",
+                link: "20.html"
+            },
+            {
+                seatNo: "21",
+                name: "楊沛綸",
+                title: "DELEGATE HUB",
+                type: "web",
+                link: "https://d11431521-netizen.github.io/-21/"
+            },
+            {
+                seatNo: "22",
+                name: "萬禹彤",
+                title: "AI 萬用對話回覆產生器",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/1W21OngAX6YWTLnZRwT7Uy7pKI-WW0amU?ts=6a27d17b"
+            },
+            {
+                seatNo: "23",
+                name: "劉宜臻",
+                title: "極簡番茄鐘待辦清單與專注日曆",
+                type: "web",
+                link: "23.html"
+            },
+            {
+                seatNo: "24",
+                name: "潘宜辰",
+                title: "Chemhub Portal",
+                type: "web",
+                link: "https://ypanp048-art.github.io/chemistrylab/"
+            },
+            {
+                seatNo: "25",
+                name: "蔡欣芸",
+                title: "AURA | 數位穿搭智能衣櫃",
+                type: "web",
+                link: "https://gemini.google.com/share/d/1r9qWg9l_FpxhBNl8xf1nBKw_IQ2emQYb?ts=6a30edbe"
+            },
+            {
+                seatNo: "26",
+                name: "鄭安晴",
+                title: "#STUDYWITHME - 專注寵物島",
+                type: "web",
+                link: "26.html"
+            },
+            {
+                seatNo: "27",
+                name: "賴瑜瑾",
+                title: "AI 料理助手 - 您的質感智慧廚房",
+                type: "web",
+                link: "https://gemini.google.com/share/d/1mBl5jVS8rPirDn_XCkSX24YCMz21IGRs?ts=6a301dc4"
+            },
+            {
+                seatNo: "28",
+                name: "謝欣菲",
+                title: "AI 考卷筆跡擦除還原工具",
+                type: "web",
+                link: "28.html"
+            },
+            {
+                seatNo: "29",
+                name: "顏得晴",
+                title: "AICartoSplitter",
+                type: "web",
+                link: "https://gemini.google.com/share/d/1Hm2onqSPeeb3CWqmEBKThHUtUS1Lcu9y?ts=6a2fc536"
+            },
+            {
+                seatNo: "30",
+                name: "魏采樂",
+                title: "Atmosphere",
+                type: "web",
+                link: "https://d11431530.github.io/Weather_Timer/"
+            },
+            {
+                seatNo: "31",
+                name: "羅若芫",
+                title: "個人化健康飲食推薦助手",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/1xhioMfL6T2xWhNsJES8aIACmwr51ZaVD?ts=6a28478a"
+            },
+            {
+                seatNo: "32",
+                name: "劉冠貽",
+                title: "高中物理AI智慧解題助手",
+                type: "canvas",
+                link: "https://gemini.google.com/share/d/12-XU_yBAWJ71FN6ghptKqMdcclV4n9B1?ts=6a27d99c"
+            }
+            // 💡 提示：您可以繼續複製上面的格式往下貼，直到填滿 32 位學生。
+            // 例如：
+            // ,
+            // {
+            //     seatNo: "05",
+            //     name: "李小華",
+            //     title: "歷史科 AI 年代表整理",
+            //     type: "canvas",
+            //     link: "https://docs.google.com/document/d/another-link"
+            // }
+        ]
