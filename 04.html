@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindHub 智能圖書編目整理器</title>
+    <!-- 引入 Tailwind CSS 提供極致版面與美學排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Vue 3 提供單網頁最流暢、穩定的資料雙向綁定與狀態管理 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 FontAwesome 6 提供高相容性、高質感圖示 (不干擾 Vue DOM) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.3s ease-out forwards',
+                        'fade-in': 'fadeIn 0.2s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [v-cloak] { display: none; }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
+
+    <div id="app" v-cloak class="min-h-screen flex flex-col">
+        <!-- 導覽列 -->
+        <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-sm">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-100">
+                        <i class="fa-solid fa-book-open text-base"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base font-bold tracking-tight text-slate-950">MindHub</h1>
+                        <p class="text-[10px] text-slate-400 font-medium">個人 AI 智能知識編目艙</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <!-- 匯入 -->
+                    <label class="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-955 hover:bg-slate-100 rounded-lg cursor-pointer transition">
+                        <i class="fa-solid fa-upload"></i>
+                        <span class="hidden sm:inline">匯入</span>
+                        <input type="file" accept=".json" @change="handleImportData" class="hidden" />
+                    </label>
+
+                    <!-- 匯出 -->
+                    <button 
+                        @click="handleExportData"
+                        class="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-955 hover:bg-slate-100 rounded-lg transition"
+                    >
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden sm:inline">匯出</span>
+                    </button>
+
+                    <!-- 新增按鈕 -->
+                    <button
+                        @click="handleOpenAddModal"
+                        class="flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-xs shadow-md shadow-indigo-100 transition active:scale-95"
+                    >
+                        <i class="fa-solid fa-plus"></i>
+                        <span>新增藏書</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主體內容 -->
+        <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+            
+            <!-- Toast 訊息通知 -->
+            <div v-if="toastMessage" class="fixed bottom-6 right-6 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl text-xs animate-fade-in-up">
+                <i class="fa-solid fa-check text-emerald-400"></i>
+                <span>{{ toastMessage }}</span>
+            </div>
+
+            <!-- 互動式新手歡迎引導區 -->
+            <div v-if="showOnboarding" class="bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 text-white rounded-2xl p-5 relative overflow-hidden shadow-md">
+                <button 
+                    @click="handleCloseOnboarding" 
+                    class="absolute top-4 right-4 text-white/70 hover:text-white transition"
+                    title="不再顯示"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="flex items-start space-x-4 max-w-2xl">
+                    <div class="p-2.5 bg-white/10 rounded-xl shrink-0">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-300 animate-pulse text-lg"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <h2 class="text-sm font-bold tracking-wide">📚 本知識庫已支援「自訂書櫃系統」與「標準圖書分類」！點擊步驟體驗：</h2>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                          
+                            <!-- 引導 1 -->
+                            <button 
+                                @click="handleOpenAddModal"
+                                class="bg-white/10 hover:bg-white/20 hover:scale-[1.02] text-left p-3 rounded-xl border border-white/10 transition duration-200 focus:outline-none"
+                            >
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="font-bold text-amber-300 text-xs">1. 建立自訂書櫃</span>
+                                    <i class="fa-solid fa-arrow-right text-white/60 text-[10px]"></i>
+                                </div>
+                                <p class="text-[11px] text-white/90 leading-normal">
+                                    開啟建檔視窗，手動輸入書籍名稱、圖書分類與存放的自訂書櫃。
+                                </p>
+                            </button>
+
+                            <!-- 引導 2 -->
+                            <button 
+                                @click="handleTriggerAiDemo"
+                                class="bg-white/10 hover:bg-white/20 hover:scale-[1.02] text-left p-3 rounded-xl border border-white/10 transition duration-200 focus:outline-none"
+                            >
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="font-bold text-amber-300 text-xs">2. 體驗 AI 書櫃解析</span>
+                                    <i class="fa-solid fa-wand-magic-sparkles text-amber-300 text-[10px]"></i>
+                                </div>
+                                <p class="text-[11px] text-white/90 leading-normal">
+                                    AI 會智慧分析簡介網址，一鍵帶入 ISBN、主題與自訂編目！
+                                </p>
+                            </button>
+
+                            <!-- 引導 3 -->
+                            <button 
+                                @click="handleTriggerExpandDemo"
+                                class="bg-white/10 hover:bg-white/20 hover:scale-[1.02] text-left p-3 rounded-xl border border-white/10 transition duration-200 focus:outline-none"
+                            >
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="font-bold text-amber-300 text-xs">3. 展開智慧推薦</span>
+                                    <i class="fa-solid fa-layer-group text-amber-300 text-[10px]"></i>
+                                </div>
+                                <p class="text-[11px] text-white/90 leading-normal">
+                                    展開藏書，觀看詳細編目、原文筆記、並探索同一個書櫃內的書籍推薦。
+                                </p>
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 核心搜索與快速工具箱 -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm space-y-3">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input
+                            type="text"
+                            placeholder="快速搜尋書名、ISBN、書櫃、網址、精華..."
+                            v-model="searchQuery"
+                            class="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                        />
+                        <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-3 top-3 text-slate-400 hover:text-slate-650">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center space-x-1 bg-slate-50 p-1 rounded-xl shrink-0 overflow-x-auto">
+                        <button
+                            @click="statusFilter = 'all'"
+                            class="py-1.5 px-3 text-[11px] font-semibold rounded-lg transition shrink-0"
+                            :class="statusFilter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-700'"
+                        >
+                            全部 ({{ links.length }})
+                        </button>
+                        <button
+                            @click="statusFilter = 'unread'"
+                            class="py-1.5 px-3 text-[11px] font-semibold rounded-lg transition shrink-0"
+                            :class="statusFilter === 'unread' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-700'"
+                        >
+                            待讀 ({{ links.filter(l => l.status === 'unread').length }})
+                        </button>
+                        <button
+                            @click="statusFilter = 'reading'"
+                            class="py-1.5 px-3 text-[11px] font-semibold rounded-lg transition shrink-0"
+                            :class="statusFilter === 'reading' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400 hover:text-slate-700'"
+                        >
+                            閱讀中 ({{ links.filter(l => l.status === 'reading').length }})
+                        </button>
+                        <button
+                            @click="statusFilter = 'completed'"
+                            class="py-1.5 px-3 text-[11px] font-semibold rounded-lg transition shrink-0"
+                            :class="statusFilter === 'completed' ? 'bg-white text-slate-600 shadow-sm' : 'text-slate-400 hover:text-slate-700'"
+                        >
+                            已完結
+                        </button>
+                        <button
+                            @click="statusFilter = 'favorites'"
+                            class="py-1.5 px-3 text-[11px] font-semibold rounded-lg transition shrink-0"
+                            :class="statusFilter === 'favorites' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-400 hover:text-slate-700'"
+                        >
+                            ❤️ 最愛
+                        </button>
+                    </div>
+
+                    <button
+                        @click="showFilters = !showFilters"
+                        class="flex items-center justify-center space-x-1.5 px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition shrink-0"
+                        :class="showFilters || activeCategory !== 'all' || selectedBookcase ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
+                    >
+                        <i class="fa-solid fa-filter text-xs"></i>
+                        <span>進階分類</span>
+                        <span v-if="activeCategory !== 'all' || selectedBookcase" class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                    </button>
+                </div>
+
+                <!-- 進階篩選抽屜 -->
+                <div v-if="showFilters" class="border-t border-slate-100 pt-4 mt-3 space-y-4 animate-fade-in">
+                    <!-- 我的自訂書櫃系統 -->
+                    <div class="space-y-1.5">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1">
+                                <i class="fa-solid fa-table-columns text-indigo-500"></i>
+                                <span>📚 我的自訂書櫃</span>
+                            </h3>
+                            <!-- 建立新書櫃工具 -->
+                            <div class="flex items-center space-x-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="輸入新書櫃名稱..." 
+                                    v-model="newBookcaseName"
+                                    @keyup.enter="addNewBookcase"
+                                    class="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[150px]"
+                                />
+                                <button 
+                                    @click="addNewBookcase"
+                                    class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition flex items-center space-x-1"
+                                >
+                                    <i class="fa-solid fa-plus text-[8px]"></i>
+                                    <span>自建書櫃</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1 pt-1.5">
+                            <button
+                                v-for="bk in bookcases"
+                                :key="bk"
+                                @click="selectedBookcase = selectedBookcase === bk ? '' : bk"
+                                class="px-2.5 py-1.5 rounded-lg text-xs transition border flex items-center space-x-1.5 group/bk"
+                                :class="selectedBookcase === bk ? 'bg-orange-500 border-orange-500 text-white font-semibold shadow-sm' : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100'"
+                            >
+                                <i class="fa-solid fa-bookmark text-[9px] opacity-80"></i>
+                                <span>{{ bk }}</span>
+                                <span class="text-[9px] px-1 rounded" :class="selectedBookcase === bk ? 'bg-white/20 text-white' : 'bg-slate-200/60 text-slate-500'">
+                                    {{ links.filter(l => l.bookcase === bk).length }}
+                                </span>
+                                <!-- 刪除特定書櫃 (非未分類) -->
+                                <span 
+                                    v-if="bk !== '未分類'"
+                                    @click.stop="deleteBookcase(bk)"
+                                    class="text-[12px] leading-none ml-1 pl-1 border-l border-current opacity-60 hover:opacity-100 transition cursor-pointer"
+                                    title="刪除書櫃"
+                                >
+                                    &times;
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 圖書分類 -->
+                    <div class="space-y-1.5">
+                        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">中國圖書分類 (CC)</h3>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button
+                                v-for="cat in categories"
+                                :key="cat.id"
+                                @click="activeCategory = cat.id"
+                                class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs transition border"
+                                :class="activeCategory === cat.id ? 'bg-slate-900 border-slate-900 text-white' : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100'"
+                            >
+                                <i :class="cat.icon + ' text-[10px] opacity-80'"></i>
+                                <span>{{ cat.name }} ({{ cat.id === 'all' ? links.length : links.filter(l => l.category === cat.id).length }})</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 知識點列表區 -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between text-xs text-slate-400 font-medium px-1">
+                    <span>找到 <b>{{ filteredLinks.length }}</b> 本藏書/文章</span>
+                    <button
+                        v-if="activeCategory !== 'all' || selectedBookcase || searchQuery || statusFilter !== 'all'"
+                        @click="resetAllFilters"
+                        class="text-indigo-600 hover:text-indigo-800 font-bold"
+                    >
+                        重設所有篩選
+                    </button>
+                </div>
+
+                <div v-if="filteredLinks.length === 0" class="bg-white rounded-2xl border border-slate-100 p-12 text-center space-y-4 shadow-sm">
+                    <div class="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto">
+                        <i class="fa-solid fa-book-open text-lg"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-xs font-bold text-slate-700">尚未找到符合的書籍</h3>
+                        <p class="text-[11px] text-slate-400 max-w-xs mx-auto">點擊上方「新增書籍」來貼上你想儲存的好書片段與讀書筆記吧！</p>
+                    </div>
+                </div>
+
+                <div v-else class="space-y-3.5">
+                    <div 
+                        v-for="link in filteredLinks"
+                        :key="link.id"
+                        @click="toggleCardExpand(link.id)"
+                        class="bg-white border rounded-xl p-5 hover:shadow-md transition-all duration-300 flex flex-col justify-between relative group cursor-pointer animate-fade-in"
+                        :class="expandedCards[link.id] ? 'border-indigo-200 ring-2 ring-indigo-500/5 shadow-sm' : 'border-slate-100/80 hover:border-slate-200'"
+                    >
+                        <!-- 右上功能按鈕 -->
+                        <div class="absolute top-4 right-4 flex items-center space-x-0.5">
+                            <button 
+                                @click.stop="toggleFavorite(link.id)"
+                                class="p-1.5 rounded-md transition-all text-xs"
+                                :class="link.isFavorite ? 'text-rose-500 bg-rose-50/50' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-50'"
+                                title="收藏最愛"
+                            >
+                                <i :class="link.isFavorite ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+                            </button>
+                            <button 
+                                @click.stop="handleOpenEditModal(link)"
+                                class="p-1.5 rounded-md text-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-all text-xs"
+                                title="編輯"
+                            >
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button 
+                                @click.stop="handleDeleteLink(link.id)"
+                                class="p-1.5 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-all text-xs"
+                                title="刪除"
+                            >
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+
+                        <!-- 卡片內容 -->
+                        <div class="space-y-3">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold border" :class="getCategoryConfig(link.category).color">
+                                    <i :class="getCategoryConfig(link.category).icon + ' text-[9px]'"></i>
+                                    <span>{{ link.category }}</span>
+                                </span>
+
+                                <span v-if="link.bookcase" @click.stop="selectedBookcase = link.bookcase; showFilters = true" class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold border bg-orange-50 text-orange-700 border-orange-100 hover:bg-orange-100 transition cursor-pointer">
+                                    <i class="fa-solid fa-bookmark text-[9px]"></i>
+                                    <span>書櫃：{{ link.bookcase }}</span>
+                                </span>
+
+                                <span v-if="link.isbn" class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium border bg-slate-50 text-slate-500 border-slate-100">
+                                    <i class="fa-solid fa-hashtag text-[8px]"></i>
+                                    <span>ISBN: {{ link.isbn }}</span>
+                                </span>
+
+                                <button
+                                    v-if="expandedCards[link.id]"
+                                    @click.stop="handleStatusCycle(link.id, link.status)"
+                                    class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all"
+                                    :class="link.status === 'completed' ? 'bg-slate-100 text-slate-500 hover:bg-slate-200' : link.status === 'reading' ? 'bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100'"
+                                >
+                                    {{ link.status === 'completed' ? '已讀完' : link.status === 'reading' ? '閱讀中 📖' : '待閱讀 ⏰' }}
+                                </button>
+                            </div>
+
+                            <div class="space-y-1 pr-14">
+                                <h3 class="text-sm font-bold text-slate-900 leading-snug transition-all" :class="expandedCards[link.id] ? 'text-indigo-600' : 'group-hover:text-indigo-600'">
+                                    {{ link.title }}
+                                </h3>
+                                <a 
+                                    v-if="link.url && !expandedCards[link.id]" 
+                                    :href="link.url" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    @click.stop
+                                    class="inline-flex items-center space-x-1 text-[11px] text-slate-400 hover:text-indigo-600 font-medium break-all"
+                                >
+                                    <span>{{ link.url }}</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                                </a>
+                            </div>
+
+                            <!-- [展開時] 圖書簡述 -->
+                            <p v-if="expandedCards[link.id] && link.description" class="text-xs text-slate-500 leading-relaxed bg-slate-50/50 p-2.5 rounded-lg border border-slate-50 animate-fade-in">
+                                {{ link.description }}
+                            </p>
+
+                            <!-- [展開時] AI 核心摘要 -->
+                            <div v-if="expandedCards[link.id] && link.summary && link.summary.length > 0" class="border-t border-slate-100 pt-3 mt-1 bg-indigo-50/10 p-2.5 rounded-lg animate-fade-in">
+                                <div class="flex items-center space-x-1.5 px-1 mb-2 text-[11px] font-extrabold text-indigo-600 tracking-wider uppercase">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-500 shrink-0"></i>
+                                    <span>AI 核心摘要</span>
+                                </div>
+                                <ul class="space-y-2 pl-1">
+                                    <li v-for="(sumText, sIdx) in link.summary" :key="sIdx" class="text-[11px] text-slate-600 flex items-start space-x-2">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0"></span>
+                                        <span class="leading-relaxed">{{ sumText }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- [展開時] 收錄原文/讀書筆記 -->
+                            <div v-if="expandedCards[link.id] && link.content" class="border-t border-slate-100 pt-3 mt-1 bg-slate-50/70 p-3 rounded-lg animate-fade-in">
+                                <div class="flex items-center space-x-1.5 px-1 mb-2 text-[11px] font-extrabold text-slate-500 tracking-wider uppercase">
+                                    <i class="fa-regular fa-file-lines text-slate-500 shrink-0"></i>
+                                    <span>📝 收錄原文與讀書隨筆</span>
+                                </div>
+                                <div class="text-[11px] text-slate-600 leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap pr-1">
+                                    {{ link.content }}
+                                </div>
+                            </div>
+
+                            <!-- [展開時] 前往原文連結實體按鈕 -->
+                            <div v-if="expandedCards[link.id] && link.url" class="pt-2 animate-fade-in">
+                                <a 
+                                    :href="link.url" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    @click.stop
+                                    class="w-full flex items-center justify-center space-x-1.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition"
+                                >
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>前往閱讀原文網頁</span>
+                                </a>
+                            </div>
+
+                            <!-- [展開時] 雙向智能推薦 -->
+                            <div v-if="expandedCards[link.id] && getRelatedLinks(link).length > 0" class="border-t border-slate-100 pt-3 mt-2 animate-fade-in">
+                                <div class="flex items-center space-x-1.5 mb-2 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                    <i class="fa-solid fa-layer-group text-slate-450"></i>
+                                    <span>📚 館藏推薦關聯書籍</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <div 
+                                        v-for="rel in getRelatedLinks(link)"
+                                        :key="rel.item.id"
+                                        @click.stop="switchAndExpand(rel.item.id)"
+                                        class="bg-slate-50 hover:bg-indigo-50/40 border border-slate-100 hover:border-indigo-100 p-2.5 rounded-lg transition-all duration-200 text-left cursor-pointer flex flex-col justify-between"
+                                    >
+                                        <h4 class="text-[11px] font-bold text-slate-700 line-clamp-1">
+                                            {{ rel.item.title }}
+                                        </h4>
+                                        <span class="text-[9px] text-indigo-500 mt-1 font-medium block">
+                                            {{ rel.matchReason }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 底部日期與狀態 -->
+                        <div class="border-t border-slate-50 pt-3 mt-3.5 flex items-center justify-between flex-wrap gap-2 text-[10px]">
+                            <div class="text-slate-400 font-medium ml-auto">
+                                <span v-if="expandedCards[link.id]">編目於 {{ link.createdAt }}</span>
+                                <span v-else class="text-indigo-500/80 group-hover:text-indigo-600 transition flex items-center space-x-1">
+                                    <span>展開詳細摘要與原文</span>
+                                    <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 編輯/新增 Modal -->
+        <div v-if="isModalOpen" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-xl w-full border border-slate-100 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                
+                <!-- Modal 頭部 -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-900">
+                            {{ editingId ? '編輯圖書編目' : '新增藏書/知識點' }}
+                        </h3>
+                    </div>
+                    <button 
+                        @click="isModalOpen = false"
+                        class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                    >
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- 模式切換膠囊鈕 -->
+                <div class="flex bg-slate-100 p-1 rounded-xl mx-6 mt-4">
+                    <button
+                        type="button"
+                        @click="modalMode = 'ai'"
+                        class="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-bold transition-all duration-200"
+                        :class="modalMode === 'ai' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                    >
+                        <i class="fa-solid fa-wand-magic-sparkles text-xs" :class="{'animate-pulse text-indigo-600': modalMode === 'ai'}"></i>
+                        <span>AI 智能自動編目</span>
+                    </button>
+                    <button
+                        type="button"
+                        @click="modalMode = 'manual'"
+                        class="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-bold transition-all duration-200"
+                        :class="modalMode === 'manual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                    >
+                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                        <span>手動編目模式</span>
+                    </button>
+                </div>
+
+                <!-- 內容填寫區 -->
+                <div class="p-6 overflow-y-auto flex-1 space-y-4 text-xs">
+                    
+                    <!-- ---------------- 模式 A：極速 AI 模式 ---------------- -->
+                    <div v-if="modalMode === 'ai'" class="space-y-3.5 animate-fade-in">
+                        <div class="bg-indigo-50/50 border border-indigo-100/50 p-4 rounded-xl space-y-1.5">
+                            <h4 class="font-bold text-indigo-800 flex items-center space-x-1">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span>什麼是 AI 圖書自動編目？</span>
+                            </h4>
+                            <p class="text-[10px] text-slate-500 leading-relaxed">
+                                貼上您想收藏的<b>書籍網址、簡介、書評或版權宣告</b>。
+                                AI 將自動判定<b>圖書分類學科</b>、<b>提取 ISBN 書號</b>、提取摘要重點，並自動幫您把貼入的全文儲存進「收錄原文」區，關閉視窗後也不怕遺失！
+                            </p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="font-bold text-slate-600 block">貼上書籍/文章網址或簡介內容</label>
+                            <textarea
+                                placeholder="請貼上書籍相關連結，或者直接貼上大段書摘段落、含有 ISBN 書號的版權說明文字..."
+                                v-model="aiRawInput"
+                                rows="6"
+                                class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition"
+                            ></textarea>
+                            <div v-if="aiError" class="text-[10px] text-rose-600 flex items-center space-x-1 animate-pulse">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                <span>{{ aiError }}</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <button
+                                type="button"
+                                @click="handleAiAnalyze"
+                                :disabled="isAiAnalyzing"
+                                class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center space-x-1.5"
+                            >
+                                <template v-if="isAiAnalyzing">
+                                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>AI 正在研讀學科、ISBN 書號與摘要...</span>
+                                </template>
+                                <template v-else>
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    <span>進行 AI 智慧編目並帶入</span>
+                                </template>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ---------------- 模式 B：手動精細模式 ---------------- -->
+                    <div v-if="modalMode === 'manual'" class="space-y-4 animate-fade-in">
+                        <!-- 子 Tab 切換 -->
+                        <div class="flex space-x-4 border-b border-slate-100 pb-1.5 mb-2">
+                            <button
+                                type="button"
+                                @click="activeManualTab = 'basic'"
+                                class="text-xs font-bold pb-2 transition-all border-b-2"
+                                :class="activeManualTab === 'basic' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                            >
+                                1. 書籍定位 (必填)
+                            </button>
+                            <button
+                                type="button"
+                                @click="activeManualTab = 'detail'"
+                                class="text-xs font-bold pb-2 transition-all border-b-2"
+                                :class="activeManualTab === 'detail' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'"
+                            >
+                                2. 核心精華 & 原文
+                            </button>
+                        </div>
+
+                        <!-- 步驟 1: 基礎 -->
+                        <div v-if="activeManualTab === 'basic'" class="space-y-3.5 animate-fade-in">
+                            <div class="space-y-1">
+                                <label class="font-bold text-slate-600 block">書籍名稱 / 知識標題 <span class="text-rose-500">*</span></label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="例如：《原子習慣》精粹大綱"
+                                    v-model="formTitle"
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition"
+                                />
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label class="font-bold text-slate-600 block flex items-center space-x-1">
+                                        <i class="fa-solid fa-hashtag text-indigo-500"></i>
+                                        <span>ISBN 國際標準書號</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="例如：9789861755267"
+                                        v-model="formIsbn"
+                                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition font-mono"
+                                    />
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="font-bold text-slate-600 block">參考來源連結</label>
+                                    <input
+                                        type="url"
+                                        placeholder="https://example.com/..."
+                                        v-model="formUrl"
+                                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label class="font-bold text-slate-600 block">專業圖書分類</label>
+                                    <select
+                                        v-model="formCategory"
+                                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition"
+                                    >
+                                        <option v-for="cat in categories.filter(c => c.id !== 'all')" :key="cat.id" :value="cat.id">
+                                            {{ cat.name }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="font-bold text-slate-600 block">閱讀進度狀態</label>
+                                    <select
+                                        v-model="formStatus"
+                                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition"
+                                    >
+                                        <option value="unread">⏰ 待閱讀 (Read Later)</option>
+                                        <option value="reading">📖 閱讀中 (Reading)</option>
+                                        <option value="completed">✅ 已讀完 (Completed)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 選擇書櫃 -->
+                            <div class="space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-2">
+                                <label class="font-bold text-slate-700 block flex items-center space-x-1">
+                                    <i class="fa-solid fa-bookmark text-indigo-500"></i>
+                                    <span>指定存放書櫃</span>
+                                </label>
+                                <div class="flex items-center space-x-2">
+                                    <select
+                                        v-model="formBookcase"
+                                        class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500"
+                                    >
+                                        <option v-for="bk in bookcases" :key="bk" :value="bk">{{ bk }}</option>
+                                    </select>
+                                    <!-- 在 Modal 內快速建立書櫃 -->
+                                    <input 
+                                        type="text" 
+                                        placeholder="快速建立新書櫃..." 
+                                        v-model="newBookcaseNameModal"
+                                        @keyup.enter="addNewBookcaseModal"
+                                        class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[130px]"
+                                    />
+                                    <button 
+                                        type="button"
+                                        @click="addNewBookcaseModal"
+                                        class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold transition shrink-0"
+                                    >
+                                        建立
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 步驟 2: 詳細與原文 -->
+                        <div v-if="activeManualTab === 'detail'" class="space-y-3.5 animate-fade-in">
+                            <div class="space-y-1">
+                                <label class="font-bold text-slate-600 block">圖書簡述 / 大綱</label>
+                                <textarea
+                                    placeholder="請以一句話簡要描述這本書的大綱..."
+                                    v-model="formDescription"
+                                    rows="2"
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition"
+                                ></textarea>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="font-bold text-indigo-600 block flex items-center space-x-1">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i>
+                                    <span>核心重點摘要 (3點)</span>
+                                </label>
+                                <div class="space-y-1.5">
+                                    <div v-for="(val, idx) in formSummary" :key="idx" class="flex items-center space-x-2">
+                                        <span class="font-bold text-slate-300 w-4">#{{ idx + 1 }}</span>
+                                        <input
+                                            type="text"
+                                            :placeholder="'核心要點明細 ' + (idx + 1)"
+                                            v-model="formSummary[idx]"
+                                            class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 原文與隨筆儲存 -->
+                            <div class="space-y-1">
+                                <label class="font-bold text-slate-600 block flex items-center space-x-1.5">
+                                    <i class="fa-regular fa-file-lines text-slate-500"></i>
+                                    <span>收錄原文 / 個人讀書筆記</span>
+                                </label>
+                                <textarea
+                                    placeholder="請在此記錄長篇的書本經典段落、名句，或是您隨手記下的深度讀書隨筆..."
+                                    v-model="formContent"
+                                    rows="4"
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition"
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <!-- 按鈕導航區 -->
+                        <div class="border-t border-slate-100 pt-4 mt-5 flex justify-between items-center">
+                            <button
+                                v-if="activeManualTab === 'detail'"
+                                type="button"
+                                @click="activeManualTab = 'basic'"
+                                class="px-4 py-2 text-xs font-bold text-indigo-600 hover:bg-slate-50 rounded-lg transition"
+                            >
+                                ⬅ 返回步驟 1
+                            </button>
+                            <div v-else></div>
+
+                            <div class="flex space-x-2">
+                                <button
+                                    type="button"
+                                    @click="isModalOpen = false"
+                                    class="px-4 py-2 font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+                                >
+                                    取消
+                                </button>
+
+                                <button
+                                    v-if="activeManualTab === 'basic'"
+                                    type="button"
+                                    @click="activeManualTab = 'detail'"
+                                    class="px-4 py-2 font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition flex items-center space-x-1"
+                                >
+                                    <span>下一步：填寫摘要與原文</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </button>
+                                <button
+                                    v-else
+                                    type="button"
+                                    @click="handleSubmitForm"
+                                    class="px-4 py-2 font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition active:scale-95"
+                                >
+                                    確認儲存建檔
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-white border-t border-slate-100 py-6 text-center text-xs text-slate-400 mt-auto">
+        <div class="max-w-6xl mx-auto px-4">
+            <p>© 2026 MindHub 智能知識編目航艙. 保留所有權利。</p>
+            <p class="mt-1 text-[10px] text-slate-350">為個人離線與線上多端知識收納量身打造</p>
+        </div>
+    </footer>
+
+    </div>
+
+    <!-- 核心 JS 運作程式邏輯 -->
+    <script>
+        // 1. 優先定義預設示範圖書數據 (避開變數 hoisting TDZ 報錯)
+        const INITIAL_LINKS = [
+          {
+            id: '1',
+            title: '原子習慣：細微改變帶來巨大成就的實作法則',
+            url: 'https://example.com/atomic-habits',
+            isbn: '9789861755267', 
+            description: '深入解析習慣養成的四個步驟：提示、渴望、回應、獎賞。引導讀者透過每日 1% 的系統進步，在一年後產生成長 37 倍的巨大複利效應。',
+            category: '100 哲學類', 
+            bookcase: '年度必讀', // 關聯至預設書櫃
+            status: 'completed',
+            isFavorite: true,
+            content: '《原子習慣》提供了最完整的習慣建立藍圖。這本被奉為珪臬的著作深入論述了：如何利用極小的進步（微習慣）累積複利效果；以及如何透過提示、渴望、回應與獎賞建立牢固的系統。改變習慣並非只靠意志力，而是靠系統。',
+            summary: [
+              '習慣是自我改善的複利：每天進步1%，一年後會強大37倍。',
+              '建立習慣的四個步驟：讓提示顯而易見、讓渴望有吸引力、讓行動輕而易舉、讓獎賞令人滿足。',
+              '專注於系統而非目標：系統是達成結果的過程，才是改變的核心。'
+            ],
+            createdAt: '2026-05-15'
+          },
+          {
+            id: '2',
+            title: '深度工作力：在極度分心的世界中，如何鍛鍊專注力？',
+            url: 'https://example.com/deep-work',
+            isbn: '9789571371085', 
+            description: '在這個隨時被社群與通知打斷的時代，深度工作力已成為極度稀缺的黃金資產。本書教你如何建立儀式感，進入深度專注工作流。',
+            category: '400 應用科學類', 
+            bookcase: '專業研究', // 關聯至預設書櫃
+            status: 'reading',
+            isFavorite: false,
+            content: 'Cal Newport 教授在這本書中嚴肅論述了深度工作力。在這個淺度工作被演算法、通知轟炸的世界裡，能將認知能力發揮到極限的能力已成稀世珍寶。本書提供了完整的策略（如僧侶型、雙峰型等）幫助我們奪回注意力主權。',
+            summary: [
+              '深度工作是指在無干擾狀態下，使大腦認知能力發揮到極致的專業活動。',
+              '淺度工作（如回電子郵件、無意義會議）無法創造新價值，且容易被取代。',
+              '建立四大深度工作策略：僧侶型、雙峰型、節奏型或新聞記者型。'
+            ],
+            createdAt: '2026-05-20'
+          }
+        ];
+
+        // 2. 導入 FontAwesome 經典圖書分類法
+        const CATEGORIES = [
+          { id: 'all', name: '全部藏書', icon: 'fa-solid fa-book-open', color: 'bg-slate-100 text-slate-700 border-slate-200' },
+          { id: '000 總類', name: '000 總類', icon: 'fa-solid fa-briefcase', color: 'bg-slate-100 text-slate-600 border-slate-200' },
+          { id: '100 哲學類', name: '100 哲學類', icon: 'fa-solid fa-compass', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+          { id: '200 宗教類', name: '200 宗教類', icon: 'fa-solid fa-wand-magic-sparkles', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+          { id: '300 科學類', name: '300 科學類', icon: 'fa-solid fa-microchip', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+          { id: '400 應用科學類', name: '400 應用科學類', icon: 'fa-solid fa-microchip', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+          { id: '500 社會科學類', name: '500 社會科學類', icon: 'fa-solid fa-users', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+          { id: '600-700 史地類', name: '600-700 史地類', icon: 'fa-solid fa-globe', color: 'bg-rose-50 text-rose-700 border-rose-200' },
+          { id: '800 語言文學類', name: '800 語言文學類', icon: 'fa-solid fa-book', color: 'bg-teal-50 text-teal-700 border-teal-200' },
+          { id: '900 藝術類', name: '900 藝術類', icon: 'fa-solid fa-palette', color: 'bg-pink-50 text-pink-700 border-pink-200' }
+        ];
+
+        // 3. 初始化 Vue 3 應用程式
+        const { createApp, ref, reactive, watch, computed } = Vue;
+
+        createApp({
+            setup() {
+                // 資料載入與同步 (藏書清單)
+                const links = ref([]);
+                const saved = localStorage.getItem('mindhub_links');
+                if (saved) {
+                    links.value = JSON.parse(saved);
+                } else {
+                    links.value = INITIAL_LINKS;
+                }
+
+                // 自訂書櫃清單載入與同步 (預設書櫃)
+                const bookcases = ref(['未分類', '年度必讀', '專業研究', '休閒放鬆']);
+                const savedBookcases = localStorage.getItem('mindhub_bookcases');
+                if (savedBookcases) {
+                    bookcases.value = JSON.parse(savedBookcases);
+                }
+
+                // UI 篩選狀態
+                const activeCategory = ref('all');
+                const searchQuery = ref('');
+                const selectedBookcase = ref(''); 
+                const statusFilter = ref('all');
+                const showFilters = ref(false);
+                const showOnboarding = ref(true);
+                const toastMessage = ref('');
+                const expandedCards = ref({});
+
+                // 書櫃新增文字輸入綁定
+                const newBookcaseName = ref('');
+                const newBookcaseNameModal = ref('');
+
+                // 檢查新手引導狀態
+                const closed = localStorage.getItem('mindhub_onboarding_closed');
+                if (closed === 'true') {
+                    showOnboarding.value = false;
+                }
+
+                // 彈出視窗狀態
+                const isModalOpen = ref(false);
+                const editingId = ref(null);
+                const modalMode = ref('ai');
+                const activeManualTab = ref('basic');
+
+                // 手動表單欄位
+                const formTitle = ref('');
+                const formUrl = ref('');
+                const formIsbn = ref('');
+                const formDescription = ref('');
+                const formCategory = ref('100 哲學類');
+                const formBookcase = ref('未分類'); 
+                const formStatus = ref('unread');
+                const formContent = ref('');
+                const formSummary = reactive(['', '', '']);
+
+                // AI 分析欄位
+                const isAiAnalyzing = ref(false);
+                const aiRawInput = ref('');
+                const aiError = ref('');
+
+                // 監聽藏書並自動儲存
+                watch(links, (newVal) => {
+                    localStorage.setItem('mindhub_links', JSON.stringify(newVal));
+                }, { deep: true });
+
+                // 監聽書櫃清單並自動儲存
+                watch(bookcases, (newVal) => {
+                    localStorage.setItem('mindhub_bookcases', JSON.stringify(newVal));
+                }, { deep: true });
+
+                // 核心過濾與搜索
+                const filteredLinks = computed(() => {
+                    return links.value.filter(link => {
+                        const matchesSearch = 
+                            link.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                            (link.description && link.description.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+                            (link.url && link.url.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+                            (link.isbn && link.isbn.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+                            (link.bookcase && link.bookcase.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+                            (link.content && link.content.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+                            (link.summary && link.summary.some(s => s.toLowerCase().includes(searchQuery.value.toLowerCase())));
+
+                        const matchesCategory = activeCategory.value === 'all' || link.category === activeCategory.value;
+                        const matchesBookcase = !selectedBookcase.value || link.bookcase === selectedBookcase.value;
+
+                        let matchesStatus = true;
+                        if (statusFilter.value === 'unread') matchesStatus = link.status === 'unread';
+                        else if (statusFilter.value === 'reading') matchesStatus = link.status === 'reading';
+                        else if (statusFilter.value === 'completed') matchesStatus = link.status === 'completed';
+                        else if (statusFilter.value === 'favorites') matchesStatus = link.isFavorite === true;
+
+                        return matchesSearch && matchesCategory && matchesBookcase && matchesStatus;
+                    });
+                });
+
+                // 新增書櫃函式 (於篩選面板內)
+                const addNewBookcase = () => {
+                    const name = newBookcaseName.value.trim();
+                    if (!name) return;
+                    if (bookcases.value.includes(name)) {
+                        showToast('⚠️ 該書櫃名稱已存在！');
+                        return;
+                    }
+                    bookcases.value.push(name);
+                    newBookcaseName.value = '';
+                    showToast(`📚 書櫃「${name}」已成功建立！`);
+                };
+
+                // 新增書櫃函式 (於彈出視窗 Modal 內)
+                const addNewBookcaseModal = () => {
+                    const name = newBookcaseNameModal.value.trim();
+                    if (!name) return;
+                    if (bookcases.value.includes(name)) {
+                        showToast('⚠️ 該書櫃名稱已存在！');
+                        return;
+                    }
+                    bookcases.value.push(name);
+                    formBookcase.value = name; 
+                    newBookcaseNameModal.value = '';
+                    showToast(`📚 書櫃已建立，並自動指定至新書櫃！`);
+                };
+
+                // 刪除自訂書櫃 (將底下的藏書自動歸檔到 未分類)
+                const deleteBookcase = (name) => {
+                    if (name === '未分類') return;
+                    links.value = links.value.map(l => l.bookcase === name ? { ...l, bookcase: '未分類' } : l);
+                    bookcases.value = bookcases.value.filter(b => b !== name);
+                    if (selectedBookcase.value === name) {
+                        selectedBookcase.value = '';
+                    }
+                    showToast(`🗑️ 已刪除「${name}」書櫃，底下藏書已歸入「未分類」`);
+                };
+
+                // 關聯藏書計算推薦 (修改為：同書櫃 > 同分類 優先度推薦)
+                const getRelatedLinks = (currentLink) => {
+                    if (!currentLink) return [];
+                    return links.value
+                        .filter(item => item.id !== currentLink.id)
+                        .map(item => {
+                            let score = 0;
+                            let matchReason = '';
+
+                            if (currentLink.bookcase && item.bookcase && currentLink.bookcase === item.bookcase && currentLink.bookcase !== '未分類') {
+                                score += 100;
+                                matchReason = `📚 同在【${currentLink.bookcase}】書櫃`;
+                            }
+
+                            if (currentLink.category === item.category) {
+                                score += 30;
+                                if (score === 30) {
+                                    matchReason = `📚 同屬【${currentLink.category}】領域`;
+                                } else {
+                                    matchReason += ' & 相同圖書分類';
+                                }
+                            }
+
+                            return { item, score, matchReason };
+                        })
+                        .filter(res => res.score > 0)
+                        .sort((a, b) => b.score - a.score)
+                        .slice(0, 3);
+                };
+
+                // 跳轉至推薦
+                const switchAndExpand = (id) => {
+                    expandedCards.value = { [id]: true };
+                    showToast('📖 已跳轉至推薦館藏！');
+                };
+
+                const resetAllFilters = () => {
+                    activeCategory.value = 'all';
+                    selectedBookcase.value = '';
+                    searchQuery.value = '';
+                    statusFilter.value = 'all';
+                    showToast('🔄 已重設所有篩選');
+                };
+
+                const showToast = (msg) => {
+                    toastMessage.value = msg;
+                    setTimeout(() => {
+                        toastMessage.value = '';
+                    }, 3000);
+                };
+
+                const handleCloseOnboarding = () => {
+                    showOnboarding.value = false;
+                    localStorage.setItem('mindhub_onboarding_closed', 'true');
+                };
+
+                const toggleCardExpand = (id) => {
+                    expandedCards.value[id] = !expandedCards.value[id];
+                };
+
+                const toggleFavorite = (id) => {
+                    links.value = links.value.map(l => l.id === id ? { ...l, isFavorite: !l.isFavorite } : l);
+                    showToast('❤️ 收藏狀態已變更');
+                };
+
+                const handleStatusCycle = (id, currentStatus) => {
+                    const nextStatusMap = {
+                        'unread': 'reading',
+                        'reading': 'completed',
+                        'completed': 'unread'
+                    };
+                    const nextStatus = nextStatusMap[currentStatus] || 'unread';
+                    links.value = links.value.map(l => l.id === id ? { ...l, status: nextStatus } : l);
+                    const statusNames = { 'unread': '待讀中 ⏰', 'reading': '閱讀中 📖', 'completed': '已讀完 ✅' };
+                    showToast(`狀態更新為：${statusNames[nextStatus]}`);
+                };
+
+                // 新增視窗
+                const handleOpenAddModal = () => {
+                    editingId.value = null;
+                    formUrl.value = '';
+                    formTitle.value = '';
+                    formIsbn.value = '';
+                    formDescription.value = '';
+                    formCategory.value = '100 哲學類';
+                    formBookcase.value = '未分類'; 
+                    formStatus.value = 'unread';
+                    formContent.value = '';
+                    formSummary[0] = '';
+                    formSummary[1] = '';
+                    formSummary[2] = '';
+                    aiRawInput.value = '';
+                    aiError.value = '';
+                    newBookcaseNameModal.value = '';
+                    modalMode.value = 'ai';
+                    activeManualTab.value = 'basic';
+                    isModalOpen.value = true;
+                };
+
+                const handleTriggerAiDemo = () => {
+                    handleOpenAddModal();
+                    aiRawInput.value = '《原子習慣實踐手冊》是一本實體工具書，國際書號為 ISBN: 9789861755268。它提供了每日習慣追蹤表格，能幫讀者把自我改善的複利效果發揮到極致。並且這本書非常適合放入「年度必讀」書櫃中！';
+                    showToast('✨ 已預載示範內容，請點擊「進行 AI 智慧編目」體驗！');
+                };
+
+                const handleTriggerExpandDemo = () => {
+                    if (filteredLinks.value.length > 0) {
+                        const firstId = filteredLinks.value[0].id;
+                        expandedCards.value[firstId] = !expandedCards.value[firstId];
+                        showToast(expandedCards.value[firstId] ? '✨ 已自動展開第一個卡片！' : '✨ 已收合示範卡片');
+                    } else {
+                        showToast('⚠️ 目前列表中沒有卡片可供展開！');
+                    }
+                };
+
+                // 編輯視窗
+                const handleOpenEditModal = (link) => {
+                    editingId.value = link.id;
+                    formUrl.value = link.url || '';
+                    formTitle.value = link.title || '';
+                    formIsbn.value = link.isbn || '';
+                    formDescription.value = link.description || '';
+                    formCategory.value = link.category || '000 總類';
+                    formBookcase.value = link.bookcase || '未分類';
+                    formStatus.value = link.status || 'unread';
+                    formContent.value = link.content || '';
+                    formSummary[0] = link.summary?.[0] || '';
+                    formSummary[1] = link.summary?.[1] || '';
+                    formSummary[2] = link.summary?.[2] || '';
+                    aiRawInput.value = '';
+                    aiError.value = '';
+                    newBookcaseNameModal.value = '';
+                    modalMode.value = 'manual';
+                    activeManualTab.value = 'basic';
+                    isModalOpen.value = true;
+                };
+
+                const handleDeleteLink = (id) => {
+                    links.value = links.value.filter(l => l.id !== id);
+                    showToast('🗑️ 已成功刪除該圖書');
+                };
+
+                const handleSubmitForm = () => {
+                    if (!formTitle.value.trim()) {
+                        showToast('⚠️ 書籍名稱為必填項目！');
+                        return;
+                    }
+
+                    const itemData = {
+                        title: formTitle.value.trim(),
+                        url: formUrl.value.trim(),
+                        isbn: formIsbn.value.trim(),
+                        description: formDescription.value.trim(),
+                        category: formCategory.value,
+                        bookcase: formBookcase.value, 
+                        tags: [], 
+                        status: formStatus.value,
+                        content: formContent.value.trim(),
+                        summary: [formSummary[0].trim(), formSummary[1].trim(), formSummary[2].trim()].filter(s => s !== ''),
+                        isFavorite: editingId.value ? links.value.find(l => l.id === editingId.value)?.isFavorite : false,
+                        updatedAt: new Date().toISOString().split('T')[0]
+                    };
+
+                    if (editingId.value) {
+                        links.value = links.value.map(l => l.id === editingId.value ? { ...l, ...itemData } : l);
+                        showToast('🎉 書籍編目更新成功！');
+                    } else {
+                        const newLink = {
+                            id: Date.now().toString(),
+                            createdAt: new Date().toISOString().split('T')[0],
+                            ...itemData
+                        };
+                        links.value = [newLink, ...links.value];
+                        showToast('🎉 新增藏書成功！');
+                    }
+                    isModalOpen.value = false;
+                };
+
+                // Gemini 2.5 Flash API 調用
+                const handleAiAnalyze = async () => {
+                    if (!aiRawInput.value.trim()) {
+                        aiError.value = '請填入文章簡介、網址或任何內容！';
+                        return;
+                    }
+
+                    isAiAnalyzing.value = true;
+                    aiError.value = '';
+
+                    const apiKey = ""; 
+
+                    const systemPrompt = `你是一個專業的圖書館學與知識編目專家。請根據使用者輸入的「書籍簡介、片段、章節、或網址內容」，在 5 秒內完成深度理解與精確結構化整理。
+                    請特別注意：
+                    1. 分析該內容最適合歸入以下哪一個圖書分類領域。
+                    2. 解析並尋找其中提及的 10 位或 13 位數字國際標準書號 (ISBN)。若存在請在 "isbn" 欄位純數字或連字號回傳。
+                    3. 在 "bookcase" 欄位推薦最合適的自訂書櫃名稱（必須從這幾個候選名稱中挑選一個最適當的：'年度必讀', '專業研究', '休閒放鬆'，若都不適合則回傳 '未分類'）。
+                    
+                    請嚴格回傳一個符合 JSON Schema 的物件：
+                    {
+                      "title": "符合文章主旨的繁體中文吸睛書名/標題 (20字內)",
+                      "description": "簡潔流暢的圖書簡介或概述 (60字內)",
+                      "category": "必須且只能是以下之一：'000 總類', '100 哲學類', '200 宗教類', '300 科學類', '400 應用科學類', '500 社會科學類', '600-700 史地類', '800 語言文學類', '900 藝術類'",
+                      "isbn": "10位或13位標準書號，如果有則提取，否則留空",
+                      "bookcase": "推薦對應的候選書櫃名稱",
+                      "summary": ["核心摘要一 (簡短有力)", "核心摘要二 (簡短有力)", "核心摘要三 (簡短有力)"]
+                    }`;
+
+                    const fetchWithRetry = async (url, options, retries = 5, delay = 1000) => {
+                        try {
+                            const response = await fetch(url, options);
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            return await response.json();
+                        } catch (error) {
+                            if (retries > 0) {
+                                await new Promise(resolve => setTimeout(resolve, delay));
+                                return fetchWithRetry(url, options, retries - 1, delay * 2);
+                            }
+                            throw error;
+                        }
+                    };
+
+                    try {
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                        const payload = {
+                            contents: [{ parts: [{ text: aiRawInput.value }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] },
+                            generationConfig: {
+                                responseMimeType: "application/json",
+                                responseSchema: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        title: { type: "STRING" },
+                                        description: { type: "STRING" },
+                                        category: { type: "STRING" },
+                                        isbn: { type: "STRING" },
+                                        bookcase: { type: "STRING" },
+                                        summary: { type: "ARRAY", items: { type: "STRING" } }
+                                    },
+                                    required: ["title", "description", "category", "isbn", "bookcase", "summary"]
+                                }
+                            }
+                        };
+
+                        const result = await fetchWithRetry(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!responseText) {
+                            throw new Error("無法取得 AI 正常回覆");
+                        }
+
+                        const parsedData = JSON.parse(responseText);
+
+                        formTitle.value = parsedData.title || '';
+                        formDescription.value = parsedData.description || '';
+                        formCategory.value = parsedData.category || '000 總類';
+                        formIsbn.value = parsedData.isbn || '';
+                        formBookcase.value = parsedData.bookcase || '未分類';
+                        formTagsText.value = ''; 
+                        formSummary[0] = parsedData.summary?.[0] || '';
+                        formSummary[1] = parsedData.summary?.[1] || '';
+                        formSummary[2] = parsedData.summary?.[2] || '';
+                        formContent.value = aiRawInput.value.trim(); 
+
+                        showToast('✨ AI 智慧圖書編目完成！並已自動為您歸入「' + formBookcase.value + '」書櫃');
+                        modalMode.value = 'manual';
+                        activeManualTab.value = 'basic';
+                    } catch (err) {
+                        console.error(err);
+                        aiError.value = 'AI 分析編目失敗，請手動模式填寫或稍候重試。';
+                    } finally {
+                        isAiAnalyzing.value = false;
+                    }
+                };
+
+                // JSON 備份匯出功能
+                const handleExportData = () => {
+                    const backupData = {
+                        bookcases: bookcases.value,
+                        links: links.value
+                    };
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+                    const downloadAnchor = document.createElement('a');
+                    downloadAnchor.setAttribute("href", dataStr);
+                    downloadAnchor.setAttribute("download", `MindHub_Library_Backup_${new Date().toISOString().split('T')[0]}.json`);
+                    document.body.appendChild(downloadAnchor);
+                    downloadAnchor.click();
+                    downloadAnchor.remove();
+                    showToast('💾 成功匯出圖書館藏與自訂書櫃備份！');
+                };
+
+                // JSON 備份匯入功能
+                const handleImportData = (e) => {
+                    const fileReader = new FileReader();
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    fileReader.onload = (event) => {
+                        try {
+                            const parsed = JSON.parse(event.target.result);
+                            
+                            let importedLinks = [];
+                            let importedBookcases = [];
+
+                            if (Array.isArray(parsed)) {
+                                importedLinks = parsed;
+                            } else if (parsed && parsed.links) {
+                                importedLinks = parsed.links;
+                                importedBookcases = parsed.bookcases || [];
+                            }
+
+                            if (importedLinks.length > 0) {
+                                const isValid = importedLinks.every(item => item.title && typeof item.title === 'string');
+                                if (isValid) {
+                                    importedBookcases.forEach(b => {
+                                        if (!bookcases.value.includes(b)) bookcases.value.push(b);
+                                    });
+                                    importedLinks.forEach(l => {
+                                        if (l.bookcase && !bookcases.value.includes(l.bookcase)) {
+                                            bookcases.value.push(l.bookcase);
+                                        }
+                                    });
+                                    links.value = [...importedLinks, ...links.value];
+                                    showToast(`📂 成功匯入 ${importedLinks.length} 筆書籍編目！`);
+                                } else {
+                                    showToast('⚠️ 檔案規格不符！');
+                                }
+                            } else {
+                                showToast('⚠️ 匯入失敗，請提供合法的備份 JSON 檔案');
+                            }
+                        } catch (err) {
+                            showToast('⚠️ 解析 JSON 備份檔失敗！');
+                        }
+                    };
+                    fileReader.readAsText(file);
+                    e.target.value = null;
+                };
+
+                const getCategoryConfig = (catId) => {
+                    return CATEGORIES.find(c => c.id === catId) || CATEGORIES[CATEGORIES.length - 1];
+                };
+
+                return {
+                    links,
+                    bookcases,
+                    categories: CATEGORIES,
+                    activeCategory,
+                    searchQuery,
+                    selectedBookcase,
+                    statusFilter,
+                    showFilters,
+                    showOnboarding,
+                    toastMessage,
+                    expandedCards,
+                    isModalOpen,
+                    editingId,
+                    modalMode,
+                    activeManualTab,
+                    newBookcaseName,
+                    newBookcaseNameModal,
+                    formTitle,
+                    formUrl,
+                    formIsbn,
+                    formDescription,
+                    formCategory,
+                    formBookcase,
+                    formStatus,
+                    formContent,
+                    formSummary,
+                    isAiAnalyzing,
+                    aiRawInput,
+                    aiError,
+                    filteredLinks,
+                    getRelatedLinks,
+                    addNewBookcase,
+                    addNewBookcaseModal,
+                    deleteBookcase,
+                    switchAndExpand,
+                    resetAllFilters,
+                    handleCloseOnboarding,
+                    toggleCardExpand,
+                    toggleFavorite,
+                    handleStatusCycle,
+                    handleOpenAddModal,
+                    handleTriggerAiDemo,
+                    handleTriggerExpandDemo,
+                    handleOpenEditModal,
+                    handleDeleteLink,
+                    handleSubmitForm,
+                    handleAiAnalyze,
+                    handleExportData,
+                    handleImportData,
+                    getCategoryConfig
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
