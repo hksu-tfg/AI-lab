@@ -30,15 +30,8 @@
                     <p class="text-xs text-slate-500">學生互評投票系統 (每人上限 16 票)</p>
                 </div>
             </div>
-            
-            <div class="flex items-center space-x-2">
-                <!-- 資料來源狀態指示標籤 -->
-                <span id="dataSourceBadge" class="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600">
-                    <i class="fa-solid fa-spinner fa-spin mr-1"></i>資料載入中
-                </span>
-                <div class="text-sm font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full">
-                    班級人數：32 人
-                </div>
+            <div class="text-sm font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full">
+                班級人數：32 人
             </div>
         </div>
     </header>
@@ -77,7 +70,7 @@
     <!-- 主內容區 -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <!-- 第一步：確認你的身份 -->
+        <!-- 第一步：填寫自己的身份 -->
         <section class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mb-8">
             <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
@@ -89,7 +82,7 @@
                     <select id="studentSelector" onchange="onVoterChanged()" 
                             class="w-full pl-3 pr-10 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm appearance-none bg-white font-medium text-slate-700 cursor-pointer">
                         <option value="">-- 請選擇你的座號 --</option>
-                        <!-- JavaScript 將自動從 JSON 資料中產生座號選單 -->
+                        <!-- JavaScript 將自動產出 01-32 的座號 -->
                     </select>
                     <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
                         <i class="fa-solid fa-chevron-down text-xs"></i>
@@ -115,7 +108,7 @@
 
             <!-- 4 * 8 共 32 個同學的卡片網格 -->
             <div id="cardsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <!-- 由 JavaScript 讀取 JSON 後動態生成 -->
+                <!-- 由 JavaScript 渲染出 32 張投票卡片 -->
             </div>
         </section>
 
@@ -142,7 +135,7 @@
 
     </main>
 
-    <!-- 💡 自訂 Toast 訊息提示元件 -->
+    <!-- 💡 自訂 Toast 訊息提示元件 (避免 alert 阻擋) -->
     <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-5 py-3 rounded-xl shadow-xl flex items-center space-x-2 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none z-50">
         <span id="toastIcon"><i class="fa-solid fa-circle-check text-emerald-400"></i></span>
         <span id="toastMsg">成功複製投票連結！</span>
@@ -151,9 +144,9 @@
     <!-- ==================== JAVASCRIPT 資料與邏輯 ==================== -->
     <script>
         // ==========================================
-        // 💾 內建預設 32 位學生資料庫 (當讀取 students.json 失敗時，會自動啟用此名單)
+        // 🛠️ 32位學生完整資料庫 (請直接修改這裡的內容)
         // ==========================================
-        const DEFAULT_STUDENTS = [
+        const studentsData = [
             {
                 seatNo: "01",
                 name: "宋沛築",
@@ -378,65 +371,24 @@
                 type: "canvas",
                 link: "https://gemini.google.com/share/d/12-XU_yBAWJ71FN6ghptKqMdcclV4n9B1?ts=6a27d99c"
             }
-            // 💡 提示：您可以繼續複製上面的格式往下貼，直到填滿 32 位學生。
-            // 例如：
-            // ,
-            // {
-            //     seatNo: "05",
-            //     name: "李小華",
-            //     title: "歷史科 AI 年代表整理",
-            //     type: "canvas",
-            //     link: "https://docs.google.com/document/d/another-link"
-            // }
         ];
-        // 實際在程式內使用的變數
-        let studentsData = []; 
 
         // 紀錄當前學生的投票狀態
         let currentVoter = ""; // 儲存目前正在投票人的座號
-        let selectedVotes = []; // 儲存已選的座號陣列 (不超過 16 個)
+        let selectedVotes = []; // 儲存已選的座號陣列 (不超過16個)
 
         // ==========================================
-        // 1. 初始化網頁 (智慧雙模非同步讀取)
+        // 1. 初始化網頁
         // ==========================================
-        window.onload = async function() {
-            await loadStudentsData();
+        window.onload = function() {
             initVoterDropdown();
             initVoteCards();
             checkAndParseUrl(); // 偵測是否有後綴網址，以便進行教師解析
         }
 
-        // 智慧載入方法：優先嘗試抓 JSON，若失敗則降級讀取 DEFAULT_STUDENTS 陣列
-        async function loadStudentsData() {
-            const badge = document.getElementById('dataSourceBadge');
-            try {
-                // 嘗試抓取同目錄下的 students.json
-                const response = await fetch('students.json');
-                if (!response.ok) {
-                    throw new Error("找不到檔案或 HTTP 錯誤");
-                }
-                studentsData = await response.json();
-                
-                // 成功載入外部 JSON，更新狀態標籤
-                badge.className = "text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-100 text-emerald-700 border border-emerald-200";
-                badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-down mr-1"></i>外部 JSON 載入`;
-                console.log("成功讀取外部學生資料檔 (students.json)");
-            } catch (error) {
-                // 若載入失敗，秒切換到內建的備用資料陣列
-                studentsData = DEFAULT_STUDENTS;
-                
-                badge.className = "text-xs px-2.5 py-1 rounded-full font-medium bg-amber-100 text-amber-700 border border-amber-200";
-                badge.innerHTML = `<i class="fa-solid fa-circle-info mr-1"></i>備用資料庫模式`;
-                console.warn("未能讀取 students.json，已自動啟用 HTML 內建 32 人備用名單機制。原因：", error.message);
-            }
-        }
-
         // 初始化學生座號下拉選單
         function initVoterDropdown() {
             const selector = document.getElementById('studentSelector');
-            // 清空舊選項（保留第一個提示選項）
-            selector.innerHTML = '<option value="">-- 請選擇你的座號 --</option>';
-            
             studentsData.forEach(student => {
                 const opt = document.createElement('option');
                 opt.value = student.seatNo;
@@ -598,7 +550,7 @@
         }
 
         // ==========================================
-        // 4. 生成二進位並壓縮為一個 10 進位整數（位元遮罩編碼機制）
+        // 4. 生成二進位並壓縮為一個 10 進位整數（核心編解碼設計）
         // ==========================================
         function generateUrl() {
             const urlInput = document.getElementById('generatedUrl');
@@ -612,9 +564,12 @@
             const base = window.location.origin + window.location.pathname;
             
             // 💡 32-bit Bitmask 編碼法：
+            // 將每一個勾選的座號 (1~32) 對應到二進位的位元 index (0~31)
+            // 並將這些位元權值累加，形成一個單一的大整數。
             let encodedVotes = 0;
             selectedVotes.forEach(seat => {
                 const bitIndex = parseInt(seat, 10) - 1; // 轉為位元偏移量：0 ~ 31
+                // 使用 2 ** bitIndex，安全不溢位
                 encodedVotes += Math.pow(2, bitIndex);
             });
 
@@ -635,7 +590,7 @@
                 return;
             }
 
-            // 建立暫時性輸入框完成複製 (相容 iframe)
+            // 支援 Iframe 相容的複製方式
             const tempInput = document.createElement("input");
             tempInput.value = urlInput.value;
             document.body.appendChild(tempInput);
@@ -659,7 +614,7 @@
             
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-            }, 3000);
+            }, 2500);
         }
 
         // ==========================================
@@ -688,7 +643,8 @@
                     const votesArray = [];
 
                     if (!isNaN(encodedNum)) {
-                        // 💡 32-bit Bitmask 解碼法
+                        // 💡 32-bit Bitmask 解碼法：
+                        // 使用無符號右移運算子 '>>>' 與 '& 1'，依序檢查 0 ~ 31 位元是否為 1
                         for (let i = 0; i < 32; i++) {
                             if (((encodedNum >>> i) & 1) === 1) {
                                 const seatNo = String(i + 1).padStart(2, '0');
