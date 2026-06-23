@@ -70,6 +70,24 @@
     <!-- 主內容區 -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
+        <!-- 📥 快速匯入投票網址區 (新增功能位置) -->
+        <section class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mb-8">
+            <h2 class="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-file-import text-indigo-600"></i>
+                匯入投票網址 (讀取/修改先前投票)
+            </h2>
+            <p class="text-xs text-slate-500 mb-4">
+                貼上已複製的投票網址（包含 <code>?voter=...</code> 後綴），系統將會自動反解析並還原該同學的座號身份與所有勾選作品。
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="importUrlInput" placeholder="請貼上完整的投票網址（例如：http://.../?voter=01&votes=17）" 
+                       class="flex-grow px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 placeholder-slate-400">
+                <button onclick="importVotingUrl()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 whitespace-nowrap">
+                    <i class="fa-solid fa-file-import"></i> 立即匯入並還原
+                </button>
+            </div>
+        </section>
+
         <!-- 第一步：填寫自己的身份 -->
         <section class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mb-8">
             <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -601,6 +619,108 @@
             showToast("投票網址複製成功！請將它貼給老師。", "fa-solid fa-circle-check text-emerald-400");
         }
 
+        // ==========================================
+        // 5. 快速反解析匯入功能 (新增功能 JavaScript 邏輯)
+        // ==========================================
+        function importVotingUrl() {
+            const inputVal = document.getElementById('importUrlInput').value.trim();
+            if (!inputVal) {
+                showToast("請貼上投票網址再進行匯入！", "fa-solid fa-triangle-exclamation text-amber-500");
+                return;
+            }
+
+            try {
+                let urlObj;
+                // 相容不同的貼上格式 (包含帶有協議的完整網址、僅帶問號的後綴，或純 query 參數)
+                if (inputVal.startsWith('http') || inputVal.startsWith('//')) {
+                    urlObj = new URL(inputVal);
+                } else if (inputVal.startsWith('?')) {
+                    urlObj = new URL(window.location.origin + window.location.pathname + inputVal);
+                } else {
+                    urlObj = new URL('http://temp.com/?' + inputVal);
+                }
+
+                const voter = urlObj.searchParams.get('voter');
+                const votesEncoded = urlObj.searchParams.get('votes');
+
+                if (!voter) {
+                    showToast("無效的投票網址！找不到座號欄位 (voter)。", "fa-solid fa-circle-exclamation text-rose-500");
+                    return;
+                }
+
+                // 比對資料庫中是否存在該座號
+                const voterStudent = studentsData.find(s => s.seatNo === voter);
+                if (!voterStudent) {
+                    showToast(`找不到座號 #${voter} 的學生資料。`, "fa-solid fa-circle-exclamation text-rose-500");
+                    return;
+                }
+
+                // 1. 還原投票人身分與下拉選單狀態
+                currentVoter = voter;
+                document.getElementById('studentSelector').value = voter;
+
+                // 2. 還原卡片的基本防呆設定 (先解鎖所有卡片，再單獨鎖定自己)
+                studentsData.forEach(student => {
+                    const card = document.getElementById(`card-${student.seatNo}`);
+                    const checkbox = document.getElementById(`check-${student.seatNo}`);
+                    if (card && checkbox) {
+                        card.classList.remove('opacity-40', 'bg-slate-50', 'pointer-events-none', 'bg-indigo-50/50', 'border-indigo-400', 'ring-1', 'ring-indigo-400');
+                        checkbox.checked = false;
+                        checkbox.disabled = false;
+                    }
+                });
+
+                // 獨自鎖定投票人本人的卡片 (防止自投)
+                const selfCard = document.getElementById(`card-${voter}`);
+                const selfCheckbox = document.getElementById(`check-${voter}`);
+                if (selfCard && selfCheckbox) {
+                    selfCard.classList.add('opacity-40', 'bg-slate-50', 'pointer-events-none');
+                    selfCheckbox.disabled = true;
+                }
+
+                // 3. 解析並解碼 votes (Bitmask -> 陣列)
+                selectedVotes = [];
+                if (votesEncoded) {
+                    const encodedNum = parseInt(votesEncoded, 10);
+                    if (!isNaN(encodedNum)) {
+                        for (let i = 0; i < 32; i++) {
+                            if (((encodedNum >>> i) & 1) === 1) {
+                                const seatNo = String(i + 1).padStart(2, '0');
+                                // 二次過濾防呆：不能有自投、名單不超過 16 人上限
+                                if (seatNo !== voter && selectedVotes.length < 16) {
+                                    selectedVotes.push(seatNo);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 4. 動態勾選核取方塊並加上 active 樣式
+                selectedVotes.forEach(seatNo => {
+                    const checkbox = document.getElementById(`check-${seatNo}`);
+                    const card = document.getElementById(`card-${seatNo}`);
+                    if (checkbox && card) {
+                        checkbox.checked = true;
+                        card.classList.add('bg-indigo-50/50', 'border-indigo-400', 'ring-1', 'ring-indigo-400');
+                    }
+                });
+
+                // 5. 更新計數看板與輸出 URL
+                updateCheckboxStates();
+                updateVoteCount();
+                generateUrl();
+
+                showToast(`成功載入！目前身分：[座號 ${voter}] ${voterStudent.name}，已還原 ${selectedVotes.length} 票。`, "fa-solid fa-circle-check text-emerald-400");
+                
+                // 清空匯入輸入框
+                document.getElementById('importUrlInput').value = "";
+
+            } catch (error) {
+                console.error(error);
+                showToast("反解析失敗！請確認貼上的網址格式是否正確。", "fa-solid fa-triangle-exclamation text-rose-500");
+            }
+        }
+
         // 自訂提示框
         function showToast(message, iconClass = "fa-solid fa-circle-check text-emerald-400") {
             const toast = document.getElementById('toast');
@@ -614,11 +734,11 @@
             
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-            }, 2500);
+            }, 3000);
         }
 
         // ==========================================
-        // 5. 教師端二進位還原解碼邏輯
+        // 6. 教師端二進位還原解碼邏輯
         // ==========================================
         function checkAndParseUrl() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -643,8 +763,7 @@
                     const votesArray = [];
 
                     if (!isNaN(encodedNum)) {
-                        // 💡 32-bit Bitmask 解碼法：
-                        // 使用無符號右移運算子 '>>>' 與 '& 1'，依序檢查 0 ~ 31 位元是否為 1
+                        // 💡 32-bit Bitmask 解碼法
                         for (let i = 0; i < 32; i++) {
                             if (((encodedNum >>> i) & 1) === 1) {
                                 const seatNo = String(i + 1).padStart(2, '0');
